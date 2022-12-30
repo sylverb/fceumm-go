@@ -1617,6 +1617,9 @@ INES_BOARD_BEGIN()
 #if defined(LINUX_EMU) || defined(NES_MAPPER_467)
 	INES_BOARD( "47-2",                 	467, Mapper467_Init         )
 #endif
+#if defined(LINUX_EMU) || defined(NES_MAPPER_468)
+	INES_BOARD( "BlazePro CPLD",           	468, Mapper468_Init         )
+#endif
 #if defined(LINUX_EMU) || defined(NES_MAPPER_513)
 	INES_BOARD( "SA-9602B",                 513, SA9602B_Init           )
 #endif
