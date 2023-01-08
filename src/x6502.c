@@ -69,7 +69,7 @@ static INLINE void WrMemNorm(uint32 A, uint8 V) {
 #ifndef TARGET_GNW
 	BWrite[A](A, V);
 #else
-	GetWriteHandler(A)(A, V);
+	fceu_write(A, V);
 #endif
 }
 
@@ -113,7 +113,7 @@ void FASTAPASS(2) X6502_DMW(uint32 A, uint8 V) {
 #ifndef TARGET_GNW
 	BWrite[A](A, V);
 #else
-	GetWriteHandler(A)(A, V);
+	fceu_write(A, V);
 #endif
 }
 

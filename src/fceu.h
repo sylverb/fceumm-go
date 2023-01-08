@@ -33,7 +33,10 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func);
 void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func);
 writefunc FASTAPASS(1) GetWriteHandler(int32 a);
 readfunc FASTAPASS(1) GetReadHandler(int32 a);
+#ifdef TARGET_GNW
 uint8 fceu_read(int32 a);
+void fceu_write(int32 a,uint8 v);
+#endif
 
 int AllocGenieRW(void);
 void FlushGenieRW(void);

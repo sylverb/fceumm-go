@@ -194,6 +194,7 @@ readfunc FASTAPASS(1) GetReadHandler(int32 a)
 #endif
 }
 
+#ifdef TARGET_GNW
 uint8 fceu_read(int32 a) {
 	if (a < 0x800) {
 		return RAM[a];
@@ -219,6 +220,7 @@ uint8 fceu_read(int32 a) {
 
 	return(X.DB);
 }
+#endif
 
 void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 {
@@ -264,11 +266,6 @@ writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 	else
 		return BWrite[a];
 #else
-	for (int i=0; i<memWrite_index;i++) {
-		if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
-			return MemWrite[i].write_func;
-		}
-	}
 	if (a <= 0x7FF) {
 		return BRAML;
 	}
@@ -296,13 +293,70 @@ writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 				return B2007;
 		}
 	}
-
+	for (int i=0; i<memWrite_index;i++) {
+		if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
+			return MemWrite[i].write_func;
+		}
+	}
 	if (a == 0x4014)
 		return B4014;
 
 	return BNull;
 #endif
 }
+
+#ifdef TARGET_GNW
+void fceu_write(int32 a,uint8 v) {
+	if (a <= 0x7FF) {
+		RAM[a] = v;
+		return;
+	}
+	if (a <= 0x1FFF) {
+		RAM[a & 0x7FF] = v;
+		return;
+	}
+	if (a <= 0x3FFF) {
+		switch (a%8) {
+			case 0:
+				B2000(a,v);
+				return;
+			case 1:
+				B2001(a,v);
+				return;
+			case 2:
+				B2002(a,v);
+				return;
+			case 3:
+				B2003(a,v);
+				return;
+			case 4:
+				B2004(a,v);
+				return;
+			case 5:
+				B2005(a,v);
+				return;
+			case 6:
+				B2006(a,v);
+				return;
+			case 7:
+				B2007(a,v);
+				return;
+		}
+	}
+	for (int i=0; i<memWrite_index;i++) {
+		if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
+			MemWrite[i].write_func(a,v);
+			return;
+		}
+	}
+	if (a == 0x4014) {
+		B4014(a,v);
+		return;
+	}
+
+	return;
+}
+#endif
 
 void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 {
