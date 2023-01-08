@@ -20,6 +20,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static void GenMMC1Power(void);
 static void GenMMC1Init(CartInfo *info, int prg, int chr, int wram, int saveram);
@@ -323,7 +326,11 @@ static void GenMMC1Init(CartInfo *info, int prg, int chr, int wram, int saveram)
 	CHRmask8[0] &= (chr >> 13) - 1;
 
 	if (WRAMSIZE) {
+#ifndef TARGET_GNW
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+		WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (saveram) {
@@ -332,7 +339,11 @@ static void GenMMC1Init(CartInfo *info, int prg, int chr, int wram, int saveram)
 		}
 	}
 	if (!chr) {
+#ifndef TARGET_GNW
 		CHRRAM = (uint8*)FCEU_gmalloc(8192);
+#else
+		CHRRAM = (uint8*)ahb_calloc(1, 8192);
+#endif
 		SetupCartCHRMapping(0, CHRRAM, 8192, 1);
 		AddExState(CHRRAM, 8192, 0, "CHRR");
 	}

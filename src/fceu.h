@@ -33,6 +33,7 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func);
 void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func);
 writefunc FASTAPASS(1) GetWriteHandler(int32 a);
 readfunc FASTAPASS(1) GetReadHandler(int32 a);
+uint8 fceu_read(int32 a);
 
 int AllocGenieRW(void);
 void FlushGenieRW(void);
@@ -57,8 +58,10 @@ extern uint8 MMC5HackSPPage;
 
 extern uint8 RAM[0x800];
 
+#ifndef TARGET_GNW
 extern readfunc ARead[0x10000];
 extern writefunc BWrite[0x10000];
+#endif
 
 extern void (*GameInterface)(int h);
 extern void (*GameStateRestore)(int version);
@@ -93,7 +96,9 @@ typedef struct {
 	int UsrFirstSLine[2];
 	int UsrLastSLine[2];
 	uint32 SndRate;
+#ifndef TARGET_GNW
 	int soundq;
+#endif
 	int lowpass;
 } FCEUS;
 
@@ -111,7 +116,9 @@ void FCEU_PutImageDummy(void);
 
 extern uint8 Exit;
 extern uint8 pale;
+#ifndef TARGET_GNW
 extern uint8 vsdip;
+#endif
 
 #define JOY_A        0x01
 #define JOY_B        0x02

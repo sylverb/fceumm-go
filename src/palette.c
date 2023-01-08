@@ -126,6 +126,7 @@ void SetNESDeemph(uint8 d, int force) {
 
 int ipalette = 0;
 
+#ifndef TARGET_GNW
 void FCEU_LoadGamePalette(void) {
 	uint8 ptmp[192];
 	RFILE *fp = NULL;
@@ -153,6 +154,7 @@ void FCEU_LoadGamePalette(void) {
 	}
 	free(fn);
 }
+#endif
 
 void FCEU_ResetPalette(void) {
 	if (GameInfo) {
@@ -162,9 +164,12 @@ void FCEU_ResetPalette(void) {
 }
 
 static void ChoosePalette(void) {
+#ifndef TARGET_GNW
 	if (GameInfo->type == GIT_NSF)
 		palo = 0;
-	else if (ipalette)
+	else
+#endif
+	if (ipalette)
 		palo = palettei;
 	else
 		palo = palpoint[pale];
@@ -175,8 +180,11 @@ void WritePalette(void) {
 
 	for (x = 0; x < 7; x++)
 		FCEUD_SetPalette(x, unvpalette[x].r, unvpalette[x].g, unvpalette[x].b);
+#ifndef TARGET_GNW
 	if (GameInfo->type == GIT_NSF) {
-	} else {
+	} else
+#endif
+	{
 		for (x = 0; x < 64; x++)
 			FCEUD_SetPalette(128 + x, palo[x].r, palo[x].g, palo[x].b);
 		SetNESDeemph(lastd, 1);

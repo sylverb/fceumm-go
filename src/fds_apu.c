@@ -23,8 +23,8 @@
 #include "fceu-types.h"
 #include "x6502.h"
 #include "fceu.h"
-#include "sound.h"
-#include "state.h"
+#include "fceu-sound.h"
+#include "fceu-state.h"
 
 #define FDSClock (1789772.7272727272727272 / 2)
 
@@ -87,9 +87,11 @@ static void RenderSoundHQ(void);
 
 static DECLFW(FDSSWrite) {
 	if (FSettings.SndRate) {
+#ifndef TARGET_GNW
 		if (FSettings.soundq >= 1)
 			RenderSoundHQ();
 		else
+#endif
 			RenderSound();
 	}
 	A -= 0x4080;
@@ -237,6 +239,7 @@ static void RenderSound(void) {
 		}
 }
 
+#ifndef TARGET_GNW
 static void RenderSoundHQ(void) {
 	uint32 x;
 
@@ -252,6 +255,7 @@ static void RenderSoundHQ(void) {
 static void HQSync(int32 ts) {
 	FBC = ts;
 }
+#endif
 
 void FDSSound(int c) {
 	RenderSound();
@@ -260,9 +264,12 @@ void FDSSound(int c) {
 
 static void FDS_ESI(void) {
 	if (FSettings.SndRate) {
+#ifndef TARGET_GNW
 		if (FSettings.soundq >= 1) {
 			fdso.cycles = (int64)1 << 39;
-		} else {
+		} else
+#endif
+		{
 			fdso.cycles = ((int64)1 << 40) * FDSClock;
 			fdso.cycles /= FSettings.SndRate * 16;
 		}
@@ -276,8 +283,10 @@ static void FDS_ESI(void) {
 void FDSSoundReset(void) {
 	memset(&fdso, 0, sizeof(fdso));
 	FDS_ESI();
+#ifndef TARGET_GNW
 	GameExpSound.HiSync = HQSync;
 	GameExpSound.HiFill = RenderSoundHQ;
+#endif
 	GameExpSound.Fill = FDSSound;
 	GameExpSound.RChange = FDS_ESI;
 }

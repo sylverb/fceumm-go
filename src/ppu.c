@@ -27,14 +27,14 @@
 #include        "fceu.h"
 #include        "ppu.h"
 #include        "nsf.h"
-#include        "sound.h"
+#include        "fceu-sound.h"
 #include        "general.h"
 #include        "fceu-endian.h"
 #include        "fceu-memory.h"
 
-#include        "cart.h"
+#include        "fceu-cart.h"
 #include        "palette.h"
-#include        "state.h"
+#include        "fceu-state.h"
 #include        "video.h"
 #include        "input.h"
 
@@ -145,7 +145,7 @@ uint8 * MMC5BGVRAMADR(uint32 V) {
 	} else return &MMC5BGVPage[(V) >> 10][(V)];
 }
 
-static DECLFR(A2002) {
+DECLFR(A2002) {
 	uint8 ret;
 
 	FCEUPPU_LineUpdate();
@@ -164,12 +164,12 @@ static DECLFR(A2002) {
 	return ret;
 }
 
-static DECLFR(A200x) {	/* Not correct for $2004 reads. */
+DECLFR(A200x) {	/* Not correct for $2004 reads. */
 	FCEUPPU_LineUpdate();
 	return PPUGenLatch;
 }
 
-static DECLFR(A2007) {
+DECLFR(A2007) {
 	uint8 ret;
 	uint32 tmp = RefreshAddr & 0x3FFF;
 
@@ -238,7 +238,7 @@ static DECLFR(A2007) {
 	return ret;
 }
 
-static DECLFW(B2000) {
+DECLFW(B2000) {
 	FCEUPPU_LineUpdate();
 	PPUGenLatch = V;
 
@@ -250,7 +250,7 @@ static DECLFW(B2000) {
 	TempAddr |= (V & 3) << 10;
 }
 
-static DECLFW(B2001) {
+DECLFW(B2001) {
 	FCEUPPU_LineUpdate();
 	PPUGenLatch = V;
 	PPU[1] = V;
@@ -258,17 +258,17 @@ static DECLFW(B2001) {
 		deemp = V >> 5;
 }
 
-static DECLFW(B2002) {
+DECLFW(B2002) {
 	PPUGenLatch = V;
 }
 
-static DECLFW(B2003) {
+DECLFW(B2003) {
 	PPUGenLatch = V;
 	PPU[3] = V;
 	PPUSPL = V & 0x7;
 }
 
-static DECLFW(B2004) {
+DECLFW(B2004) {
 	PPUGenLatch = V;
 	if (PPUSPL >= 8) {
 		if (PPU[3] >= 8)
@@ -280,7 +280,7 @@ static DECLFW(B2004) {
 	PPUSPL++;
 }
 
-static DECLFW(B2005) {
+DECLFW(B2005) {
 	uint32 tmp = TempAddr;
 	FCEUPPU_LineUpdate();
 	PPUGenLatch = V;
@@ -298,7 +298,7 @@ static DECLFW(B2005) {
 }
 
 
-static DECLFW(B2006) {
+DECLFW(B2006) {
 	FCEUPPU_LineUpdate();
 
 	PPUGenLatch = V;
@@ -316,7 +316,7 @@ static DECLFW(B2006) {
 	vtoggle ^= 1;
 }
 
-static DECLFW(B2007) {
+DECLFW(B2007) {
 	uint32 tmp = RefreshAddr & 0x3FFF;
 	PPUGenLatch = V;
 	if (tmp < 0x2000) {
@@ -342,7 +342,7 @@ static DECLFW(B2007) {
 		PPU_hook(RefreshAddr & 0x3fff);
 }
 
-static DECLFW(B4014) {
+DECLFW(B4014) {
 	uint32 t = V << 8;
 	int x;
 
@@ -651,7 +651,9 @@ static void DoLine(void)
 {
 	int x, colour_emphasis;
 	uint8 *target = NULL;
+#ifndef TARGET_GNW
 	uint8 *dtarget = NULL;
+#endif
 
 	if (scanline >= 240 && scanline != totalscanlines)
 	{
@@ -662,7 +664,9 @@ static void DoLine(void)
 	}
 
 	target = XBuf + ((scanline < 240 ? scanline : 240) << 8);
+#ifndef TARGET_GNW
 	dtarget = XDBuf + ((scanline < 240 ? scanline : 240) << 8);
+#endif
 
 	if (MMC5Hack && (ScreenON || SpriteON)) MMC5_hb(scanline);
 
@@ -696,9 +700,11 @@ static void DoLine(void)
 			*(uint32*)&target[x << 2] = ((*(uint32*)&target[x << 2]) & 0x3f3f3f3f) | 0x80808080;
 
 	/* write the actual colour emphasis */
+#ifndef TARGET_GNW
 	colour_emphasis = ((PPU[1] >> 5) << 24) | ((PPU[1] >> 5) << 16) | ((PPU[1] >> 5) << 8) | ((PPU[1] >> 5) << 0);
 	for (x = 63; x >= 0; x--)
 		*(uint32*)&dtarget[x << 2] = colour_emphasis;
+#endif
 
     sphitx = 0x100;
 
@@ -1084,13 +1090,16 @@ void FCEUPPU_Reset(void) {
 }
 
 void FCEUPPU_Power(void) {
+#ifndef TARGET_GNW
 	int x;
+#endif
 
 	memset(NTARAM, 0x00, 0x800);
 	memset(PALRAM, 0x00, 0x20);
 	memset(UPALRAM, 0x00, 0x03);
 	memset(SPRAM, 0x00, 0x100);
 	FCEUPPU_Reset();
+#ifndef TARGET_GNW
 	for (x = 0x2000; x < 0x4000; x += 8) {
 		ARead[x] = A200x;
 		BWrite[x] = B2000;
@@ -1111,6 +1120,7 @@ void FCEUPPU_Power(void) {
 	}
 
 	BWrite[0x4014] = B4014;
+#endif
 }
 
 
@@ -1132,9 +1142,12 @@ int FCEUPPU_Loop(int skip) {
 
 		/* I need to figure out the true nature and length of this delay. */
 		X6502_Run(12);
+#ifndef TARGET_GNW
 		if (GameInfo->type == GIT_NSF)
 			DoNSFFrame();
-		else {
+		else
+#endif
+		{
 			if (VBlankON)
 				TriggerNMI();
 		}
@@ -1175,10 +1188,13 @@ int FCEUPPU_Loop(int skip) {
 			X6502_Run(16 - kook);
 			kook ^= 1;
 		}
+#ifndef TARGET_GNW
 		if (GameInfo->type == GIT_NSF)
 			X6502_Run((256 + 85) * normal_scanlines);
+		else
+#endif
 		#ifdef FRAMESKIP
-		else if (skip) {
+		if (skip) {
 			int y;
 
 			y = SPRAM[0];
@@ -1199,9 +1215,9 @@ int FCEUPPU_Loop(int skip) {
 				X6502_Run((256 + 85) * (240 - y));
 			} else
 				X6502_Run((256 + 85) * 240);
-		}
+		} else
 		#endif
-		else {
+		{
 			int x, max, maxref;
 
 			deemp = PPU[1] >> 5;

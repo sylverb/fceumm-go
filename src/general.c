@@ -36,22 +36,27 @@
 #include "fceu.h"
 
 #include "general.h"
-#include "state.h"
+#include "fceu-state.h"
 
 #include "driver.h"
 
 #include "md5.h"
 
+#ifndef TARGET_GNW
 static char BaseDirectory[2048] = {0};
+#endif
 
+#ifndef TARGET_GNW
 void FCEUI_SetBaseDirectory(const char *dir)
 {
 	strncpy(BaseDirectory, dir, 2047);
 	BaseDirectory[2047] = 0;
 }
+#endif
 
 char *FCEU_MakeFName(int type, int id1, char *cd1)
 {
+#ifndef TARGET_GNW
    char tmp[4096 + 512] = {0}; /* +512 for no reason :D */
    char *ret      = 0;
 
@@ -79,6 +84,9 @@ char *FCEU_MakeFName(int type, int id1, char *cd1)
    strcpy(ret, tmp);
 
    return(ret);
+#else
+   return 0;
+#endif
 }
 
 uint32 uppow2(uint32 n)

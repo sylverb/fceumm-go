@@ -29,7 +29,7 @@
 #include "fceu.h"
 #include "ppu.h"
 
-#include "cart.h"
+#include "fceu-cart.h"
 #include "fceu-memory.h"
 #include "x6502.h"
 
@@ -336,6 +336,7 @@ void SetupCartMirroring(int m, int hard, uint8 *extra) {
 	mirrorhard = hard;
 }
 
+#ifndef TARGET_GNW
 static uint8 *GENIEROM = 0;
 
 void FixGenieMap(void);
@@ -525,3 +526,4 @@ void FCEU_GeniePower(void) {
 	else
 		geniestage = 2;
 }
+#endif

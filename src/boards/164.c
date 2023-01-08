@@ -27,6 +27,9 @@
 
 #include "mapinc.h"
 #include "eeprom_93C66.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *WRAM;
 static uint32 WRAMSIZE;
@@ -125,7 +128,11 @@ void Mapper164_Init (CartInfo *info)
    AddExState(StateRegs, ~0, 0, 0);
 
    WRAMSIZE = info->iNES2? (info->PRGRamSize + (info->PRGRamSaveSize &~0x7FF)): 8192;
-   WRAM = (uint8*) FCEU_gmalloc(WRAMSIZE);
+#ifndef TARGET_GNW
+   WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+   WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
    SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
    AddExState(WRAM, WRAMSIZE, 0, "WRAM");
    FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);

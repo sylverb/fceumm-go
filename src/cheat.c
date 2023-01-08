@@ -28,7 +28,7 @@
 #include "cheat.h"
 #include "fceu.h"
 #include "general.h"
-#include "cart.h"
+#include "fceu-cart.h"
 #include "fceu-memory.h"
 
 static uint8 *CheatRPtrs[64];
@@ -170,7 +170,9 @@ void FCEU_LoadGameCheats(void)
 void FCEU_FlushGameCheats(void) {
 	if (CheatComp)
    {
+#ifndef TARGET_GNW
 		free(CheatComp);
+#endif
 		CheatComp = 0;
 	}
 	RebuildSubCheats();	/* Remove memory handlers. */
@@ -179,7 +181,9 @@ void FCEU_FlushGameCheats(void) {
 void FCEU_ResetCheats(void)
 {
 	if (CheatComp) {
+#ifndef TARGET_GNW
 		free(CheatComp);
+#endif
 		CheatComp = 0;
 	}
 
@@ -189,8 +193,10 @@ void FCEU_ResetCheats(void)
       for (;; ) {
          struct CHEATF *last = next;
          next = next->next;
+#ifndef TARGET_GNW
          free(last->name);
          free(last);
+#endif
          if (!next) break;
       }
       cheats = cheatsl = 0;

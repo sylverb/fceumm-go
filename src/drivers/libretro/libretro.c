@@ -22,7 +22,7 @@
 #include "../../input.h"
 #include "../../state.h"
 #include "../../ppu.h"
-#include "../../cart.h"
+#include "../../fceu-cart.h"
 #include "../../x6502.h"
 #include "../../git.h"
 #include "../../palette.h"

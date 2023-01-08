@@ -46,7 +46,10 @@
     YM2143 data sheet
 
 **************************************************************************************/
-#include "emu2413.h"
+#include "fceu-emu2413.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static const unsigned char default_inst[15][8] = {
 	/* 2019-03-19 VRC7 instrument patchset dumped by Nuke.YKT */
@@ -560,7 +563,11 @@ OPLL *OPLL_new(uint32 _clk, uint32 _rate) {
 
 	maketables(_clk, _rate);
 
+#ifndef TARGET_GNW
 	opll = (OPLL*)calloc(sizeof(OPLL), 1);
+#else
+	opll = (OPLL*)ahb_calloc(1, sizeof(OPLL), 1);
+#endif
 	if (opll == NULL)
 		return NULL;
 
@@ -573,7 +580,9 @@ OPLL *OPLL_new(uint32 _clk, uint32 _rate) {
 
 
 void OPLL_delete(OPLL * opll) {
+#ifndef TARGET_GNW
 	free(opll);
+#endif
 }
 
 /* Reset whole of OPLL except patch datas. */

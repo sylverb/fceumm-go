@@ -20,6 +20,9 @@
 
 #include "mapinc.h"
 #include "../fds_apu.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 latche, latcheinit, bus_conflict;
 static uint16 addrreg0, addrreg1;
@@ -70,7 +73,11 @@ static void Latch_Init(CartInfo *info, void (*proc)(void), uint8 init, uint16 ad
 	GameStateRestore = StateRestore;
 	if (wram) {
 		WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+		WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		if (info->battery) {
 			info->SaveGame[0] = WRAM;
@@ -113,7 +120,11 @@ void NROM_Init(CartInfo *info) {
 	info->Close = LatchClose;
 
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;

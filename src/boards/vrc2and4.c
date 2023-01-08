@@ -23,6 +23,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 isPirate, is22;
 static uint16 IRQCount;
@@ -70,9 +73,12 @@ static void Sync(void) {
 	}
 	setprg8(0xA000, prgreg[1] | big_bank);
 	setprg8(0xE000, (prgreg[3] & prgMask) | big_bank);
+#ifndef TARGET_GNW
 	if (UNIFchrrama)
 		setchr8(0);
-	else {
+	else
+#endif
+	{
 		uint8 i;
 		for (i = 0; i < 8; i++)
 			setchr1(i << 10, (chrhi[i] | chrreg[i]) >> is22);
@@ -88,9 +94,12 @@ static void Sync(void) {
 static DECLFW(VRC24Write) {
 	A &= 0xF003;
 	if ((A >= 0xB000) && (A <= 0xE003)) {
+#ifndef TARGET_GNW
 		if (UNIFchrrama)
 			big_bank = (V & 8) << 2;							/* my personally many-in-one feature ;) just for support pirate cart 2-in-1 */
-		else {
+		else
+#endif
+		{
 			uint16 i = ((A >> 1) & 1) | ((A - 0xB000) >> 11);
 			uint16 nibble = ((A & 1) << 2);
 			chrreg[i] = (chrreg[i] & (0xF0 >> nibble)) | ((V & 0xF) << nibble);
@@ -244,7 +253,11 @@ static void VRC24_Init(CartInfo *info, uint32 hasWRAM) {
 
 	if (hasWRAM) {
 		WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+		WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

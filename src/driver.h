@@ -1,7 +1,9 @@
 #ifndef _FCEU_DRIVER_H
 #define _FCEU_DRIVER_H
 
+//#ifndef TARGET_GNW
 #include <libretro.h>
+//#endif
 
 #ifdef  __cplusplus
 extern "C" {
@@ -9,7 +11,7 @@ extern "C" {
 
 #include "fceu-types.h"
 #include "git.h"
-#include "debug.h"
+#include "fceu-debug.h"
 
 #define FCEUNPCMD_RESET       0x01
 #define FCEUNPCMD_POWER       0x02
@@ -178,7 +180,9 @@ uint16 FCEUI_Disassemble(void *XA, uint16 a, char *stringo);
 void FCEUI_GetIVectors(uint16 *reset, uint16 *irq, uint16 *nmi);
 #endif
 
+#ifndef TARGET_GNW
 void FCEUI_SetLowPass(int q);
+#endif
 
 void FCEUI_NSFSetVis(int mode);
 int FCEUI_NSFChange(int amount);

@@ -28,29 +28,33 @@
 #include "fceu.h"
 #include "general.h"
 #include "fceu-memory.h"
-#include "crc32.h"
-#include "state.h"
+#include "fceu-state.h"
 #include "palette.h"
 #include "nsf.h"
 #include "input.h"
 #include "vsuni.h"
 
 uint8 *XBuf = NULL;
+#ifndef TARGET_GNW
 uint8 *XDBuf = NULL;
+#endif
 int show_crosshair = 0;
 
 void FCEU_KillVirtualVideo(void)
 {
+#ifndef TARGET_GNW
 	if (XBuf)
 		free(XBuf);
    XBuf = 0;
    if (XDBuf)
 		free(XDBuf);
    XDBuf = 0;
+#endif
 }
 
 int FCEU_InitVirtualVideo(void)
 {
+#ifndef TARGET_GNW
    /* 256 bytes per scanline, * 240 scanline maximum, +8 for alignment, */
    if (!XBuf)
       XBuf = (uint8*)(FCEU_malloc(256 * (256 + extrascanlines + 8)));
@@ -62,6 +66,7 @@ int FCEU_InitVirtualVideo(void)
 
    memset(XBuf, 128, 256 * (256 + extrascanlines + 8));
    memset(XDBuf, 128, 256 * (256 + extrascanlines + 8));
+#endif
    return 1;
 }
 
@@ -69,6 +74,7 @@ int FCEU_InitVirtualVideo(void)
 
 void FCEU_PutImage(void)
 {
+#ifndef TARGET_GNW
 	if (GameInfo->type == GIT_NSF)
 		DrawNSF(XBuf);
    else
@@ -78,6 +84,7 @@ void FCEU_PutImage(void)
 	}
 	if (show_crosshair)
 		FCEU_DrawInput(XBuf);
+#endif
 }
 
 void FCEU_PutImageDummy(void)

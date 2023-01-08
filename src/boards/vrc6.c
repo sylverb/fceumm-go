@@ -22,6 +22,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 is26;
 static uint8 prg[2], chr[8], mirr;
@@ -287,6 +290,7 @@ static INLINE void DoSQVHQ(int x) {
 	cvbc[x] = SOUNDTS;
 }
 
+#ifndef TARGET_GNW
 static void DoSQV1HQ(void) {
 	DoSQVHQ(0);
 }
@@ -315,6 +319,7 @@ static void DoSawVHQ(void) {
 	}
 	cvbc[2] = SOUNDTS;
 }
+#endif
 
 void VRC6Sound(int Count) {
 	int x;
@@ -326,6 +331,7 @@ void VRC6Sound(int Count) {
 		cvbc[x] = Count;
 }
 
+#ifndef TARGET_GNW
 void VRC6SoundHQ(void) {
 	DoSQV1HQ();
 	DoSQV2HQ();
@@ -336,23 +342,29 @@ void VRC6SyncHQ(int32 ts) {
 	int x;
 	for (x = 0; x < 3; x++) cvbc[x] = ts;
 }
+#endif
 
 static void VRC6_ESI(void) {
 	GameExpSound.RChange = VRC6_ESI;
 	GameExpSound.Fill = VRC6Sound;
+#ifndef TARGET_GNW
 	GameExpSound.HiFill = VRC6SoundHQ;
 	GameExpSound.HiSync = VRC6SyncHQ;
+#endif
 
 	phaseacc = 0;
 	memset(cvbc, 0, sizeof(cvbc));
 	memset(vcount, 0, sizeof(vcount));
 	memset(dcount, 0, sizeof(dcount));
 	if (FSettings.SndRate) {
+#ifndef TARGET_GNW
 		if (FSettings.soundq >= 1) {
 			sfun[0] = DoSQV1HQ;
 			sfun[1] = DoSQV2HQ;
 			sfun[2] = DoSawVHQ;
-		} else {
+		} else
+#endif
+		{
 			sfun[0] = DoSQV1;
 			sfun[1] = DoSQV2;
 			sfun[2] = DoSawV;
@@ -382,7 +394,11 @@ void Mapper26_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

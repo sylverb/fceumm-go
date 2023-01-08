@@ -23,6 +23,9 @@
 
 #include "mapinc.h"
 #include "../fds_apu.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 reg[8], cmd;
 static uint8 *WRAM = NULL;
@@ -104,7 +107,11 @@ void UNLKS7037_Init(CartInfo *info) {
 	WSync = SyncKS7037;
 
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
@@ -119,7 +126,11 @@ void LH10_Init(CartInfo *info) {
 	WSync = SyncLH10;
 
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

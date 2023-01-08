@@ -19,6 +19,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
@@ -115,7 +118,11 @@ void Mapper375_Init(CartInfo *info) {
 	AddExState(&datalatch, 1, 0, "DATA");
 
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

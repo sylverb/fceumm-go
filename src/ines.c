@@ -27,21 +27,28 @@
 #include "fceu-types.h"
 #include "x6502.h"
 #include "fceu.h"
-#include "cart.h"
+#include "fceu-cart.h"
 #include "ppu.h"
 
 #include "ines.h"
 #include "unif.h"
-#include "state.h"
+#include "fceu-state.h"
 #include "file.h"
 #include "general.h"
 #include "fceu-memory.h"
+#ifndef TARGET_GNW
+#include "fceu-crc32.h"
+#else
 #include "crc32.h"
+#include "gw_malloc.h"
+#endif
 #include "md5.h"
 #include "cheat.h"
 #include "vsuni.h"
 
+#ifndef TARGET_GNW
 extern SFORMAT FCEUVSUNI_STATEINFO[];
+#endif
 
 uint8 *trainerpoo       = NULL;
 uint8 *ROM              = NULL;
@@ -124,7 +131,7 @@ struct INPSEL {
 };
 
 static void SetInput(void) {
-	static struct INPSEL moo[] =
+	static struct INPSEL moo[] __attribute__((section(".extflash_emu_data"))) =
 	{
 		{0x19b0a9f1,	SI_GAMEPAD,		SI_ZAPPER,		SIFC_NONE		},	/* 6-in-1 (MGC-023)(Unl)[!] */
 		{0x29de87af,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Aerobics Studio */
@@ -210,6 +217,7 @@ static void SetInput(void) {
 	}
 }
 
+#ifndef TARGET_GNW
 #define INESB_INCOMPLETE  1
 #define INESB_CORRUPT     2
 #define INESB_HACKED      4
@@ -220,7 +228,7 @@ struct BADINF {
 	uint32 type;
 };
 
-static struct BADINF BadROMImages[] =
+static struct BADINF BadROMImages[] __attribute__((section(".extflash_emu_data"))) =
 {
 	#include "ines-bad.h"
 };
@@ -238,6 +246,7 @@ static void CheckBad(uint64 md5partial)
 		x++;
 	}
 }
+#endif
 
 struct CHINF {
 	uint32 crc32;
@@ -265,18 +274,22 @@ static void CheckHInfo(void)
 #define MULTI     2
 #define DENDY     3
 
-   static struct CHINF moo[] =
+   static struct CHINF moo[] __attribute__((section(".extflash_emu_data"))) =
    {
 #include "ines-correct.h"
    };
    int32 tofix = 0, x;
+#ifndef TARGET_GNW
    uint64 partialmd5 = 0;
+#endif
    int32 current_mapper = 0;
    int32 cur_mirr = 0;
 
+#ifndef TARGET_GNW
    for (x = 0; x < 8; x++)
       partialmd5 |= (uint64)iNESCart.MD5[15 - x] << (x * 8);
    CheckBad(partialmd5);
+#endif
 
    x = 0;
    do {
@@ -284,7 +297,9 @@ static void CheckHInfo(void)
          if (moo[x].mapper >= 0) {
             if (moo[x].extra >= 0 && moo[x].extra == 0x800 && VROM_size) {
                VROM_size = 0;
+#ifndef TARGET_GNW
                free(VROM);
+#endif
                VROM = NULL;
                tofix |= 8;
             }
@@ -331,17 +346,25 @@ static void CheckHInfo(void)
          }
 
          if (moo[x].prgram >= 0) {
+			printf("1 %d\n",iNESCart.PRGRamSize);
+			printf("1 %d\n",iNESCart.PRGRamSaveSize);
             tofix |= 32;
             iNESCart.iNES2 = 1;
             iNESCart.PRGRamSize = (moo[x].prgram & 0x0F) ? (64 << ((moo[x].prgram >> 0) & 0xF)) : 0;
             iNESCart.PRGRamSaveSize = (moo[x].prgram & 0xF0) ? (64 << ((moo[x].prgram >> 4) & 0xF)) : 0;
+			printf("11 %d\n",iNESCart.PRGRamSize);
+			printf("11 %d\n",iNESCart.PRGRamSaveSize);
          }
 
          if (moo[x].chrram >= 0) {
+			printf("2 CHRRamSize %d\n",iNESCart.CHRRamSize);
+			printf("2 CHRRamSaveSize %d\n",iNESCart.CHRRamSaveSize);
             tofix |= 32;
             iNESCart.iNES2 = 1;
             iNESCart.CHRRamSize = (moo[x].chrram & 0x0F) ? (64 << ((moo[x].chrram >> 0) & 0xF)) : 0;
             iNESCart.CHRRamSaveSize = (moo[x].chrram & 0xF0) ? (64 << ((moo[x].chrram >> 4) & 0xF)) : 0;
+			printf("22 CHRRamSize %d\n",iNESCart.CHRRamSize);
+			printf("22 CHRRamSaveSize %d\n",iNESCart.CHRRamSaveSize);
          }
 
          break;
@@ -367,7 +390,7 @@ static void CheckHInfo(void)
       strcpy(gigastr, " The iNES header contains incorrect information.  For now, the information will be corrected in RAM. ");
       gigastr_len = strlen(gigastr);
       if (tofix & 1)
-         sprintf(gigastr + gigastr_len, "Current mapper # is %d. The mapper number should be set to %d. ", current_mapper, iNESCart.mapper);
+         sprintf(gigastr + gigastr_len, "Current mapper # is %ld. The mapper number should be set to %d. ", current_mapper, iNESCart.mapper);
       if (tofix & 2) {
          uint8 *mstr[3] = { (uint8_t*)"Horizontal", (uint8_t*)"Vertical", (uint8_t*)"Four-screen" };
          sprintf(gigastr + gigastr_len, "Current mirroring is %s. Mirroring should be set to \"%s\". ", mstr[cur_mirr & 3], mstr[iNESCart.mirror & 3]);
@@ -424,7 +447,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "NROM",                       0, NROM_Init              )
 	INES_BOARD( "MMC1",                       1, Mapper1_Init           )
 	INES_BOARD( "UNROM",                      2, UNROM_Init             )
-	INES_BOARD( "CNROM",                      3, CNROM_Init             )
+	INES_BOARD( "CNROM",                      3, CNROM_Init             ) // Sylver : corrupted GFX
 	INES_BOARD( "MMC3",                       4, Mapper4_Init           )
 	INES_BOARD( "MMC5",                       5, Mapper5_Init           )
 	INES_BOARD( "FFE Rev. A",                 6, Mapper6_Init           )
@@ -432,7 +455,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                           8, Mapper8_Init           ) /* no games, it's worthless */
 	INES_BOARD( "MMC2",                       9, Mapper9_Init           )
 	INES_BOARD( "MMC4",                      10, Mapper10_Init          )
-	INES_BOARD( "Color Dreams",              11, Mapper11_Init          )
+	INES_BOARD( "Color Dreams",              11, Mapper11_Init          ) // Sylver : corrupted GFX
 	INES_BOARD( "REX DBZ 5",                 12, Mapper12_Init          )
 	INES_BOARD( "CPROM",                     13, CPROM_Init             )
 	INES_BOARD( "REX SL-1632",               14, UNLSL1632_Init         )
@@ -446,17 +469,18 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "Konami VRC2/VRC4 B",        22, Mapper22_Init          )
 	INES_BOARD( "Konami VRC2/VRC4 C",        23, Mapper23_Init          )
 	INES_BOARD( "Konami VRC6 Rev. A",        24, Mapper24_Init          )
+#ifndef TARGET_GNW
 	INES_BOARD( "Konami VRC2/VRC4 D",        25, Mapper25_Init          )
 	INES_BOARD( "Konami VRC6 Rev. B",        26, Mapper26_Init          )
 	INES_BOARD( "CC-21 MI HUN CHE",          27, UNLCC21_Init           ) /* Former dupe for VRC2/VRC4 mapper, redefined with crc to mihunche boards */
 	INES_BOARD( "Action 53",                 28, Mapper28_Init          )
 	INES_BOARD( "",                          29, Mapper29_Init          )
-	INES_BOARD( "UNROM 512",                 30, UNROM512_Init          )
+	INES_BOARD( "UNROM 512",                 30, UNROM512_Init          ) // Sylver : using too much ram for the G&W
 	INES_BOARD( "infineteNesLives-NSF",      31, Mapper31_Init          )
 	INES_BOARD( "IREM G-101",                32, Mapper32_Init          )
 	INES_BOARD( "TC0190FMC/TC0350FMR",       33, Mapper33_Init          )
 	INES_BOARD( "IREM I-IM/BNROM",           34, Mapper34_Init          )
-	INES_BOARD( "EL870914C",                 35, Mapper35_Init          )
+	INES_BOARD( "EL870914C",                 35, Mapper35_Init          ) // Sylver : using too much ram for the G&W
 	INES_BOARD( "TXC Policeman",             36, Mapper36_Init          )
 	INES_BOARD( "PAL-ZZ SMB/TETRIS/NWC",     37, Mapper37_Init          )
 	INES_BOARD( "Bit Corp.",                 38, Mapper38_Init          ) /* Crime Busters */
@@ -532,15 +556,19 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "FDS UNROM BOARD",          108, Mapper108_Init         )
 /*    INES_BOARD( "",                            109, Mapper109_Init ) */
 /*    INES_BOARD( "",                            110, Mapper110_Init ) */
+#ifndef TARGET_GNW // Can't fit in the G&W due to 512kB of ram requested
 	INES_BOARD( "Cheapocabra",              111, Mapper111_Init         )
+#endif
 	INES_BOARD( "ASDER/NTDEC BOARD",        112, Mapper112_Init         )
 	INES_BOARD( "HACKER/SACHEN BOARD",      113, Mapper113_Init         )
 	INES_BOARD( "MMC3 SG PROT. A",          114, Mapper114_Init         )
 	INES_BOARD( "MMC3 PIRATE A",            115, Mapper115_Init         )
 	INES_BOARD( "MMC1/MMC3/VRC PIRATE",     116, UNLSL12_Init           )
 	INES_BOARD( "FUTURE MEDIA BOARD",       117, Mapper117_Init         )
+#endif
 	INES_BOARD( "TSKROM",                   118, TKSROM_Init            )
 	INES_BOARD( "NES-TQROM",                119, Mapper119_Init         )
+#ifndef TARGET_GNW
 	INES_BOARD( "FDS TOBIDASE",             120, Mapper120_Init         )
 	INES_BOARD( "MMC3 PIRATE PROT. A",      121, Mapper121_Init         )
 /*    INES_BOARD( "",                            122, Mapper122_Init ) */
@@ -581,7 +609,9 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "BANDAI BARCODE",           157, Mapper157_Init         )
 	INES_BOARD( "TENGEN 800037",            158, Mapper158_Init         )
 	INES_BOARD( "BANDAI 24C01",             159, Mapper159_Init         ) /* Different type of EEPROM on the  bandai board */
-	INES_BOARD( "SA009",                    160, SA009_Init             )
+#endif
+	INES_BOARD( "SA009",                    160, SA009_Init             ) // Sylver : not working
+#ifndef TARGET_GNW
 /*    INES_BOARD( "",                            161, Mapper161_Init ) */
 	INES_BOARD( "Waixing FS304",            162, Mapper162_Init         )
 	INES_BOARD( "",                         163, Mapper163_Init         )
@@ -856,6 +886,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "KS-7010",                  554, Mapper554_Init         )
 	INES_BOARD( "",                         550, Mapper550_Init         )
 	INES_BOARD( "YC-03-09",                 558, Mapper558_Init         )
+#endif
 INES_BOARD_END()
 
 static uint32 iNES_get_mapper_id(void)
@@ -899,6 +930,174 @@ static void iNES_read_header_info(void) {
    }
 }
 
+#ifdef TARGET_GNW
+int iNESLoad(const char *name, const uint8_t *rom, uint32_t rom_size)
+{
+   uint64 filesize         = rom_size; /* size of file including header */
+   uint64 romSize          = 0;                 /* size of PRG + CHR rom */
+   /* used for malloc and cart mapping */
+   uint32 offset = 0;
+   uint32 rom_size_pow2    = 0;
+   uint32 vrom_size_pow2   = 0;
+
+   memcpy(&head, rom, 16);
+   offset+=16;
+
+   if (memcmp(&head, "NES\x1a", 4))
+   {
+      FCEU_PrintError("Not an iNES file!\n");
+      return 0;
+   }
+
+   memset(&iNESCart, 0, sizeof(iNESCart));
+
+   if (!memcmp((char*)(&head) + 0x7, "DiskDude", 8))
+      memset((char*)(&head) + 0x7, 0, 0x9);
+
+   if (!memcmp((char*)(&head) + 0x7, "demiforce", 9))
+      memset((char*)(&head) + 0x7, 0, 0x9);
+
+   if (!memcmp((char*)(&head) + 0xA, "Ni03", 4))
+   {
+      if (!memcmp((char*)(&head) + 0x7, "Dis", 3))
+         memset((char*)(&head) + 0x7, 0, 0x9);
+      else
+         memset((char*)(&head) + 0xA, 0, 0x6);
+   }
+
+   iNES_read_header_info();
+
+   if (!ROM_size)
+      ROM_size = 256;
+
+   filesize -= 16; /* remove header size from total size */
+
+   /* Trainer */
+   if (head.ROM_type & 4)
+   {
+      trainerpoo = (uint8*)FCEU_gmalloc(512);
+      memcpy(trainerpoo, rom+16, 512);
+      offset+=512;
+
+      filesize -= 512;
+   }
+
+   iNESCart.PRGRomSize = ROM_size >=0xF00? (pow(2, head.ROM_size >>2)*((head.ROM_size &3)*2+1)): (ROM_size*0x4000);
+   iNESCart.CHRRomSize =VROM_size >=0xF00? (pow(2, head.VROM_size>>2)*((head.VROM_size&3)*2+1)): (VROM_size*0x2000);;
+
+   romSize = iNESCart.PRGRomSize + iNESCart.CHRRomSize;
+
+   if (romSize > filesize)
+   {
+      FCEU_PrintError(" File length is too short to contain all data reported from header by %llu\n", romSize -  filesize);
+   }
+   else if (romSize < filesize)
+      FCEU_PrintError(" File contains %llu bytes of unused data\n", filesize - romSize);
+
+   rom_size_pow2 = uppow2(iNESCart.PRGRomSize);
+
+   ROM = (uint8 *)(rom + offset);
+   offset+=iNESCart.PRGRomSize;
+
+   if (iNESCart.CHRRomSize)
+   {
+	  VROM = (uint8 *)(rom + offset);
+	  offset+=iNESCart.CHRRomSize;
+   }
+
+   iNESCart.PRGCRC32   = crc32_le(0, ROM, iNESCart.PRGRomSize);
+   iNESCart.CHRCRC32   = crc32_le(0, VROM, iNESCart.CHRRomSize);
+   iNESCart.CRC32      = crc32_le(iNESCart.PRGCRC32, VROM, iNESCart.CHRRomSize);
+
+   if (iNESCart.iNES2 == 0) {
+      if (strstr(name, "(E)") || strstr(name, "(e)") ||
+            strstr(name, "(Europe)") || strstr(name, "(PAL)") ||
+            strstr(name, "(F)") || strstr(name, "(f)") ||
+            strstr(name, "(G)") || strstr(name, "(g)") ||
+            strstr(name, "(I)") || strstr(name, "(i)") ||
+            strstr(name, "(S)") || strstr(name, "(s)") ||
+            strstr(name, "(France)") || strstr(name, "(Germany)") ||
+            strstr(name, "(Italy)") || strstr(name, "(Spain)") ||
+            strstr(name, "(Sweden)") || strstr(name, "(Sw)") ||
+            strstr(name, "(Australia)") || strstr(name, "(A)") ||
+            strstr(name, "(a)")) {
+         iNESCart.region = 1;
+      }
+   }
+
+   ResetCartMapping();
+   ResetExState(0, 0);
+
+   SetupCartPRGMapping(0, ROM, rom_size_pow2, 0);
+
+   SetInput();
+   
+   if (iNESCart.iNES2 < 1)
+      CheckHInfo();
+
+/*   {
+      int x;
+      int mapper    = iNESCart.mapper;
+      int mirroring = iNESCart.mirror;
+
+      for (x = 0; x < 8; x++)
+         partialmd5 |= (uint64)iNESCart.MD5[7 - x] << (x * 8);
+
+      FCEU_VSUniCheck(partialmd5, &mapper, &mirroring);
+
+      if ((mapper != iNESCart.mapper) || (mirroring != iNESCart.mirror))
+      {
+         FCEU_PrintError("\n");
+         FCEU_PrintError(" Incorrect VS-Unisystem header information!\n");
+         if (mapper != iNESCart.mapper)
+            FCEU_PrintError(" Mapper:    %d\n", mapper);
+         if (mirroring != iNESCart.mirror)
+            FCEU_PrintError(" Mirroring: %s\n",
+                  (mirroring == 2) ? "None (Four-screen)" : mirroring ? "Vertical" : "Horizontal");
+         iNESCart.mapper = mapper;
+         iNESCart.mirror = mirroring;
+      }
+   }*/
+
+   /* Must remain here because above functions might change value of
+    * VROM_size and free(VROM).
+    */
+   if (VROM_size)
+      SetupCartCHRMapping(0, VROM, vrom_size_pow2, 0);
+
+   if (iNESCart.mirror == 2)
+   {
+      ExtraNTARAM = (uint8*)FCEU_gmalloc(2048);
+      SetupCartMirroring(4, 1, ExtraNTARAM);
+   }
+   else if (iNESCart.mirror >= 0x10)
+      SetupCartMirroring(2 + (iNESCart.mirror & 1), 1, 0);
+   else
+      SetupCartMirroring(iNESCart.mirror & 1, (iNESCart.mirror & 4) >> 2, 0);
+
+   iNESCart.battery = (head.ROM_type & 2) ? 1 : 0;
+
+   if (!iNES_Init(iNESCart.mapper))
+   {
+      FCEU_printf("\n");
+      FCEU_PrintError(" iNES mapper #%d is not supported at all.\n",
+            iNESCart.mapper);
+      return 0;
+   }
+
+   GameInterface = iNESGI;
+
+   /* 0: RP2C02 ("NTSC NES")
+    * 1: RP2C07 ("Licensed PAL NES")
+    * 2: Multiple-region
+    * 3: UMC 6527P ("Dendy") */
+   if (iNESCart.region == 3)
+      dendy = 1;
+   FCEUI_SetVidSystem((iNESCart.region == 1) ? 1 : 0);
+
+   return 1;
+}
+#else
 int iNESLoad(const char *name, FCEUFILE *fp)
 {
    const char *tv_region[] = { "NTSC", "PAL", "Multi-region", "Dendy" };
@@ -1138,18 +1337,23 @@ int iNESLoad(const char *name, FCEUFILE *fp)
 
    return 1;
 }
+#endif
 
 static int iNES_Init(int num) {
 	BMAPPINGLocal *tmp = bmap;
 
 	CHRRAMSize = -1;
 
+#ifndef TARGET_GNW
 	if (GameInfo->type == GIT_VSUNI)
 		AddExState(FCEUVSUNI_STATEINFO, ~0, 0, 0);
+#endif
 
 	while (tmp->init) {
 		if (num == tmp->number) {
+#ifndef TARGET_GNW
 			UNIFchrrama = 0;	/* need here for compatibility with UNIF mapper code */
+#endif
 			if (!VROM_size) {
 				if (iNESCart.iNES2) {
 					CHRRAMSize = iNESCart.CHRRamSize + iNESCart.CHRRamSaveSize;
@@ -1171,9 +1375,15 @@ static int iNES_Init(int num) {
 					iNESCart.CHRRamSize = CHRRAMSize;
 				}
 				if (CHRRAMSize > 0) { /* TODO: CHR-RAM are sometimes handled in mappers e.g. MMC1 using submapper 1/2/4 and CHR-RAM can be zero here */
+#ifndef TARGET_GNW
 					if ((VROM = (uint8*)malloc(CHRRAMSize)) == NULL) return 0;
+#else
+					if ((VROM = (uint8*)ahb_malloc(CHRRAMSize)) == NULL) return 0;
+#endif
 					FCEU_MemoryRand(VROM, CHRRAMSize);
+#ifndef TARGET_GNW
 					UNIFchrrama = VROM;
+#endif
 					SetupCartCHRMapping(0, VROM, CHRRAMSize, 1);
 					AddExState(VROM, CHRRAMSize, 0, "CHRR");
 					/* FCEU_printf(" CHR-RAM:  %3d KiB\n", CHRRAMSize / 1024); */
@@ -1186,6 +1396,8 @@ static int iNES_Init(int num) {
 					AddExState(ExtraNTARAM, 2048, 0, "EXNR");
 				}
 			}
+		   FCEU_printf("init found mapper %ld\n",tmp->number);
+
 			tmp->init(&iNESCart);
 			return 1;
 		}

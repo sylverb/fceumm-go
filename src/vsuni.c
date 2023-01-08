@@ -25,7 +25,7 @@
 #include "fceu.h"
 #include "input.h"
 #include "vsuni.h"
-#include "state.h"
+#include "fceu-state.h"
 
 #define IOPTION_GUN         0x01
 #define IOPTION_SWAPDIRAB   0x02

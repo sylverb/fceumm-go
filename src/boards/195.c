@@ -19,6 +19,9 @@
  */
 #include "mapinc.h"
 #include "mmc3.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 writefunc writePPU;
 static uint8 *CHRRAM;
@@ -89,7 +92,11 @@ void Mapper195_Init(CartInfo *info) {
 	info->Reset = MMC3RegReset;
 	info->Close = Mapper195_Close;
 	CHRRAMSIZE =4096;
+#ifndef TARGET_GNW
 	CHRRAM =(uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM =(uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 	AddExState(&mask, 1, 0, "EXP0");

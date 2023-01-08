@@ -25,6 +25,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 preg[4], creg[8];
 static uint32 IRQCount;
@@ -108,7 +111,11 @@ void UNLBJ56_Init(CartInfo *info) {
 	MapIRQHook = UNLBJ56IRQHook;
 	GameStateRestore = StateRestore;
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;

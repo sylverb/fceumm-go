@@ -19,10 +19,17 @@
  */
 
 #include "mapinc.h"
-#include "emu2413.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#else
+// TODO : Fix OPLL support, for now emu2413 is using too much ram for the G&W
+#include "fceu-emu2413.h"
+#endif
 
 static int32 dwave = 0;
+#ifndef TARGET_GNW
 static OPLL *VRC7Sound = NULL;
+#endif
 static uint8 vrc7idx, preg[3], creg[8], mirr;
 static uint8 IRQLatch, IRQa, IRQd;
 static int32 IRQCount, CycleCount;
@@ -45,10 +52,13 @@ static SFORMAT StateRegs[] =
 
 /* VRC7 Sound */
 
+#ifndef TARGET_GNW
 void DoVRC7Sound(void) {
 	int32 z, a;
+#ifndef TARGET_GNW
 	if (FSettings.soundq >= 1)
 		return;
+#endif
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
 	a = z - dwave;
 	OPLL_fillbuf(VRC7Sound, &Wave[dwave], a, 1);
@@ -86,6 +96,7 @@ static void VRC7_ESI(void) {
 	OPLL_reset(VRC7Sound);
 	OPLL_reset(VRC7Sound);
 }
+#endif
 
 /* VRC7 Sound */
 
@@ -106,6 +117,7 @@ static void Sync(void) {
 	}
 }
 
+#ifndef TARGET_GNW
 static DECLFW(VRC7SW) {
 	if (FSettings.SndRate) {
 		OPLL_writeReg(VRC7Sound, vrc7idx, V);
@@ -113,6 +125,7 @@ static DECLFW(VRC7SW) {
 		GameExpSound.NeoFill = UpdateOPLNEO;
 	}
 }
+#endif
 
 static DECLFW(VRC7Write) {
 	A |= (A & 8) << 1;	/* another two-in-oooone */
@@ -120,8 +133,10 @@ static DECLFW(VRC7Write) {
 		A &= 0xF010;
 		creg[((A >> 4) & 1) | ((A - 0xA000) >> 11)] = V;
 		Sync();
+#ifndef TARGET_GNW
 	} else if (A == 0x9030) {
 		VRC7SW(A, V);
+#endif
 	} else switch (A & 0xF010) {
 		case 0x8000: preg[0] = V; Sync(); break;
 		case 0x8010: preg[1] = V; Sync(); break;
@@ -175,8 +190,10 @@ static void VRC7IRQHook(int a) {
 static void StateRestore(int version) {
 	Sync();
 
+#ifndef TARGET_GNW
 #ifndef GEKKO
 	OPLL_forceRefresh(VRC7Sound);
+#endif
 #endif
 }
 
@@ -185,7 +202,11 @@ void Mapper85_Init(CartInfo *info) {
 	info->Close = VRC7Close;
 	MapIRQHook = VRC7IRQHook;
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {
@@ -193,10 +214,13 @@ void Mapper85_Init(CartInfo *info) {
 		info->SaveGameLen[0] = WRAMSIZE;
 	}
 	GameStateRestore = StateRestore;
+#ifndef TARGET_GNW
 	VRC7_ESI();
+#endif
 	AddExState(&StateRegs, ~0, 0, 0);
 
 /* Ignoring these sound state files for Wii since it causes states unable to load */
+#ifndef TARGET_GNW
 #ifndef GEKKO
 	/* Sound states */
 	AddExState(&VRC7Sound->adr, sizeof(VRC7Sound->adr), 0, "ADDR");
@@ -220,10 +244,13 @@ void Mapper85_Init(CartInfo *info) {
 	AddExState(&VRC7Sound->mask, sizeof(VRC7Sound->mask), 0, "MASK");
 	AddExState((uint8 *)VRC7Sound->slot, sizeof(VRC7Sound->slot), 0, "SLOT");
 #endif
+#endif
 }
 
 void NSFVRC7_Init(void) {
 	SetWriteHandler(0x9010, 0x901F, VRC7Write);
 	SetWriteHandler(0x9030, 0x903F, VRC7Write);
+#ifndef TARGET_GNW
 	VRC7_ESI();
+#endif
 }

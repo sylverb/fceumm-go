@@ -20,6 +20,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 cmdreg, preg[4], creg[8], mirr;
 static uint8 IRQa;
@@ -100,9 +103,13 @@ static DECLFW(M69Write1) {
 /* SUNSOFT-5/FME-7 Sound */
 
 static void AYSound(int Count);
+#ifndef TARGET_GNW
 static void AYSoundHQ(void);
+#endif
 static void DoAYSQ(int x);
+#ifndef TARGET_GNW
 static void DoAYSQHQ(int x);
+#endif
 
 static uint8 sndcmd, sreg[14];
 static int32 vcount[3];
@@ -136,7 +143,9 @@ static DECLFW(M69SWrite0) {
 
 static DECLFW(M69SWrite1) {
 	GameExpSound.Fill = AYSound;
+#ifndef TARGET_GNW
 	GameExpSound.HiFill = AYSoundHQ;
+#endif
 	switch (sndcmd) {
 	case 0:
 	case 1:
@@ -180,6 +189,7 @@ static void DoAYSQ(int x) {
 		}
 }
 
+#ifndef TARGET_GNW
 static void DoAYSQHQ(int x) {
 	uint32 V;
 	int32 freq = ((sreg[x << 1] | ((sreg[(x << 1) + 1] & 15) << 8)) + 1) << 4;
@@ -200,6 +210,7 @@ static void DoAYSQHQ(int x) {
 	}
 	CAYBC[x] = SOUNDTS;
 }
+#endif
 
 static void DoAYSQ1(void) {
 	DoAYSQ(0);
@@ -213,6 +224,7 @@ static void DoAYSQ3(void) {
 	DoAYSQ(2);
 }
 
+#ifndef TARGET_GNW
 static void DoAYSQ1HQ(void) {
 	DoAYSQHQ(0);
 }
@@ -224,6 +236,7 @@ static void DoAYSQ2HQ(void) {
 static void DoAYSQ3HQ(void) {
 	DoAYSQHQ(2);
 }
+#endif
 
 static void AYSound(int Count) {
 	int x;
@@ -234,6 +247,7 @@ static void AYSound(int Count) {
 		CAYBC[x] = Count;
 }
 
+#ifndef TARGET_GNW
 static void AYSoundHQ(void) {
 	DoAYSQ1HQ();
 	DoAYSQ2HQ();
@@ -246,19 +260,25 @@ static void AYHiSync(int32 ts) {
 	for (x = 0; x < 3; x++)
 		CAYBC[x] = ts;
 }
+#endif
 
 void Mapper69_ESI(void) {
 	GameExpSound.RChange = Mapper69_ESI;
+#ifndef TARGET_GNW
 	GameExpSound.HiSync = AYHiSync;
+#endif
 	memset(dcount, 0, sizeof(dcount));
 	memset(vcount, 0, sizeof(vcount));
 	memset(CAYBC, 0, sizeof(CAYBC));
 	if (FSettings.SndRate) {
+#ifndef TARGET_GNW
 		if (FSettings.soundq >= 1) {
 			sfun[0] = DoAYSQ1HQ;
 			sfun[1] = DoAYSQ2HQ;
 			sfun[2] = DoAYSQ3HQ;
-		} else {
+		} else
+#endif
+		{
 			sfun[0] = DoAYSQ1;
 			sfun[1] = DoAYSQ2;
 			sfun[2] = DoAYSQ3;
@@ -308,7 +328,11 @@ void Mapper69_Init(CartInfo *info) {
 	info->Close = M69Close;
 	MapIRQHook = M69IRQHook;
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

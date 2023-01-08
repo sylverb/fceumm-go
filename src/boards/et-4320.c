@@ -40,6 +40,9 @@ Example Game:
 
 #include "mapinc.h"
 #include "mmc3.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *CHRRAM;
 static uint32 CHRRAMSize;
@@ -107,7 +110,11 @@ static void TKSPPU(uint32 A) {
 void BMC810131C_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 8, 0);
 	CHRRAMSize = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
+#ifndef TARGET_GNW
+	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
 	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
 	pwrap = BMC810131C_PW;

@@ -22,6 +22,9 @@
 /* DS-9-27. Absolutely insane PCB that overlays 8 KiB of WRAM into a selectable position between $8000 and $E000. */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *WRAM;
 static uint32 WRAMSIZE;
@@ -129,7 +132,11 @@ void Mapper452_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE =8192;
+#ifndef TARGET_GNW
 	WRAM =(uint8*) FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM =(uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	AddExState(&latch, 4, 0, "LATC");

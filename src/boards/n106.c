@@ -45,8 +45,10 @@ static uint8 gorko;
 static void NamcoSound(int Count);
 static void NamcoSoundHack(void);
 static void DoNamcoSound(int32 *Wave, int Count);
+#ifndef TARGET_GNW
 static void DoNamcoSoundHQ(void);
 static void SyncHQ(int32 ts);
+#endif
 
 static int is210;	/* Lesser mapper. */
 
@@ -175,8 +177,10 @@ static DECLFW(Mapper19_write) {
 				if (FSettings.SndRate) {
 					NamcoSoundHack();
 					GameExpSound.Fill = NamcoSound;
+#ifndef TARGET_GNW
 					GameExpSound.HiFill = DoNamcoSoundHQ;
 					GameExpSound.HiSync = SyncHQ;
+#endif
 				}
 				FixCache(dopol, V);
 			}
@@ -219,10 +223,12 @@ static int dwave = 0;
 
 static void NamcoSoundHack(void) {
 	int32 z, a;
+#ifndef TARGET_GNW
 	if (FSettings.soundq >= 1) {
 		DoNamcoSoundHQ();
 		return;
 	}
+#endif
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
 	a = z - dwave;
 	if (a) DoNamcoSound(&Wave[dwave], a);
@@ -266,10 +272,11 @@ static SFORMAT N106_SStateRegs[] =
 };
 
 /* 16:15 */
+#ifndef TARGET_GNW
 static void SyncHQ(int32 ts) {
 	CVBC = ts;
 }
-
+#endif
 
 /* Things to do:
 	1        Read freq low
@@ -289,6 +296,7 @@ static INLINE uint32 FetchDuff(uint32 P, uint32 envelope) {
 	return(duff);
 }
 
+#ifndef TARGET_GNW
 static void DoNamcoSoundHQ(void) {
 	int32 P, V;
 	int32 cyclesuck = (((IRAM[0x7F] >> 4) & 7) + 1) * 15;
@@ -320,7 +328,7 @@ static void DoNamcoSoundHQ(void) {
 	}
 	CVBC = SOUNDTS;
 }
-
+#endif
 
 static void DoNamcoSound(int32 *Wave, int Count) {
 	int P, V;

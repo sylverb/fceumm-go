@@ -20,6 +20,9 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *CHRRAM;
 static uint8 tekker;
@@ -73,7 +76,11 @@ void UNLSHeroes_Init(CartInfo *info) {
 	info->Power = MSHPower;
 	info->Reset = MSHReset;
 	info->Close = MSHClose;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(8192);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, 8192);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);
 	AddExState(EXPREGS, 4, 0, "EXPR");
 	AddExState(&tekker, 1, 0, "DIPSW");

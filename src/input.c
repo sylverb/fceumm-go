@@ -27,7 +27,7 @@
 #include "x6502.h"
 
 #include "fceu.h"
-#include "state.h"
+#include "fceu-state.h"
 
 #include "input.h"
 #include "vsuni.h"
@@ -135,6 +135,7 @@ uint8 FCEU_GetJoyJoy(void) {
 }
 
 /* 4-player support for famicom expansion */
+#ifndef TARGET_GNW
 static uint8 F4ReadBit[2];
 
 static void StrobeFami4(void) {
@@ -163,6 +164,7 @@ static uint8 FP_FASTAPASS(1) ReadGPVS(int w) {
 	}
 	return ret;
 }
+#endif
 
 /* standard gamepad inputs */
 static uint8 FP_FASTAPASS(1) ReadGP(int w) {
@@ -202,8 +204,10 @@ static void FP_FASTAPASS(1) StrobeGP(int w) {
 }
 
 static INPUTC GPC = { ReadGP, 0, StrobeGP, UpdateGP, 0, 0 };
+#ifndef TARGET_GNW
 static INPUTC GPCVS = { ReadGPVS, 0, StrobeGP, UpdateGP, 0, 0 };
 static INPUTCFC FAMI4C = { ReadFami4, 0, StrobeFami4, 0, 0, 0 };
+#endif
 
 /**********************************************************************/
 
@@ -220,13 +224,16 @@ void FCEU_UpdateInput(void)
    if (FCExp && FCExp->Update)
       FCExp->Update(InputDataPtrFC, JPAttribFC);
 
+#ifndef TARGET_GNW
    if (GameInfo && GameInfo->type == GIT_VSUNI)
       if (coinon) coinon--;
 
    if (GameInfo->type == GIT_VSUNI)
       FCEU_VSUniSwap(&joy[0], &joy[1]);
+#endif
 }
 
+#ifndef TARGET_GNW
 static DECLFR(VSUNIRead0)
 {
    uint8 ret = 0;
@@ -249,6 +256,7 @@ static DECLFR(VSUNIRead1)
 	ret |= vsdip & 0xFC;
 	return ret;
 }
+#endif
 
 static void SLHLHook(uint8 *bg, uint8 *spr, uint32 linets, int final)
 {
@@ -281,11 +289,14 @@ static void FASTAPASS(1) SetInputStuff(int x)
          JPorts[x] = &DummyJPort;
          break;
       case SI_GAMEPAD:
+#ifndef TARGET_GNW
          if (GameInfo->type == GIT_VSUNI)
             JPorts[x] = &GPCVS;
          else
+#endif
             JPorts[x] = &GPC;
          break;
+#ifndef TARGET_GNW
       case SI_ARKANOID:
          JPorts[x] = FCEU_InitArkanoid(x);
          break;
@@ -301,6 +312,7 @@ static void FASTAPASS(1) SetInputStuff(int x)
       case SI_POWERPADB:
          JPorts[x] = FCEU_InitPowerpadB(x);
          break;
+#endif
    }
 	CheckSLHook();
 }
@@ -312,6 +324,7 @@ static void SetInputStuffFC(void)
       case SIFC_NONE:
          FCExp = 0;
          break;
+#ifndef TARGET_GNW
       case SIFC_ARKANOID:
          FCExp = FCEU_InitArkanoidFC();
          break;
@@ -355,6 +368,7 @@ static void SetInputStuffFC(void)
       case SIFC_TOPRIDER:
          FCExp = FCEU_InitTopRider();
          break;
+#endif
    }
 	CheckSLHook();
 }
@@ -365,12 +379,14 @@ void InitializeInput(void)
    memset(joy,0,sizeof(joy));
    LastStrobe = 0;
 
+#ifndef TARGET_GNW
    if (GameInfo && GameInfo->type == GIT_VSUNI)
    {
       SetReadHandler(0x4016, 0x4016, VSUNIRead0);
       SetReadHandler(0x4017, 0x4017, VSUNIRead1);
    }
    else
+#endif
       SetReadHandler(0x4016, 0x4017, JPRead);
 
    SetWriteHandler(0x4016, 0x4016, B4016);

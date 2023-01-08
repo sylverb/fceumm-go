@@ -22,6 +22,9 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 void 	(*sync)(void);
 static uint8	allowExtendedMirroring;
@@ -455,7 +458,11 @@ void JYASIC_init (CartInfo *info)
 
    if (WRAMSIZE)
    {
+#ifndef TARGET_GNW
       WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+      WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
       SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
       FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
    }

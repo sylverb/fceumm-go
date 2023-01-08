@@ -21,6 +21,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 SWRAM[3072];
 static uint8 *WRAM = NULL;
@@ -88,7 +91,11 @@ void Mapper186_Init(CartInfo *info) {
 	info->Power = M186Power;
 	info->Close = M186Close;
 	GameStateRestore = M186Restore;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(32768);
+#else
+	WRAM = (uint8*)ahb_calloc(1, 32768);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, 32768, 1);
 	AddExState(WRAM, 32768, 0, "WRAM");
 	AddExState(StateRegs, ~0, 0, 0);

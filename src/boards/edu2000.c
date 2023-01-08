@@ -20,6 +20,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *WRAM = NULL;
 static uint8 reg;
@@ -67,7 +70,11 @@ void UNLEDU2000_Init(CartInfo *info) {
 	info->Power = UNLEDU2000Power;
 	info->Close = UNLEDU2000Close;
 	GameStateRestore = UNLEDU2000Restore;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(32768);
+#else
+	WRAM = (uint8*)ahb_calloc(1, 32768);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, 32768, 1);
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;

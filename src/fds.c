@@ -30,13 +30,16 @@
 #include "fceu.h"
 #include "fds.h"
 #include "fds_apu.h"
-#include "sound.h"
+#include "fceu-sound.h"
 #include "general.h"
-#include "state.h"
+#include "fceu-state.h"
 #include "file.h"
 #include "fceu-memory.h"
-#include "cart.h"
+#include "fceu-cart.h"
 #include "md5.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 /*	TODO:  Add code to put a delay in between the time a disk is inserted
  *	and the when it can be successfully read/written to.  This should
@@ -597,7 +600,11 @@ static int SubLoad(FCEUFILE *fp) {
 	if (TotalSides < 1) TotalSides = 1;
 
 	FDSROMSize = TotalSides * BYTES_PER_SIDE;
+#ifndef TARGET_GNW
 	FDSROM = (uint8*)FCEU_malloc(FDSROMSize);
+#else
+	FDSROM = (uint8*)ahb_calloc(1, FDSROMSize);
+#endif
 
 	if (!FDSROM)
 		return (0);
@@ -605,6 +612,7 @@ static int SubLoad(FCEUFILE *fp) {
 	for (x = 0; x < TotalSides; x++)
 		diskdata[x] = &FDSROM[x * BYTES_PER_SIDE];
 
+#ifndef TARGET_GNW
 	md5_starts(&md5);
 
 	for (x = 0; x < TotalSides; x++) {
@@ -612,6 +620,7 @@ static int SubLoad(FCEUFILE *fp) {
 		md5_update(&md5, diskdata[x], 65500);
 	}
 	md5_finish(&md5, GameInfo->MD5);
+#endif
 	return(1);
 }
 
@@ -653,7 +662,11 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 	ResetCartMapping();
 
 	FDSBIOSsize = 8192;
+#ifndef TARGET_GNW
 	FDSBIOS = (uint8*)FCEU_gmalloc(FDSBIOSsize);
+#else
+	FDSBIOS = (uint8*)ahb_calloc(1, FDSBIOSsize);
+#endif
 	SetupCartPRGMapping(0, FDSBIOS, FDSBIOSsize, 0);
 
 	if (FCEU_fread(FDSBIOS, 1, FDSBIOSsize, zp) != FDSBIOSsize) {
@@ -677,6 +690,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 		return(0);
 	}
 
+	//TODO : Sylver fix memory usage for the G&W
 	for (x = 0; x < TotalSides; x++) {
 		diskdatao[x] = (uint8*)FCEU_malloc(65500);
 		memcpy(diskdatao[x], diskdata[x], 65500);
@@ -724,12 +738,20 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 	AddExState(&mapperFDS_diskaccess, 1, 0, "DACC");
 
 	CHRRAMSize = 8192;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSize);
+#endif
 	SetupCartCHRMapping(0, CHRRAM, CHRRAMSize, 1);
 	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
 
 	FDSRAMSize = 32768;
+#ifndef TARGET_GNW
 	FDSRAM = (uint8*)FCEU_gmalloc(FDSRAMSize);
+#else
+	FDSRAM = (uint8*)ahb_calloc(1, FDSRAMSize);
+#endif
 	SetupCartPRGMapping(1, FDSRAM, FDSRAMSize, 1);
 	AddExState(FDSRAM, FDSRAMSize, 0, "FDSR");
 

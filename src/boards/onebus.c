@@ -26,6 +26,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 submapper;
 
@@ -147,7 +150,7 @@ static DECLFW(UNLOneBusWriteCPU410X) {
 /*	FCEU_printf("CPU %04x:%04x\n",A,V); */
 	A &=0xF;
 	switch (A) {
-	case 0x1: IRQLatch = V & 0xfe; break;	/* не по даташиту */
+	case 0x1: IRQLatch = V & 0xfe; break;	/* пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 	case 0x2: IRQReload = 1; break;
 	case 0x3: X6502_IRQEnd(FCEU_IQEXT); IRQa = 0; break;
 	case 0x4: IRQa = 1; break;
@@ -300,7 +303,11 @@ static void UNLOneBusCpuHook(int a) {
 				X6502_IRQBegin(FCEU_IQEXT);
 			} else {
 				uint16 addr = pcm_addr | ((apu40xx[0x30]^3) << 14);
+#ifndef TARGET_GNW
 				uint8 raw_pcm = ARead[addr](addr) >> 1;
+#else
+				uint8 raw_pcm = fceu_read(addr) >> 1;
+#endif
 				defapuwrite[0x11](0x4011, raw_pcm);
 				pcm_addr++;
 				pcm_addr &= 0x7FFF;
@@ -372,7 +379,11 @@ void UNLOneBus_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 	
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(8192);
+#else
+	WRAM = (uint8*)ahb_calloc(1, 8192);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, 8192, 1);
 }
 

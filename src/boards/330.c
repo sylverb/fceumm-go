@@ -23,6 +23,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *WRAM;
 
@@ -94,7 +97,7 @@ static DECLFW(M330Write) {
 
 static void M330Power(void) {
 	int i;
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 3; i++)
 		PRG[i] = i;
 	for (i = 0; i < 8; i++)
 		CHR[i] = i;
@@ -131,7 +134,11 @@ void Mapper330_Init(CartInfo *info) {
 	MapIRQHook = M330IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
+#ifndef TARGET_GNW
 	WRAM = (uint8 *)FCEU_gmalloc(8192);
+#else
+	WRAM = (uint8*)ahb_calloc(1, 8192);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, 8192, 1);
 	AddExState(WRAM, 8192, 0, "WRAM");
 }

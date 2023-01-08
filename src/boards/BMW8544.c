@@ -56,9 +56,18 @@ static DECLFR(UNLBMW8544ProtRead) {
 	if(!fceuindbg) {
 		if(!(A & 1)) {
 			if((EXPREGS[0] & 0xE0) == 0xC0) {
+#ifndef TARGET_GNW
 				EXPREGS[1] = ARead[0x6a](0x6a);	/* program can latch some data from the BUS, but I can't say how exactly, */
-			} else {							/* without more equipment and skills ;) probably here we can try to get any write */
+												/* without more equipment and skills ;) probably here we can try to get any write */
+#else
+				EXPREGS[1] = fceu_read(0x6a);
+#endif
+			} else {
+#ifndef TARGET_GNW
 				EXPREGS[2] = ARead[0xff](0xff);	/* before the read operation */
+#else
+				EXPREGS[2] = fceu_read(0xff);
+#endif
 			}
 			FixMMC3CHR(MMC3_cmd & 0x7F);		/* there are more different behaviour of the board that's not used by game itself, so unimplemented here and */
 		}										/* actually will break the current logic ;) */

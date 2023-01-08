@@ -21,6 +21,9 @@
 /* None of this code should use any of the iNES bank switching wrappers. */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static void (*sfun)(int P);
 static void (*psfun)(void);
@@ -496,6 +499,7 @@ static void Do5PCM(void) {
 			Wave[V >> 4] += MMC5Sound.raw << 1;
 }
 
+#ifndef TARGET_GNW
 static void Do5PCMHQ(void) {
 	uint32 V;
 	if (!(MMC5Sound.rawcontrol & 0x40) && MMC5Sound.raw)
@@ -503,13 +507,15 @@ static void Do5PCMHQ(void) {
 			WaveHi[V] += MMC5Sound.raw << 5;
 	MMC5Sound.BC[2] = SOUNDTS;
 }
-
+#endif
 
 static DECLFW(Mapper5_SW) {
 	A &= 0x1F;
 
 	GameExpSound.Fill = MMC5RunSound;
+#ifndef TARGET_GNW
 	GameExpSound.HiFill = MMC5RunSoundHQ;
+#endif
 
 	switch (A) {
 	case 0x10: if (psfun) psfun(); MMC5Sound.rawcontrol = V; break;
@@ -578,6 +584,7 @@ static void Do5SQ(int P) {
 	}
 }
 
+#ifndef TARGET_GNW
 static void Do5SQHQ(int P) {
 	static int tal[4] = { 1, 2, 4, 6 };
 	uint32 V;
@@ -620,6 +627,7 @@ void MMC5HiSync(int32 ts) {
 	for (x = 0; x < 3; x++)
 		MMC5Sound.BC[x] = ts;
 }
+#endif
 
 void MMC5RunSound(int Count) {
 	int x;
@@ -633,10 +641,13 @@ void MMC5RunSound(int Count) {
 void Mapper5_ESI(void) {
 	GameExpSound.RChange = Mapper5_ESI;
 	if (FSettings.SndRate) {
+#ifndef TARGET_GNW
 		if (FSettings.soundq >= 1) {
 			sfun = Do5SQHQ;
 			psfun = Do5PCMHQ;
-		} else {
+		} else
+#endif
+		{
 			sfun = Do5SQ;
 			psfun = Do5PCM;
 		}
@@ -646,13 +657,19 @@ void Mapper5_ESI(void) {
 	}
 	memset(MMC5Sound.BC, 0, sizeof(MMC5Sound.BC));
 	memset(MMC5Sound.vcount, 0, sizeof(MMC5Sound.vcount));
+#ifndef TARGET_GNW
 	GameExpSound.HiSync = MMC5HiSync;
+#endif
 }
 
 void NSFMMC5_Init(void) {
 	memset(&MMC5Sound, 0, sizeof(MMC5Sound));
 	mul[0] = mul[1] = 0;
+#ifndef TARGET_GNW
 	ExRAM = (uint8*)FCEU_gmalloc(1024);
+#else
+	ExRAM = (uint8*)ahb_calloc(1, 1024);
+#endif
 	Mapper5_ESI();
 	SetWriteHandler(0x5c00, 0x5fef, MMC5_ExRAMWr);
 	SetReadHandler(0x5c00, 0x5fef, MMC5_ExRAMRd);
@@ -779,13 +796,22 @@ static SFORMAT MMC5_StateRegs[] = {
 
 static void GenMMC5_Init(CartInfo *info, int wsize, int battery) {
 	if (wsize) {
+#ifndef TARGET_GNW
 		WRAM = (uint8*)FCEU_gmalloc(wsize * 1024);
+#else
+		WRAM = (uint8*)ahb_calloc(1, wsize * 1024);
+#endif
 		SetupCartPRGMapping(0x10, WRAM, wsize * 1024, 1);
 		AddExState(WRAM, wsize * 1024, 0, "WRAM");
 	}
 
+#ifndef TARGET_GNW
 	MMC5fill = (uint8*)FCEU_gmalloc(1024);
 	ExRAM = (uint8*)FCEU_gmalloc(1024);
+#else
+	MMC5fill = (uint8*)ahb_calloc(1, 1024);
+	ExRAM = (uint8*)ahb_calloc(1, 1024);
+#endif
 
 	AddExState(ExRAM, 1024, 0, "ERAM");
 	AddExState(&MMC5HackSPMode, 1, 0, "SPLM");

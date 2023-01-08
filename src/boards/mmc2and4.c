@@ -21,6 +21,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 is10, isPC10;
 static uint8 creg[4], latch0, latch1, preg, mirr;
@@ -121,7 +124,11 @@ void Mapper9_Init(CartInfo *info) {
 	if (info->battery) { /* Mike Tyson's Punch-Out!! (PC10) supports save ram */
 		isPC10 = 1;
 		WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+		WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (info->battery) {
@@ -140,7 +147,11 @@ void Mapper10_Init(CartInfo *info) {
 	info->Close = MMC2and4Close;
 	PPU_hook = MMC2and4PPUHook;
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

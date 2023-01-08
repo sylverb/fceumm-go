@@ -3,6 +3,7 @@
 
 #define SQ2NCOEFFS 1024
 
+#ifndef TARGET_GNW
 static int32 sq2coeffs[SQ2NCOEFFS];
 
 static int32 SQ2C44100NTSC[SQ2NCOEFFS / 2] =
@@ -34,6 +35,7 @@ static int32 SQ2C96000PAL[SQ2NCOEFFS / 2] =
 {
 	#include "fir/c96000pal.h"
 };
+#endif
 
 #define NCOEFFS 484
 

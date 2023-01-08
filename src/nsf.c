@@ -27,14 +27,14 @@
 #include "x6502.h"
 #include "fceu.h"
 #include "video.h"
-#include "sound.h"
+#include "fceu-sound.h"
 #include "nsf.h"
 #include "general.h"
 #include "fceu-memory.h"
 #include "file.h"
 #include "fds.h"
 #include "fds_apu.h"
-#include "cart.h"
+#include "fceu-cart.h"
 #include "input.h"
 
 #ifndef M_PI

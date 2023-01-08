@@ -41,6 +41,9 @@
 */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *WRAM            = NULL;
 static uint8 *CHRRAM          = NULL;
@@ -475,14 +478,22 @@ void Init(CartInfo *info)
 
    if (CHRRAMSIZE)
    {
+#ifndef TARGET_GNW
       CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+#else
+      CHRRAM = (uint8 *)ahb_calloc(1, CHRRAMSIZE);
+#endif
       SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
       AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
    }
 
    if (WRAMSIZE)
    {
-      WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+#ifndef TARGET_GNW
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+#else
+		WRAM = (uint8 *)ahb_calloc(1, WRAMSIZE);
+#endif
       SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
       AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

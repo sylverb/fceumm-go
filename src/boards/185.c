@@ -20,6 +20,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *DummyCHR = NULL;
 static uint8 datareg;
@@ -87,7 +90,11 @@ void Mapper185_Init(CartInfo *info) {
 	info->Power = MPower;
 	info->Close = MClose;
 	GameStateRestore = MRestore;
+#ifndef TARGET_GNW
 	DummyCHR = (uint8*)FCEU_gmalloc(8192);
+#else
+	DummyCHR = (uint8*)ahb_calloc(1, 8192);
+#endif
 	for (x = 0; x < 8192; x++)
 		DummyCHR[x] = 0xff;
 	SetupCartCHRMapping(0x10, DummyCHR, 8192, 0);
@@ -100,7 +107,11 @@ void Mapper181_Init(CartInfo *info) {
 	info->Power = MPower;
 	info->Close = MClose;
 	GameStateRestore = MRestore;
+#ifndef TARGET_GNW
 	DummyCHR = (uint8*)FCEU_gmalloc(8192);
+#else
+	DummyCHR = (uint8*)ahb_calloc(1, 8192);
+#endif
 	for (x = 0; x < 8192; x++)
 		DummyCHR[x] = 0xff;
 	SetupCartCHRMapping(0x10, DummyCHR, 8192, 0);

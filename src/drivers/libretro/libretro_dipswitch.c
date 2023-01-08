@@ -8,7 +8,7 @@
 #include "../../vsuni.h"
 #include "../../git.h"
 #include "../../driver.h"
-#include "../../cart.h"
+#include "../../fceu-cart.h"
 
 #include "libretro_dipswitch.h"
 

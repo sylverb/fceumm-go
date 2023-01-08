@@ -19,6 +19,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 chrlo[8], chrhi[8], prg[2], mirr, vlock;
 static int32 IRQa, IRQCount, IRQLatch, IRQClock;
@@ -135,12 +138,20 @@ void Mapper253_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	CHRRAMSIZE = 2048;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

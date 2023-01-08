@@ -26,8 +26,8 @@
 #include "fceu-types.h"
 #include "x6502.h"
 #include "fceu.h"
-#include "debug.h"
-#include "cart.h"
+#include "fceu-debug.h"
+#include "fceu-cart.h"
 
 void FCEUI_DumpVid(const char *fname, uint32 start, uint32 end) {
 	RFILE *fp = filestream_open(fname,

@@ -28,23 +28,22 @@
 #include  "x6502.h"
 #include  "fceu.h"
 #include  "ppu.h"
-#include  "sound.h"
+#include  "fceu-sound.h"
 #include  "general.h"
 #include  "fceu-endian.h"
 #include  "fceu-memory.h"
 
-#include  "cart.h"
+#include  "fceu-cart.h"
 #include  "nsf.h"
 #include  "fds.h"
 #include  "ines.h"
 #include  "unif.h"
 #include  "cheat.h"
 #include  "palette.h"
-#include  "state.h"
+#include  "fceu-state.h"
 #include  "video.h"
 #include  "input.h"
 #include  "file.h"
-#include  "crc32.h"
 #include  "vsuni.h"
 
 uint64 timestampbase;
@@ -54,11 +53,34 @@ void (*GameInterface)(int h);
 
 void (*GameStateRestore)(int version);
 
+#ifndef TARGET_GNW // It's using too much ram for the G&W, so we are using another method to handle that
 readfunc ARead[0x10000];
 writefunc BWrite[0x10000];
 static readfunc *AReadG = NULL;
 static writefunc *BWriteG = NULL;
 static int RWWrap = 0;
+#else
+typedef struct
+{
+   uint32 min_range, max_range;
+   readfunc read_func;
+} mem_read_handler_t;
+
+typedef struct
+{
+   uint32 min_range, max_range;
+   writefunc write_func;
+} mem_write_handler_t;
+
+mem_read_handler_t MemRead[10];
+mem_write_handler_t MemWrite[10];
+static uint8 memRead_index = 0;
+static uint8 memWrite_index = 0;
+#endif
+
+uint8 RAM[0x800];
+uint8 PAL = 0;
+
 
 static DECLFW(BNull)
 {
@@ -69,6 +91,27 @@ static DECLFR(ANull)
 	return(X.DB);
 }
 
+static DECLFW(BRAML)
+{
+	RAM[A] = V;
+}
+
+static DECLFR(ARAML)
+{
+	return RAM[A];
+}
+
+static DECLFW(BRAMH)
+{
+	RAM[A & 0x7FF] = V;
+}
+
+static DECLFR(ARAMH)
+{
+	return RAM[A & 0x7FF];
+}
+
+#ifndef TARGET_GNW
 int AllocGenieRW(void)
 {
    if (!AReadG)
@@ -109,22 +152,82 @@ void FlushGenieRW(void)
    }
    RWWrap = 0;
 }
+#endif
+
+extern DECLFR(A200x);
+extern DECLFR(A2002);
+extern DECLFR(A2007);
 
 readfunc FASTAPASS(1) GetReadHandler(int32 a)
 {
+#ifndef TARGET_GNW
 	if (a >= 0x8000 && RWWrap)
 		return AReadG[a - 0x8000];
 	else
 		return ARead[a];
+#else
+	if (a < 0x800) {
+		return ARAML;
+	}
+	if (a < 0x2000) {
+		return ARAMH;
+	}
+
+	if (a < 0x4000) {
+		switch (a%8) {
+			case 2:
+				return A2002;
+			case 7:
+				return A2007;
+			default :
+				return A200x;
+		}
+	}
+
+	for (int i=0; i<memRead_index;i++) {
+		if ((a >= MemRead[i].min_range) && (a <= MemRead[i].max_range) ) {
+			return MemRead[i].read_func;
+		}
+	}
+
+	return ANull;
+#endif
+}
+
+uint8 fceu_read(int32 a) {
+	if (a < 0x800) {
+		return RAM[a];
+	}
+	if (a < 0x2000) {
+		return RAM[a & 0x7FF];
+	}
+	if (a < 0x4000) {
+		switch (a%8) {
+			case 2:
+				return A2002(a);
+			case 7:
+				return A2007(a);
+			default :
+				return A200x(a);
+		}
+	}
+	for (int i=0; i<memRead_index;i++) {
+		if ((a >= MemRead[i].min_range) && (a <= MemRead[i].max_range) ) {
+			return MemRead[i].read_func(a);
+		}
+	}
+
+	return(X.DB);
 }
 
 void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 {
 	int32 x;
-
+	printf("SetReadHandler %lx-%lx %lx\n",start,end,(int32)func);
 	if (!func)
 		func = ANull;
 
+#ifndef TARGET_GNW
 	if (RWWrap)
 		for (x = end; x >= start; x--)
       {
@@ -136,23 +239,80 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 	else
 		for (x = end; x >= start; x--)
 			ARead[x] = func;
+#endif
+		MemRead[memRead_index].min_range = start;
+		MemRead[memRead_index].max_range = end;
+		MemRead[memRead_index].read_func = func;
+		memRead_index++;
 }
+
+extern DECLFW(B2000);
+extern DECLFW(B2001);
+extern DECLFW(B2002);
+extern DECLFW(B2003);
+extern DECLFW(B2004);
+extern DECLFW(B2005);
+extern DECLFW(B2006);
+extern DECLFW(B2007);
+extern DECLFW(B4014);
 
 writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 {
+#ifndef TARGET_GNW
 	if (RWWrap && a >= 0x8000)
 		return BWriteG[a - 0x8000];
 	else
 		return BWrite[a];
+#else
+	for (int i=0; i<memWrite_index;i++) {
+		if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
+			return MemWrite[i].write_func;
+		}
+	}
+	if (a <= 0x7FF) {
+		return BRAML;
+	}
+	if (a <= 0x1FFF) {
+		return BRAMH;
+	}
+
+	if ((a >= 0x2000) && (a <= 0x3FFF) ) {
+		switch (a%8) {
+			case 0:
+				return B2000;
+			case 1:
+				return B2001;
+			case 2:
+				return B2002;
+			case 3:
+				return B2003;
+			case 4:
+				return B2004;
+			case 5:
+				return B2005;
+			case 6:
+				return B2006;
+			case 7:
+				return B2007;
+		}
+	}
+
+	if (a == 0x4014)
+		return B4014;
+
+	return BNull;
+#endif
 }
 
 void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 {
 	int32 x;
 
+	printf("SetWriteHandler %lx-%lx %lx\n",start,end,(int32)func);
 	if (!func)
 		func = BNull;
 
+#ifndef TARGET_GNW
 	if (RWWrap)
 		for (x = end; x >= start; x--)
       {
@@ -164,46 +324,35 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 	else
 		for (x = end; x >= start; x--)
 			BWrite[x] = func;
-}
-
-uint8 RAM[0x800];
-
-uint8 PAL = 0;
-
-static DECLFW(BRAML)
-{
-	RAM[A] = V;
-}
-
-static DECLFR(ARAML)
-{
-	return RAM[A];
-}
-
-static DECLFW(BRAMH)
-{
-	RAM[A & 0x7FF] = V;
-}
-
-static DECLFR(ARAMH)
-{
-	return RAM[A & 0x7FF];
+#else
+	MemWrite[memWrite_index].min_range = start;
+	MemWrite[memWrite_index].max_range = end;
+	MemWrite[memWrite_index].write_func = func;
+	memWrite_index++;
+#endif
 }
 
 void FCEUI_CloseGame(void)
 {
+	printf("FCEUI_CloseGame\n");
 	if (!GameInfo)
       return;
 
+#ifndef TARGET_GNW
    if (GameInfo->name)
       free(GameInfo->name);
+#endif
    GameInfo->name = 0;
+#ifndef TARGET_GNW
    if (GameInfo->type != GIT_NSF)
       FCEU_FlushGameCheats();
+#endif
    GameInterface(GI_CLOSE);
    ResetExState(0, 0);
+#ifndef TARGET_GNW
    FCEU_CloseGenie();
    free(GameInfo);
+#endif
    GameInfo = 0;
 }
 
@@ -227,11 +376,63 @@ void ResetGameLoaded(void)
 	pale = 0;
 }
 
+#ifdef TARGET_GNW
+int iNESLoad(const char *name, const uint8_t *rom, uint32_t rom_size);
+//int UNIFLoad(const char *name, const char *rom, uint32_t rom_size);
+#else
 int UNIFLoad(const char *name, FCEUFILE *fp);
 int iNESLoad(const char *name, FCEUFILE *fp);
 int FDSLoad(const char *name, FCEUFILE *fp);
 int NSFLoad(FCEUFILE *fp);
+#endif
 
+#ifdef TARGET_GNW
+FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufsize,
+      frontend_post_load_init_cb_t frontend_post_load_init_cb)
+{
+   ResetGameLoaded();
+
+   GameInfo = malloc(sizeof(FCEUGI));
+   memset(GameInfo, 0, sizeof(FCEUGI));
+
+   GameInfo->soundchan = 0;
+   GameInfo->soundrate = 0;
+   GameInfo->name = 0;
+   GameInfo->type = GIT_CART;
+   GameInfo->vidsys = GIV_USER;
+   GameInfo->input[0] = GameInfo->input[1] = -1;
+   GameInfo->inputfc = -1;
+   GameInfo->cspecial = 0;
+
+   if (iNESLoad(name, databuf, databufsize))
+      goto endlseq;
+//   if (UNIFLoad(NULL, fp))
+//      goto endlseq;
+
+   FCEU_PrintError("An error occurred while loading the file.\n");
+   return NULL;
+
+endlseq:
+   if (frontend_post_load_init_cb)
+      (*frontend_post_load_init_cb)();
+
+   FCEU_ResetVidSys();
+//   if (GameInfo->type != GIT_NSF)
+//      if (FSettings.GameGenie)
+//         FCEU_OpenGenie();
+
+   PowerNES();
+
+//   if (GameInfo->type != GIT_NSF) {
+//      FCEU_LoadGamePalette();
+//      FCEU_LoadGameCheats();
+//   }
+
+   FCEU_ResetPalette();
+
+   return(GameInfo);
+}
+#else
 FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufsize,
       frontend_post_load_init_cb_t frontend_post_load_init_cb)
 {
@@ -304,6 +505,7 @@ endlseq:
 
    return(GameInfo);
 }
+#endif
 
 int FCEUI_Initialize(void) {
 	if (!FCEU_InitVirtualVideo())
@@ -321,15 +523,19 @@ int FCEUI_Initialize(void) {
 
 void FCEUI_Kill(void) {
 	FCEU_KillVirtualVideo();
+#ifndef TARGET_GNW
 	FCEU_KillGenie();
+#endif
 }
 
 void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int skip) {
-	int r, ssize;
+	int ssize;
 
 	FCEU_UpdateInput();
+#ifndef TARGET_GNW
 	if (geniestage != 1) FCEU_ApplyPeriodicCheats();
-	r = FCEUPPU_Loop(skip);
+#endif
+	FCEUPPU_Loop(skip);
 
 	ssize = FlushEmulateSound();
 
@@ -392,13 +598,19 @@ void PowerNES(void)
 	if (!GameInfo)
       return;
 
+#ifndef TARGET_GNW
 	FCEU_CheatResetRAM();
 	FCEU_CheatAddRAM(2, 0, RAM);
 
 	FCEU_GeniePower();
+#else
+	memRead_index = 0;
+	memWrite_index = 0;
+#endif
 
 	FCEU_MemoryRand(RAM, 0x800);
 
+#ifndef TARGET_GNW
 	SetReadHandler(0x0000, 0xFFFF, ANull);
 	SetWriteHandler(0x0000, 0xFFFF, BNull);
 
@@ -407,6 +619,7 @@ void PowerNES(void)
 
 	SetReadHandler(0x800, 0x1FFF, ARAMH);	/* Part of a little */
 	SetWriteHandler(0x800, 0x1FFF, BRAMH);	/* hack for a small speed boost. */
+#endif
 
 	InitializeInput();
 	FCEUSND_Power();
@@ -416,12 +629,16 @@ void PowerNES(void)
 		Needed for the NSF code and VS System code.
 	*/
 	GameInterface(GI_POWER);
+#ifndef TARGET_GNW
 	if (GameInfo->type == GIT_VSUNI)
 		FCEU_VSUniPower();
+#endif
 
 	timestampbase = 0;
 	X6502_Power();
+#ifndef TARGET_GNW
 	FCEU_PowerCheats();
+#endif
 }
 
 void FCEU_ResetVidSys(void)

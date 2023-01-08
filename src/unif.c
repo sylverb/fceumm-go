@@ -39,7 +39,7 @@
 #include  "fceu-memory.h"
 #include  "input.h"
 #include  "md5.h"
-#include  "crc32.h"
+#include  "fceu-crc32.h"
 
 #include "string/stdstring.h"
 

@@ -31,8 +31,10 @@ typedef struct {
 		should be fixed. :)
 	*/
 	void (*NeoFill)(int32 *Wave, int Count);
+#ifndef TARGET_GNW
 	void (*HiFill)(void);
 	void (*HiSync)(int32 ts);
+#endif
 
 	void (*RChange)(void);
 	void (*Kill)(void);
@@ -46,9 +48,15 @@ void SetSoundVariables(void);
 
 int GetSoundBuffer(int32 **W);
 int FlushEmulateSound(void);
+#ifndef TARGET_GNW
 extern int32 Wave[2048 + 512];
 extern int32 WaveFinal[2048 + 512];
 extern int32 WaveHi[];
+#else
+extern int32 Wave[1000];
+extern int32 WaveFinal[1000];
+extern int32 WaveHi[1000];
+#endif
 extern uint32 soundtsinc;
 
 extern uint32 soundtsoffs;

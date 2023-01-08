@@ -30,6 +30,9 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 reg[8], creg[8], mirr, cmd, IRQa = 0;
 static int32 IRQCount, IRQLatch;
@@ -168,7 +171,11 @@ void UNLKS202_Init(CartInfo *info) {
 	AddExState(&StateRegsKS202, ~0, 0, 0);
 
 	WRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;

@@ -25,9 +25,13 @@
 #include "fceu.h"
 #include "fceu-memory.h"
 #include "general.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 void *FCEU_gmalloc(uint32 size)
 {
+#ifndef TARGET_GNW
    void *ret = malloc(size);
    if (!ret)
    {
@@ -36,10 +40,16 @@ void *FCEU_gmalloc(uint32 size)
    }
    memset(ret, 0, size);
    return ret;
+#else
+   FCEU_printf("FCEU_gmalloc %ld\n",size);
+   void *ret = itc_calloc(1, size);
+   return ret;
+#endif
 }
 
 void *FCEU_malloc(uint32 size)
 {
+#ifndef TARGET_GNW
    void *ret = (void*)malloc(size);
 
    if (!ret)
@@ -49,14 +59,23 @@ void *FCEU_malloc(uint32 size)
    }
    memset(ret, 0, size);
    return ret;
+#else
+   FCEU_printf("FCEU_malloc %ld\n",size);
+   void *ret = itc_calloc(1, size);
+   return ret;
+#endif
 }
 
 void FCEU_free(void *ptr)
 {
+#ifndef TARGET_GNW
 	free(ptr);
+#endif
 }
 
 void FCEU_gfree(void *ptr)
 {
+#ifndef TARGET_GNW
 	free(ptr);
+#endif
 }

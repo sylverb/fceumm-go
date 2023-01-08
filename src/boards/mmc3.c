@@ -26,6 +26,9 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 uint8 MMC3_cmd;
 static uint8 *WRAM;
@@ -242,7 +245,9 @@ static DECLFR(MAWRAMMMC6) {
 }
 
 void GenMMC3Power(void) {
+#ifndef TARGET_GNW
 	if (UNIFchrrama) setchr8(0);
+#endif
 
 	SetWriteHandler(0x8000, 0xBFFF, MMC3_CMDWrite);
 	SetWriteHandler(0xC000, 0xFFFF, MMC3_IRQWrite);
@@ -270,10 +275,12 @@ void GenMMC3Power(void) {
 }
 
 void GenMMC3Close(void) {
+#ifndef TARGET_GNW
 	if (CHRRAM)
 		FCEU_gfree(CHRRAM);
 	if (WRAM)
 		FCEU_gfree(WRAM);
+#endif
 	CHRRAM = WRAM = NULL;
 }
 
@@ -290,7 +297,11 @@ void GenMMC3_Init(CartInfo *info, int prg, int chr, int wram, int battery) {
 
 	if (wram) {
 		mmc3opts |= 1;
+#ifndef TARGET_GNW
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+#else
+		WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
+#endif
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}
@@ -696,7 +707,11 @@ void Mapper52_Init(CartInfo *info) {
 	AddExState(EXPREGS, 2, 0, "EXPR");
 	if (info->iNES2 && info->submapper ==13) {
 		CHRRAMSIZE = 8192;
+#ifndef TARGET_GNW
 		CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+		CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 		AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");		
 	}
@@ -727,7 +742,11 @@ void Mapper74_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = M74CW;
 	CHRRAMSIZE = 2048;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
@@ -891,7 +910,11 @@ void Mapper119_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 64, 0, 0);
 	cwrap = TQWRAP;
 	CHRRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
    AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
@@ -947,7 +970,11 @@ void Mapper165_Init(CartInfo *info) {
 	PPU_hook = M165PPU;
 	info->Power = M165Power;
 	CHRRAMSIZE = 4096;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 	AddExState(EXPREGS, 4, 0, "EXPR");
@@ -963,7 +990,11 @@ void Mapper191_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 8, info->battery);
 	cwrap = M191CW;
 	CHRRAMSIZE = 2048;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
@@ -984,7 +1015,11 @@ void Mapper192_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = M192CW;
 	CHRRAMSIZE = 4096;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
@@ -1002,7 +1037,11 @@ void Mapper194_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = M194CW;
 	CHRRAMSIZE = 2048;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
@@ -1231,7 +1270,9 @@ void GN45_Init(CartInfo *info) {
 /* ---------------------------- Mapper 245 ------------------------------ */
 
 static void M245CW(uint32 A, uint8 V) {
+#ifndef TARGET_GNW
 	if (!UNIFchrrama)	/* Yong Zhe Dou E Long - Dragon Quest VI (As).nes NEEDS THIS for RAM cart */
+#endif
 		setchr1(A, V & 7);
 	EXPREGS[0] = V;
 	FixMMC3PRG(MMC3_cmd);
@@ -1394,7 +1435,11 @@ void TQROM_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 64, 0, 0);
 	cwrap = TQWRAP;
 	CHRRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
    AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

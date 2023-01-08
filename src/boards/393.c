@@ -22,6 +22,9 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 *CHRRAM;
 static uint32 CHRRAMSIZE;
@@ -104,7 +107,11 @@ void Mapper393_Init(CartInfo *info) {
 	info->Reset = M393Reset;
 	info->Close = M393lose;
 	CHRRAMSIZE = 8192;
+#ifndef TARGET_GNW
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+#else
+	CHRRAM = (uint8 *)ahb_calloc(1, CHRRAMSIZE);
+#endif
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 	AddExState(EXPREGS, 2, 0, "EXPR");

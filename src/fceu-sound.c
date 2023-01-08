@@ -26,19 +26,28 @@
 #include "x6502.h"
 
 #include "fceu.h"
-#include "sound.h"
+#include "fceu-sound.h"
 #include "filter.h"
-#include "state.h"
+#include "fceu-state.h"
 
 static uint32 wlookup1[32];
 static uint32 wlookup2[203];
 
+#ifndef TARGET_GNW
 int32 Wave[2048 + 512];
 int32 WaveHi[40000];
 int32 WaveFinal[2048 + 512];
+#else
+int32 Wave[1000];
+//int32 WaveHi[1000];
+int32 WaveFinal[1000];
+#endif
 
+#ifndef TARGET_GNW
 EXPSOUND GameExpSound = { 0, 0, 0, 0, 0, 0 };
-
+#else
+EXPSOUND GameExpSound = { 0, 0, 0, 0 };
+#endif
 static uint8 TriCount = 0;
 static uint8 TriMode = 0;
 
@@ -508,6 +517,7 @@ void FASTAPASS(1) FCEU_SoundCPUHook(int cycles) {
 	}
 }
 
+#ifndef TARGET_GNW
 void RDoPCM(void) {
 	uint32 V;
 
@@ -517,6 +527,7 @@ void RDoPCM(void) {
 
 	ChannelBC[4] = SOUNDTS;
 }
+#endif
 
 /* This has the correct phase.  Don't mess with it. */
 static INLINE void RDoSQ(int x) {
@@ -555,8 +566,10 @@ static INLINE void RDoSQ(int x) {
 		 * but is "close enough" and avoids the need for using double values
 		 * or implicit cohersion which are slower (we need speed here) */
 		/* TODO: Optimize this. */
+#ifndef TARGET_GNW
 		if (FSettings.SquareVolume[x] != 256)
 			amp = (amp * FSettings.SquareVolume[x]) / 256;
+#endif
 
 		amp <<= 24;
 		dutyCycle = (PSG[(x << 2)] & 0xC0) >> 6;
@@ -583,6 +596,7 @@ static INLINE void RDoSQ(int x) {
 	ChannelBC[x] = SOUNDTS;
 }
 
+#ifndef TARGET_GNW
 static void RDoSQ1(void) {
 	RDoSQ(0);
 }
@@ -590,6 +604,7 @@ static void RDoSQ1(void) {
 static void RDoSQ2(void) {
 	RDoSQ(1);
 }
+#endif
 
 static void RDoSQLQ(void) {
 	int32 start, end;
@@ -631,8 +646,10 @@ static void RDoSQLQ(void) {
 		 * or implicit cohersion which are slower (we need speed here)
 		 * fixed - setting up maximum volume for square2 caused complete mute square2 channel.
 		 * TODO: Optimize this. */
+#ifndef TARGET_GNW
 		if (FSettings.SquareVolume[x] != 256)
 			amp[x] = (amp[x] * FSettings.SquareVolume[x]) / 256;
+#endif
 
 		if (!inie[x]) amp[x] = 0;	/* Correct? Buzzing in MM2, others otherwise... */
 
@@ -689,6 +706,7 @@ static void RDoSQLQ(void) {
 	}
 }
 
+#ifndef TARGET_GNW
 static void RDoTriangle(void) {
 	int32 V;
 	int32 tcout = (tristep & 0xF);
@@ -699,7 +717,11 @@ static void RDoTriangle(void) {
 		int32 *start = &WaveHi[ChannelBC[2]];
 		int32 count = SOUNDTS - ChannelBC[2];
 		while (count--) {
+#ifndef TARGET_GNW
 			*start += (tcout / 256 * FSettings.TriangleVolume) & (~0xFFFF);  /* TODO OPTIMIZE ME */
+#else
+			*start += (tcout) & (~0xFFFF);
+#endif
 			start++;
 		}
 
@@ -709,7 +731,11 @@ static void RDoTriangle(void) {
 
 	} else {
 		for (V = ChannelBC[2]; V < SOUNDTS; V++) {
+#ifndef TARGET_GNW
 			WaveHi[V] += (tcout / 256 * FSettings.TriangleVolume) & (~0xFFFF);  /* TODO OPTIMIZE ME! */
+#else
+			WaveHi[V] += (tcout) & (~0xFFFF);
+#endif
 			wlcount[2]--;
 			if (!wlcount[2]) {
 				wlcount[2] = (PSG[0xa] | ((PSG[0xb] & 7) << 8)) + 1;
@@ -723,6 +749,7 @@ static void RDoTriangle(void) {
 
 	ChannelBC[2] = SOUNDTS;
 }
+#endif
 
 static void RDoTriangleNoisePCMLQ(void) {
 	int32 V;
@@ -758,8 +785,10 @@ static void RDoTriangleNoisePCMLQ(void) {
 	 * but is "close enough" and avoids the need for using double vales
 	 * or implicit cohersion which are slower (we need speed here)
 	 * TODO: Optimize this. */
+#ifndef TARGET_GNW
 	if (FSettings.TriangleVolume != 256)
 		amptab[0] = (amptab[0] * FSettings.TriangleVolume) / 256;
+#endif
 
 	amptab[1] = 0;
 	amptab[0] <<= 1;
@@ -853,6 +882,7 @@ static void RDoTriangleNoisePCMLQ(void) {
 	}
 }
 
+#ifndef TARGET_GNW
 static void RDoNoise(void) {
 	uint32 V;
 	int32 outo;
@@ -868,8 +898,10 @@ static void RDoNoise(void) {
 	* but is "close enough" and avoids the need for using double vales
 	* or implicit cohersion which are slower (we need speed here)
 	* TODO: Optimize this. */
+#ifndef TARGET_GNW
 	if (FSettings.NoiseVolume != 256)
 		amptab[0] = (amptab[0] * FSettings.NoiseVolume) / 256;
+#endif
 
 	amptab[0] <<= 16;
 	amptab[1] = 0;
@@ -917,6 +949,7 @@ static void RDoNoise(void) {
 	}
 	ChannelBC[3] = SOUNDTS;
 }
+#endif
 
 DECLFW(Write_IRQFM) {
 	V = (V & 0xC0) >> 6;
@@ -944,15 +977,20 @@ void SetNESSoundMap(void) {
 static int32 inbuf = 0;
 int FlushEmulateSound(void) {
 	int x;
-	int32 end, left;
+	int32 end;
+#ifndef TARGET_GNW
+	int32 left;
+#endif
 
 	if (!sound_timestamp) return(0);
 
+#ifndef TARGET_GNW
 	if (!FSettings.SndRate) {
 		left = 0;
 		end = 0;
 		goto nosoundo;
 	}
+#endif
 
 	DoSQ1();
 	DoSQ2();
@@ -960,10 +998,13 @@ int FlushEmulateSound(void) {
 	DoNoise();
 	DoPCM();
 
+#ifndef TARGET_GNW
 	if (FSettings.soundq >= 1) {
 		int32 *tmpo = &WaveHi[soundtsoffs];
 
+#ifndef TARGET_GNW
 		if (GameExpSound.HiFill) GameExpSound.HiFill();
+#endif
 
 		for (x = sound_timestamp; x; x--) {
 			uint32 b = *tmpo;
@@ -976,28 +1017,37 @@ int FlushEmulateSound(void) {
 		memmove(WaveHi, WaveHi + SOUNDTS - left, left * sizeof(uint32));
 		memset(WaveHi + left, 0, sizeof(WaveHi) - left * sizeof(uint32));
 
+#ifndef TARGET_GNW
 		if (GameExpSound.HiSync) GameExpSound.HiSync(left);
+#endif
 		for (x = 0; x < 5; x++)
 			ChannelBC[x] = left;
-	} else {
+	} else
+#endif
+	{
 		end = (SOUNDTS << 16) / soundtsinc;
 		if (GameExpSound.Fill)
 			GameExpSound.Fill(end & 0xF);
 
 		SexyFilter(Wave, WaveFinal, end >> 4);
 
+#ifndef TARGET_GNW
 		if (FSettings.lowpass)
 			SexyFilter2(WaveFinal, end >> 4);
+#endif
 
 		if (end & 0xF)
 			Wave[0] = Wave[(end >> 4)];
 		Wave[end >> 4] = 0;
 	}
+#ifndef TARGET_GNW
  nosoundo:
 
 	if (FSettings.soundq >= 1) {
 		soundtsoffs = left;
-	} else {
+	} else
+#endif
+	{
 		for (x = 0; x < 5; x++)
 			ChannelBC[x] = end & 0xF;
 		soundtsoffs = (soundtsinc * (end & 0xF)) >> 16;
@@ -1064,7 +1114,9 @@ void FCEUSND_Power(void) {
 	FCEUSND_Reset();
 
 	memset(Wave, 0, sizeof(Wave));
+#ifndef TARGET_GNW
 	memset(WaveHi, 0, sizeof(WaveHi));
+#endif
 	memset(&EnvUnits, 0, sizeof(EnvUnits));
 
 	for (x = 0; x < 5; x++)
@@ -1085,20 +1137,29 @@ void SetSoundVariables(void) {
 		wlookup1[0] = 0;
 		for (x = 1; x < 32; x++) {
 			wlookup1[x] = (double)16 * 16 * 16 * 4 * 95.52 / ((double)8128 / (double)x + 100);
-			if (!FSettings.soundq) wlookup1[x] >>= 4;
+#ifndef TARGET_GNW
+			if (!FSettings.soundq)
+#endif
+				wlookup1[x] >>= 4;
 		}
 		wlookup2[0] = 0;
 		for (x = 1; x < 203; x++) {
 			wlookup2[x] = (double)16 * 16 * 16 * 4 * 163.67 / ((double)24329 / (double)x + 100);
-			if (!FSettings.soundq) wlookup2[x] >>= 4;
+#ifndef TARGET_GNW
+			if (!FSettings.soundq)
+#endif
+				wlookup2[x] >>= 4;
 		}
+#ifndef TARGET_GNW
 		if (FSettings.soundq >= 1) {
 			DoNoise = RDoNoise;
 			DoTriangle = RDoTriangle;
 			DoPCM = RDoPCM;
 			DoSQ1 = RDoSQ1;
 			DoSQ2 = RDoSQ2;
-		} else {
+		} else
+#endif
+		{
 			DoNoise = DoTriangle = DoPCM = DoSQ1 = DoSQ2 = Dummyfunc;
 			DoSQ1 = RDoSQLQ;
 			DoSQ2 = RDoSQLQ;
@@ -1130,6 +1191,7 @@ void FCEUI_Sound(int Rate) {
 	SetSoundVariables();
 }
 
+#ifndef TARGET_GNW
 void FCEUI_SetLowPass(int q) {
 	FSettings.lowpass = q;
 }
@@ -1138,6 +1200,7 @@ void FCEUI_SetSoundQuality(int quality) {
 	FSettings.soundq = quality;
 	SetSoundVariables();
 }
+#endif
 
 void FCEUI_SetSoundVolume(uint32 volume) {
 	FSettings.SoundVolume = volume;
@@ -1247,6 +1310,7 @@ void FCEUSND_LoadState(int version) {
 	{
 		uint32 BC_max = 15;
 
+#ifndef TARGET_GNW
 		if (FSettings.soundq == 2)
 		{
 			BC_max = 1025;
@@ -1255,6 +1319,7 @@ void FCEUSND_LoadState(int version) {
 		{
 			BC_max = 485;
 		}
+#endif
 		if (/* ChannelBC[i] < 0 || */ ChannelBC[i] > BC_max)
 		{
 			ChannelBC[i] = 0;
