@@ -72,4 +72,10 @@ void FCEUSND_LoadState(int version);
 
 void FASTAPASS(1) FCEU_SoundCPUHook(int);
 
+DECLFR(StatusRead);
+DECLFW(Write_PSG);
+DECLFW(Write_DMCRegs);
+DECLFW(StatusWrite);
+DECLFW(Write_IRQFM);
+
 #endif

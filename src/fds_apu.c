@@ -74,7 +74,7 @@ void FDSSoundStateAdd(void) {
 	AddExState(&b17latch76, 4, 1, "B76");
 }
 
-static DECLFR(FDSSRead) {
+DECLFR(FDSSRead) {
 	switch (A & 0xF) {
 	case 0x0: return(amplitude[0] | (X.DB & 0xC0));
 	case 0x2: return(amplitude[1] | (X.DB & 0xC0));
@@ -85,7 +85,7 @@ static DECLFR(FDSSRead) {
 static void RenderSound(void);
 static void RenderSoundHQ(void);
 
-static DECLFW(FDSSWrite) {
+DECLFW(FDSSWrite) {
 	if (FSettings.SndRate) {
 #ifndef TARGET_GNW
 		if (FSettings.soundq >= 1)
@@ -147,11 +147,11 @@ static void DoEnv() {
 		}
 }
 
-static DECLFR(FDSWaveRead) {
+DECLFR(FDSWaveRead) {
 	return(fdso.cwave[A & 0x3f] | (X.DB & 0xC0));
 }
 
-static DECLFW(FDSWaveWrite) {
+DECLFW(FDSWaveWrite) {
 	if (SPSG[0x9] & 0x80)
 		fdso.cwave[A & 0x3f] = V & 0x3F;
 }
@@ -274,10 +274,12 @@ static void FDS_ESI(void) {
 			fdso.cycles /= FSettings.SndRate * 16;
 		}
 	}
+#ifndef TARGET_GNW
 	SetReadHandler(0x4040, 0x407f, FDSWaveRead);
 	SetWriteHandler(0x4040, 0x407f, FDSWaveWrite);
 	SetWriteHandler(0x4080, 0x408A, FDSSWrite);
 	SetReadHandler(0x4090, 0x4092, FDSSRead);
+#endif
 }
 
 void FDSSoundReset(void) {

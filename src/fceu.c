@@ -36,6 +36,7 @@
 #include  "fceu-cart.h"
 #include  "nsf.h"
 #include  "fds.h"
+#include  "fds_apu.h"
 #include  "ines.h"
 #include  "unif.h"
 #include  "cheat.h"
@@ -72,8 +73,10 @@ typedef struct
    writefunc write_func;
 } mem_write_handler_t;
 
-mem_read_handler_t MemRead[10];
-mem_write_handler_t MemWrite[10];
+#define MAX_MEM_HANDLER_READ_COUNT 10
+#define MAX_MEM_HANDLER_WRITE_COUNT 10
+mem_read_handler_t MemRead[MAX_MEM_HANDLER_READ_COUNT];
+mem_write_handler_t MemWrite[MAX_MEM_HANDLER_WRITE_COUNT];
 static uint8 memRead_index = 0;
 static uint8 memWrite_index = 0;
 #endif
@@ -154,10 +157,6 @@ void FlushGenieRW(void)
 }
 #endif
 
-extern DECLFR(A200x);
-extern DECLFR(A2002);
-extern DECLFR(A2007);
-
 readfunc FASTAPASS(1) GetReadHandler(int32 a)
 {
 #ifndef TARGET_GNW
@@ -166,24 +165,43 @@ readfunc FASTAPASS(1) GetReadHandler(int32 a)
 	else
 		return ARead[a];
 #else
-	if (a < 0x800) {
-		return ARAML;
-	}
-	if (a < 0x2000) {
-		return ARAMH;
+	switch (a>>11) {
+		case 0: /* 0-0x7FF */
+			return ARAML;
+		case 1: /* 0x800-0x1FFF */
+		case 2:
+		case 3:
+			return ARAMH;
+		case 4: /* 0x2000-0x3FFF */
+		case 5:
+		case 6:
+		case 7:
+			switch (a%8) {
+				case 2:
+					return A2002;
+				case 7:
+					return A2007;
+				default :
+					return A200x;
+			}
+		case 8: /* 0x4000 - 0x47FF */
+			if (a == 0x4015)
+				return StatusRead;
+			else if (a == 0x4030)
+				return FDSRead4030;
+			else if (a == 0x4031)
+				return FDSRead4031;
+			else if (a == 0x4032)
+				return FDSRead4032;
+			else if (a == 0x4033)
+				return FDSRead4033;
+			else if ((a >= 0x4040) && (a < 0x4080))
+				return FDSWaveRead;
+			else if ((a >= 0x4090) && (a <= 0x4092))
+				return FDSSRead;
 	}
 
-	if (a < 0x4000) {
-		switch (a%8) {
-			case 2:
-				return A2002;
-			case 7:
-				return A2007;
-			default :
-				return A200x;
-		}
-	}
-
+	/* Search in dynamically assigned functions */
 	for (int i=0; i<memRead_index;i++) {
 		if ((a >= MemRead[i].min_range) && (a <= MemRead[i].max_range) ) {
 			return MemRead[i].read_func;
@@ -196,22 +214,43 @@ readfunc FASTAPASS(1) GetReadHandler(int32 a)
 
 #ifdef TARGET_GNW
 uint8 fceu_read(int32 a) {
-	if (a < 0x800) {
-		return RAM[a];
+	switch (a>>11) {
+		case 0: /* 0-0x7FF */
+			return RAM[a];
+		case 1: /* 0x800-0x1FFF */
+		case 2:
+		case 3:
+			return RAM[a & 0x7FF];
+		case 4: /* 0x2000-0x3FFF */
+		case 5:
+		case 6:
+		case 7:
+			switch (a%8) {
+				case 2:
+					return A2002(a);
+				case 7:
+					return A2007(a);
+				default :
+					return A200x(a);
+			}
+		case 8: /* 0x4000 - 0x47FF */
+			if (a == 0x4015)
+				return StatusRead(a);
+			else if (a == 0x4030)
+				return FDSRead4030(a);
+			else if (a == 0x4031)
+				return FDSRead4031(a);
+			else if (a == 0x4032)
+				return FDSRead4032(a);
+			else if (a == 0x4033)
+				return FDSRead4033(a);
+			else if ((a >= 0x4040) && (a < 0x4080))
+				return FDSWaveRead(a);
+			else if ((a >= 0x4090) && (a <= 0x4092))
+				return FDSSRead(a);
 	}
-	if (a < 0x2000) {
-		return RAM[a & 0x7FF];
-	}
-	if (a < 0x4000) {
-		switch (a%8) {
-			case 2:
-				return A2002(a);
-			case 7:
-				return A2007(a);
-			default :
-				return A200x(a);
-		}
-	}
+
+	/* Search in dynamically assigned functions */
 	for (int i=0; i<memRead_index;i++) {
 		if ((a >= MemRead[i].min_range) && (a <= MemRead[i].max_range) ) {
 			return MemRead[i].read_func(a);
@@ -224,7 +263,9 @@ uint8 fceu_read(int32 a) {
 
 void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 {
+#ifndef TARGET_GNW
 	int32 x;
+#endif
 	printf("SetReadHandler %lx-%lx %lx\n",start,end,(int32)func);
 	if (!func)
 		func = ANull;
@@ -241,22 +282,17 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 	else
 		for (x = end; x >= start; x--)
 			ARead[x] = func;
+#else
+	if (memRead_index == MAX_MEM_HANDLER_READ_COUNT) {
+		printf("SetReadHandler increase MAX_MEM_HANDLER_READ_COUNT\n");
+		while(1) {};
+	}
+	MemRead[memRead_index].min_range = start;
+	MemRead[memRead_index].max_range = end;
+	MemRead[memRead_index].read_func = func;
+	memRead_index++;
 #endif
-		MemRead[memRead_index].min_range = start;
-		MemRead[memRead_index].max_range = end;
-		MemRead[memRead_index].read_func = func;
-		memRead_index++;
 }
-
-extern DECLFW(B2000);
-extern DECLFW(B2001);
-extern DECLFW(B2002);
-extern DECLFW(B2003);
-extern DECLFW(B2004);
-extern DECLFW(B2005);
-extern DECLFW(B2006);
-extern DECLFW(B2007);
-extern DECLFW(B4014);
 
 writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 {
@@ -266,40 +302,59 @@ writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 	else
 		return BWrite[a];
 #else
-	if (a <= 0x7FF) {
-		return BRAML;
+	switch (a>>11) {
+		case 0:
+			return BRAML;
+		case 1:
+		case 2:
+		case 3:
+			return BRAMH;
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			switch (a%8) {
+				case 0:
+					return B2000;
+				case 1:
+					return B2001;
+				case 2:
+					return B2002;
+				case 3:
+					return B2003;
+				case 4:
+					return B2004;
+				case 5:
+					return B2005;
+				case 6:
+					return B2006;
+				case 7:
+					return B2007;
+			}
+		case 8: /* 0x4000 - 0x47FF */
+			if (a < 0x4010) {
+				return Write_PSG;
+			} else if (a < 0x4014) {
+				return Write_DMCRegs;
+			} else if (a == 0x4015) {
+				return StatusWrite;
+			} else if (a == 0x4017) {
+				return Write_IRQFM;
+			} else if ((a >= 0x4040) && (a < 0x4080)) {
+				return FDSWaveWrite;
+			} else if ((a >= 0x4080) && (a <= 0x408A)) {
+				return FDSSWrite;
+			}
 	}
-	if (a <= 0x1FFF) {
-		return BRAMH;
-	}
-
-	if ((a >= 0x2000) && (a <= 0x3FFF) ) {
-		switch (a%8) {
-			case 0:
-				return B2000;
-			case 1:
-				return B2001;
-			case 2:
-				return B2002;
-			case 3:
-				return B2003;
-			case 4:
-				return B2004;
-			case 5:
-				return B2005;
-			case 6:
-				return B2006;
-			case 7:
-				return B2007;
-		}
-	}
+	/* Search in dynamically assigned functions */
 	for (int i=0; i<memWrite_index;i++) {
 		if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
 			return MemWrite[i].write_func;
 		}
 	}
-	if (a == 0x4014)
+	if (a == 0x4014) {
 		return B4014;
+	}
 
 	return BNull;
 #endif
@@ -307,60 +362,84 @@ writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 
 #ifdef TARGET_GNW
 void fceu_write(int32 a,uint8 v) {
-	if (a <= 0x7FF) {
-		RAM[a] = v;
-		return;
-	}
-	if (a <= 0x1FFF) {
-		RAM[a & 0x7FF] = v;
-		return;
-	}
-	if (a <= 0x3FFF) {
-		switch (a%8) {
-			case 0:
-				B2000(a,v);
+	switch (a>>11) {
+		case 0:
+			RAM[a] = v;
+			return;
+		case 1:
+		case 2:
+		case 3:
+			RAM[a & 0x7FF] = v;
+			return;
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			switch (a%8) {
+				case 0:
+					B2000(a,v);
+					return;
+				case 1:
+					B2001(a,v);
+					return;
+				case 2:
+					B2002(a,v);
+					return;
+				case 3:
+					B2003(a,v);
+					return;
+				case 4:
+					B2004(a,v);
+					return;
+				case 5:
+					B2005(a,v);
+					return;
+				case 6:
+					B2006(a,v);
+					return;
+				case 7:
+					B2007(a,v);
+					return;
+			}
+		case 8: /* 0x4000 - 0x47FF */
+			if (a < 0x4010) {
+				Write_PSG(a,v);
 				return;
-			case 1:
-				B2001(a,v);
+			} else if (a < 0x4014) {
+				Write_DMCRegs(a,v);
 				return;
-			case 2:
-				B2002(a,v);
+			} else if (a == 0x4015) {
+				StatusWrite(a,v);
 				return;
-			case 3:
-				B2003(a,v);
+			} else if (a == 0x4017) {
+				Write_IRQFM(a,v);
 				return;
-			case 4:
-				B2004(a,v);
+			} else if ((a >= 0x4040) && (a < 0x4080)) {
+				FDSWaveWrite(a,v);
 				return;
-			case 5:
-				B2005(a,v);
+			} else if ((a >= 0x4080) && (a <= 0x408A)) {
+				FDSSWrite(a,v);
 				return;
-			case 6:
-				B2006(a,v);
-				return;
-			case 7:
-				B2007(a,v);
-				return;
-		}
+			}
 	}
 	for (int i=0; i<memWrite_index;i++) {
-		if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
-			MemWrite[i].write_func(a,v);
-			return;
-		}
+			if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
+				MemWrite[i].write_func(a,v);
+				return;
+			}
+			if (a == 0x4014) {
+				B4014(a,v);
+				return;
+			}
 	}
-	if (a == 0x4014) {
-		B4014(a,v);
-		return;
-	}
-
-	return;
 }
 #endif
 
 void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 {
+#ifndef TARGET_GNW
 	int32 x;
+#endif
 
 	printf("SetWriteHandler %lx-%lx %lx\n",start,end,(int32)func);
 	if (!func)
@@ -379,6 +458,10 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 		for (x = end; x >= start; x--)
 			BWrite[x] = func;
 #else
+	if (memWrite_index == MAX_MEM_HANDLER_WRITE_COUNT) {
+		printf("SetWriteHandler increase MAX_MEM_HANDLER_WRITE_COUNT\n");
+		while(1) {};
+	}
 	MemWrite[memWrite_index].min_range = start;
 	MemWrite[memWrite_index].max_range = end;
 	MemWrite[memWrite_index].write_func = func;
@@ -432,7 +515,7 @@ void ResetGameLoaded(void)
 
 #ifdef TARGET_GNW
 int iNESLoad(const char *name, const uint8_t *rom, uint32_t rom_size);
-//int UNIFLoad(const char *name, const char *rom, uint32_t rom_size);
+int FDSLoad(const char *name, const char *rom, uint32_t rom_size);
 #else
 int UNIFLoad(const char *name, FCEUFILE *fp);
 int iNESLoad(const char *name, FCEUFILE *fp);
@@ -458,10 +541,10 @@ FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufs
    GameInfo->inputfc = -1;
    GameInfo->cspecial = 0;
 
-   if (iNESLoad(name, databuf, databufsize))
+   if (iNESLoad(name, (const uint8_t *)databuf, databufsize))
       goto endlseq;
-//   if (UNIFLoad(NULL, fp))
-//      goto endlseq;
+   if (FDSLoad(name, (const char *)databuf, databufsize))
+      goto endlseq;
 
    FCEU_PrintError("An error occurred while loading the file.\n");
    return NULL;

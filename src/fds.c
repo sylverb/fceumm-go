@@ -39,6 +39,7 @@
 #include "md5.h"
 #ifdef TARGET_GNW
 #include "gw_malloc.h"
+#include "rom_manager.h"
 #endif
 
 /*	TODO:  Add code to put a delay in between the time a disk is inserted
@@ -47,10 +48,10 @@
  *	when the virtual motor is on(mmm...virtual motor).
  */
 
-static DECLFR(FDSRead4030);
-static DECLFR(FDSRead4031);
-static DECLFR(FDSRead4032);
-static DECLFR(FDSRead4033);
+DECLFR(FDSRead4030);
+DECLFR(FDSRead4031);
+DECLFR(FDSRead4032);
+DECLFR(FDSRead4033);
 
 static DECLFW(FDSWrite);
 
@@ -145,10 +146,12 @@ static void FDSInit(void) {
 	MapIRQHook = FDSFix;
 	GameStateRestore = FDSStateRestore;
 
+#ifndef TARGET_GNW
 	SetReadHandler(0x4030, 0x4030, FDSRead4030);
 	SetReadHandler(0x4031, 0x4031, FDSRead4031);
 	SetReadHandler(0x4032, 0x4032, FDSRead4032);
 	SetReadHandler(0x4033, 0x4033, FDSRead4033);
+#endif
 
 	SetWriteHandler(0x4020, 0x4025, FDSWrite);
 
@@ -219,7 +222,7 @@ static void FP_FASTAPASS(1) FDSFix(int a) {
 	}
 }
 
-static DECLFR(FDSRead4030) {
+DECLFR(FDSRead4030) {
 	uint8 ret = 0;
 
 	/* Cheap hack. */
@@ -236,7 +239,7 @@ static DECLFR(FDSRead4030) {
 	return ret;
 }
 
-static DECLFR(FDSRead4031) {
+DECLFR(FDSRead4031) {
 	uint8 ret = 0xff;
 
 	if (FDS_DISK_INSERTED && mapperFDS_control & 0x04) {
@@ -273,7 +276,7 @@ static DECLFR(FDSRead4031) {
 	return ret;
 }
 
-static DECLFR(FDSRead4032) {
+DECLFR(FDSRead4032) {
 	uint8 ret;
 
 	ret = X.DB & ~7;
@@ -285,7 +288,7 @@ static DECLFR(FDSRead4032) {
 	return ret;
 }
 
-static DECLFR(FDSRead4033) {
+DECLFR(FDSRead4033) {
 	return 0x80;		/* battery */
 }
 
@@ -576,6 +579,47 @@ static void FreeFDSMemory(void) {
 	CHRRAM = NULL;
 }
 
+static int SubLoadRom(uint8 *fds, uint32_t rom_size) {
+#ifndef TARGET_GNW
+	struct md5_context md5;
+#endif
+	uint8 header[16];
+	int x;
+
+	memcpy(header,fds,16);
+
+	if (memcmp(header, "FDS\x1a", 4)) {
+		if (!(memcmp(header + 1, "*NINTENDO-HVC*", 14))) {
+			if (rom_size < 65500)
+				rom_size = 65500;
+			TotalSides = rom_size / 65500;
+		} else
+			return(0);
+	} else
+		TotalSides = header[4];
+
+	if (TotalSides > 8) TotalSides = 8;
+	if (TotalSides < 1) TotalSides = 1;
+
+	FDSROMSize = TotalSides * BYTES_PER_SIDE;
+	FDSROM = fds;
+
+	for (x = 0; x < TotalSides; x++)
+		diskdata[x] = &FDSROM[x * BYTES_PER_SIDE];
+
+#ifndef TARGET_GNW
+	md5_starts(&md5);
+
+	for (x = 0; x < TotalSides; x++) {
+		FCEU_fread(diskdata[x], 1, 65500, fp);
+		md5_update(&md5, diskdata[x], 65500);
+	}
+	md5_finish(&md5, GameInfo->MD5);
+#endif
+	return(1);
+}
+
+#ifndef TARGET_GNW
 static int SubLoad(FCEUFILE *fp) {
 	struct md5_context md5;
 	uint8 header[16];
@@ -600,19 +644,13 @@ static int SubLoad(FCEUFILE *fp) {
 	if (TotalSides < 1) TotalSides = 1;
 
 	FDSROMSize = TotalSides * BYTES_PER_SIDE;
-#ifndef TARGET_GNW
 	FDSROM = (uint8*)FCEU_malloc(FDSROMSize);
-#else
-	FDSROM = (uint8*)ahb_calloc(1, FDSROMSize);
-#endif
-
-	if (!FDSROM)
+if (!FDSROM)
 		return (0);
 
 	for (x = 0; x < TotalSides; x++)
 		diskdata[x] = &FDSROM[x * BYTES_PER_SIDE];
 
-#ifndef TARGET_GNW
 	md5_starts(&md5);
 
 	for (x = 0; x < TotalSides; x++) {
@@ -620,9 +658,9 @@ static int SubLoad(FCEUFILE *fp) {
 		md5_update(&md5, diskdata[x], 65500);
 	}
 	md5_finish(&md5, GameInfo->MD5);
-#endif
 	return(1);
 }
+#endif
 
 static void PreSave(void) {
 	int x;
@@ -642,6 +680,220 @@ static void PostSave(void) {
 	}
 }
 
+int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
+	int x;
+	FCEU_PrintError("FDSLoad\n");
+
+	retro_emulator_file_t *rom_file;
+
+	rom_system_t *rom_system = (rom_system_t *)rom_manager_system(&rom_mgr, "NES_BIOS");
+	rom_file = (retro_emulator_file_t *)rom_manager_get_file((const rom_system_t *)rom_system,"disksys.rom");
+	if (rom_file == NULL) {
+		FCEU_PrintError("FDS BIOS ROM image missing!\n");
+		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
+		return 0;
+	}
+
+	FreeFDSMemory();
+
+	ResetCartMapping();
+
+	FDSBIOSsize = 8192;
+	FDSBIOS = (uint8_t *)rom_file->address;
+
+	SetupCartPRGMapping(0, FDSBIOS, FDSBIOSsize, 0);
+
+	if (!SubLoadRom((uint8 *)rom, rom_size)) {
+		FDSBIOS = NULL;
+		return(0);
+	}
+
+	for (x = 0; x < TotalSides; x++) {
+		diskdatao[x] = diskdata[x];
+	}
+	
+	DiskWritten = 1;
+
+	GameInfo->type = GIT_FDS;
+	GameInterface = FDSGI;
+
+	SelectDisk = 0;
+	InDisk = 255;
+
+	ResetExState(PreSave, PostSave);
+	FDSSoundStateAdd();
+
+	for (x = 0; x < TotalSides; x++) {
+		char temp[5];
+		sprintf(temp, "DDT%d", x);
+		AddExState(diskdata[x], 65500, 0, temp);
+	}
+
+	AddExState(&FDSRegs[0], 1, 0, "REG1");
+	AddExState(&FDSRegs[1], 1, 0, "REG2");
+	AddExState(&FDSRegs[2], 1, 0, "REG3");
+	AddExState(&FDSRegs[3], 1, 0, "REG4");
+	AddExState(&FDSRegs[4], 1, 0, "REG5");
+	AddExState(&FDSRegs[5], 1, 0, "REG6");
+	AddExState(&IRQCount, 4 | FCEUSTATE_RLSB, 1, "IRQC");
+	AddExState(&IRQLatch, 4 | FCEUSTATE_RLSB, 1, "IQL1");
+	AddExState(&IRQa, 1, 0, "IRQA");
+	AddExState(&writeskip, 1, 0, "WSKI");
+	AddExState(&DiskPtr, 4 | FCEUSTATE_RLSB, 1, "DPTR");
+	AddExState(&DiskSeekIRQ, 4 | FCEUSTATE_RLSB, 1, "DSIR");
+	AddExState(&SelectDisk, 1, 0, "SELD");
+	AddExState(&InDisk, 1, 0, "INDI");
+	AddExState(&DiskWritten, 1, 0, "DSKW");
+
+	AddExState(&mapperFDS_control, 1, 0, "CTRG");
+	AddExState(&mapperFDS_filesize, 2 | FCEUSTATE_RLSB, 1, "FLSZ");
+	AddExState(&mapperFDS_block, 1, 0, "BLCK");
+	AddExState(&mapperFDS_blockstart, 2 | FCEUSTATE_RLSB, 1, "BLKS");
+	AddExState(&mapperFDS_blocklen, 2 | FCEUSTATE_RLSB, 1, "BLKL");
+	AddExState(&mapperFDS_diskaddr, 2 | FCEUSTATE_RLSB, 1, "DADR");
+	AddExState(&mapperFDS_diskaccess, 1, 0, "DACC");
+
+	CHRRAMSize = 8192;
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSize);
+	SetupCartCHRMapping(0, CHRRAM, CHRRAMSize, 1);
+	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
+
+	FDSRAMSize = 32768;
+	FDSRAM = (uint8*)ahb_calloc(1, FDSRAMSize);
+	SetupCartPRGMapping(1, FDSRAM, FDSRAMSize, 1);
+	AddExState(FDSRAM, FDSRAMSize, 0, "FDSR");
+
+	SetupCartMirroring(0, 0, 0);
+
+	FCEU_printf(" Code         : %02x\n", diskdata[0][0xf]);
+	FCEU_printf(" Manufacturer : %s\n", getManufacturer(diskdata[0][0xf]));
+	FCEU_printf(" # of Sides   : %d\n", TotalSides);
+//	FCEU_printf(" ROM MD5      : 0x%s\n", md5_asciistr(GameInfo->MD5));
+
+	FCEUI_SetVidSystem(0);
+#if 0
+	char *fn = FCEU_MakeFName(FCEUMKF_FDSROM, 0, 0);
+
+	if (!(zp = FCEU_fopen(fn, NULL, 0))) {
+		FCEU_PrintError("FDS BIOS ROM image missing!\n");
+		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
+		free(fn);
+		return 0;
+	}
+
+	free(fn);
+
+	FreeFDSMemory();
+
+	ResetCartMapping();
+
+	FDSBIOSsize = 8192;
+#ifndef TARGET_GNW
+	FDSBIOS = (uint8*)FCEU_gmalloc(FDSBIOSsize);
+#else
+	FDSBIOS = (uint8*)ahb_calloc(1, FDSBIOSsize);
+#endif
+	SetupCartPRGMapping(0, FDSBIOS, FDSBIOSsize, 0);
+
+	if (FCEU_fread(FDSBIOS, 1, FDSBIOSsize, zp) != FDSBIOSsize) {
+		if (FDSBIOS)
+			free(FDSBIOS);
+		FDSBIOS = NULL;
+		FCEU_fclose(zp);
+		FCEU_PrintError("Error reading FDS BIOS ROM image.\n");
+		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "Error reading FDS BIOS image (disksys.rom)");
+		return 0;
+	}
+
+	FCEU_fclose(zp);
+
+	FCEU_fseek(fp, 0, SEEK_SET);
+
+	if (!SubLoad(fp)) {
+		if (FDSBIOS)
+			free(FDSBIOS);
+		FDSBIOS = NULL;
+		return(0);
+	}
+
+	//TODO : Sylver fix memory usage for the G&W
+	for (x = 0; x < TotalSides; x++) {
+		diskdatao[x] = (uint8*)FCEU_malloc(65500);
+		memcpy(diskdatao[x], diskdata[x], 65500);
+	}
+	
+	DiskWritten = 1;
+
+	GameInfo->type = GIT_FDS;
+	GameInterface = FDSGI;
+
+	SelectDisk = 0;
+	InDisk = 255;
+
+	ResetExState(PreSave, PostSave);
+	FDSSoundStateAdd();
+
+	for (x = 0; x < TotalSides; x++) {
+		char temp[5];
+		sprintf(temp, "DDT%d", x);
+		AddExState(diskdata[x], 65500, 0, temp);
+	}
+
+	AddExState(&FDSRegs[0], 1, 0, "REG1");
+	AddExState(&FDSRegs[1], 1, 0, "REG2");
+	AddExState(&FDSRegs[2], 1, 0, "REG3");
+	AddExState(&FDSRegs[3], 1, 0, "REG4");
+	AddExState(&FDSRegs[4], 1, 0, "REG5");
+	AddExState(&FDSRegs[5], 1, 0, "REG6");
+	AddExState(&IRQCount, 4 | FCEUSTATE_RLSB, 1, "IRQC");
+	AddExState(&IRQLatch, 4 | FCEUSTATE_RLSB, 1, "IQL1");
+	AddExState(&IRQa, 1, 0, "IRQA");
+	AddExState(&writeskip, 1, 0, "WSKI");
+	AddExState(&DiskPtr, 4 | FCEUSTATE_RLSB, 1, "DPTR");
+	AddExState(&DiskSeekIRQ, 4 | FCEUSTATE_RLSB, 1, "DSIR");
+	AddExState(&SelectDisk, 1, 0, "SELD");
+	AddExState(&InDisk, 1, 0, "INDI");
+	AddExState(&DiskWritten, 1, 0, "DSKW");
+
+	AddExState(&mapperFDS_control, 1, 0, "CTRG");
+	AddExState(&mapperFDS_filesize, 2 | FCEUSTATE_RLSB, 1, "FLSZ");
+	AddExState(&mapperFDS_block, 1, 0, "BLCK");
+	AddExState(&mapperFDS_blockstart, 2 | FCEUSTATE_RLSB, 1, "BLKS");
+	AddExState(&mapperFDS_blocklen, 2 | FCEUSTATE_RLSB, 1, "BLKL");
+	AddExState(&mapperFDS_diskaddr, 2 | FCEUSTATE_RLSB, 1, "DADR");
+	AddExState(&mapperFDS_diskaccess, 1, 0, "DACC");
+
+	CHRRAMSize = 8192;
+#ifndef TARGET_GNW
+	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
+#else
+	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSize);
+#endif
+	SetupCartCHRMapping(0, CHRRAM, CHRRAMSize, 1);
+	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
+
+	FDSRAMSize = 32768;
+#ifndef TARGET_GNW
+	FDSRAM = (uint8*)FCEU_gmalloc(FDSRAMSize);
+#else
+	FDSRAM = (uint8*)ahb_calloc(1, FDSRAMSize);
+#endif
+	SetupCartPRGMapping(1, FDSRAM, FDSRAMSize, 1);
+	AddExState(FDSRAM, FDSRAMSize, 0, "FDSR");
+
+	SetupCartMirroring(0, 0, 0);
+
+	FCEU_printf(" Code         : %02x\n", diskdata[0][0xf]);
+	FCEU_printf(" Manufacturer : %s\n", getManufacturer(diskdata[0][0xf]));
+	FCEU_printf(" # of Sides   : %d\n", TotalSides);
+	FCEU_printf(" ROM MD5      : 0x%s\n", md5_asciistr(GameInfo->MD5));
+
+	FCEUI_SetVidSystem(0);
+#endif
+	return 1;
+}
+
+#if 0
 int FDSLoad(const char *name, FCEUFILE *fp) {
 	FCEUFILE *zp;
 	int x;
@@ -766,6 +1018,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 
 	return 1;
 }
+#endif
 
 void FDSClose(void) {
 	int x;

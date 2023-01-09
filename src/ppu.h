@@ -23,4 +23,17 @@ void FCEUPPU_LoadState(int version);
 extern int scanline;
 extern uint8 PPU[4];
 
+DECLFR(A200x);
+DECLFR(A2002);
+DECLFR(A2007);
+DECLFW(B2000);
+DECLFW(B2001);
+DECLFW(B2002);
+DECLFW(B2003);
+DECLFW(B2004);
+DECLFW(B2005);
+DECLFW(B2006);
+DECLFW(B2007);
+DECLFW(B4014);
+
 #endif

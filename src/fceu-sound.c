@@ -195,7 +195,7 @@ static void SQReload(int x, uint8 V) {
 	EnvUnits[x].reloaddec = 1;
 }
 
-static DECLFW(Write_PSG) {
+DECLFW(Write_PSG) {
 	A &= 0x1F;
 	switch (A) {
 	case 0x0:
@@ -278,7 +278,7 @@ static DECLFW(Write_PSG) {
 	PSG[A] = V;
 }
 
-static DECLFW(Write_DMCRegs) {
+DECLFW(Write_DMCRegs) {
 	A &= 0xF;
 
 	switch (A) {
@@ -311,7 +311,7 @@ static DECLFW(Write_DMCRegs) {
 	}
 }
 
-static DECLFW(StatusWrite) {
+DECLFW(StatusWrite) {
 	int x;
 
 	DoSQ1();
@@ -334,7 +334,7 @@ static DECLFW(StatusWrite) {
 	EnabledChannels = V & 0x1F;
 }
 
-static DECLFR(StatusRead) {
+DECLFR(StatusRead) {
 	int x;
 	uint8 ret;
 
@@ -966,12 +966,14 @@ DECLFW(Write_IRQFM) {
 }
 
 void SetNESSoundMap(void) {
+#ifndef TARGET_GNW
 	SetWriteHandler(0x4000, 0x400F, Write_PSG);
 	SetWriteHandler(0x4010, 0x4013, Write_DMCRegs);
 	SetWriteHandler(0x4017, 0x4017, Write_IRQFM);
 
 	SetWriteHandler(0x4015, 0x4015, StatusWrite);
 	SetReadHandler(0x4015, 0x4015, StatusRead);
+#endif
 }
 
 static int32 inbuf = 0;

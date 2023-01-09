@@ -485,7 +485,9 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "PAL-ZZ SMB/TETRIS/NWC",     37, Mapper37_Init          )
 	INES_BOARD( "Bit Corp.",                 38, Mapper38_Init          ) /* Crime Busters */
 /*    INES_BOARD( "",                         39, Mapper39_Init ) */
+#endif
 	INES_BOARD( "SMB2j FDS",                 40, Mapper40_Init          )
+#ifndef TARGET_GNW
 	INES_BOARD( "CALTRON 6-in-1",            41, Mapper41_Init          )
 	INES_BOARD( "BIO MIRACLE FDS",           42, Mapper42_Init          )
 	INES_BOARD( "FDS SMB2j LF36",            43, Mapper43_Init          )

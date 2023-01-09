@@ -11,4 +11,9 @@ void FDSSoundPower(void);
 uint8 FDSSoundRead(uint32 A);          /* $4040-$407F, $4090-$4092 */
 void FDSSoundWrite(uint32 A, uint8 V); /* $4040-$407F, $4080-$408A */
 
+DECLFR(FDSWaveRead);
+DECLFR(FDSSRead);
+DECLFW(FDSWaveWrite);
+DECLFW(FDSSWrite);
+
 #endif /* FDS_APU_H */
