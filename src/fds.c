@@ -768,132 +768,12 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	FCEU_printf(" Code         : %02x\n", diskdata[0][0xf]);
 	FCEU_printf(" Manufacturer : %s\n", getManufacturer(diskdata[0][0xf]));
 	FCEU_printf(" # of Sides   : %d\n", TotalSides);
-//	FCEU_printf(" ROM MD5      : 0x%s\n", md5_asciistr(GameInfo->MD5));
 
 	FCEUI_SetVidSystem(0);
-#if 0
-	char *fn = FCEU_MakeFName(FCEUMKF_FDSROM, 0, 0);
-
-	if (!(zp = FCEU_fopen(fn, NULL, 0))) {
-		FCEU_PrintError("FDS BIOS ROM image missing!\n");
-		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
-		free(fn);
-		return 0;
-	}
-
-	free(fn);
-
-	FreeFDSMemory();
-
-	ResetCartMapping();
-
-	FDSBIOSsize = 8192;
-#ifndef TARGET_GNW
-	FDSBIOS = (uint8*)FCEU_gmalloc(FDSBIOSsize);
-#else
-	FDSBIOS = (uint8*)ahb_calloc(1, FDSBIOSsize);
-#endif
-	SetupCartPRGMapping(0, FDSBIOS, FDSBIOSsize, 0);
-
-	if (FCEU_fread(FDSBIOS, 1, FDSBIOSsize, zp) != FDSBIOSsize) {
-		if (FDSBIOS)
-			free(FDSBIOS);
-		FDSBIOS = NULL;
-		FCEU_fclose(zp);
-		FCEU_PrintError("Error reading FDS BIOS ROM image.\n");
-		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "Error reading FDS BIOS image (disksys.rom)");
-		return 0;
-	}
-
-	FCEU_fclose(zp);
-
-	FCEU_fseek(fp, 0, SEEK_SET);
-
-	if (!SubLoad(fp)) {
-		if (FDSBIOS)
-			free(FDSBIOS);
-		FDSBIOS = NULL;
-		return(0);
-	}
-
-	//TODO : Sylver fix memory usage for the G&W
-	for (x = 0; x < TotalSides; x++) {
-		diskdatao[x] = (uint8*)FCEU_malloc(65500);
-		memcpy(diskdatao[x], diskdata[x], 65500);
-	}
-	
-	DiskWritten = 1;
-
-	GameInfo->type = GIT_FDS;
-	GameInterface = FDSGI;
-
-	SelectDisk = 0;
-	InDisk = 255;
-
-	ResetExState(PreSave, PostSave);
-	FDSSoundStateAdd();
-
-	for (x = 0; x < TotalSides; x++) {
-		char temp[5];
-		sprintf(temp, "DDT%d", x);
-		AddExState(diskdata[x], 65500, 0, temp);
-	}
-
-	AddExState(&FDSRegs[0], 1, 0, "REG1");
-	AddExState(&FDSRegs[1], 1, 0, "REG2");
-	AddExState(&FDSRegs[2], 1, 0, "REG3");
-	AddExState(&FDSRegs[3], 1, 0, "REG4");
-	AddExState(&FDSRegs[4], 1, 0, "REG5");
-	AddExState(&FDSRegs[5], 1, 0, "REG6");
-	AddExState(&IRQCount, 4 | FCEUSTATE_RLSB, 1, "IRQC");
-	AddExState(&IRQLatch, 4 | FCEUSTATE_RLSB, 1, "IQL1");
-	AddExState(&IRQa, 1, 0, "IRQA");
-	AddExState(&writeskip, 1, 0, "WSKI");
-	AddExState(&DiskPtr, 4 | FCEUSTATE_RLSB, 1, "DPTR");
-	AddExState(&DiskSeekIRQ, 4 | FCEUSTATE_RLSB, 1, "DSIR");
-	AddExState(&SelectDisk, 1, 0, "SELD");
-	AddExState(&InDisk, 1, 0, "INDI");
-	AddExState(&DiskWritten, 1, 0, "DSKW");
-
-	AddExState(&mapperFDS_control, 1, 0, "CTRG");
-	AddExState(&mapperFDS_filesize, 2 | FCEUSTATE_RLSB, 1, "FLSZ");
-	AddExState(&mapperFDS_block, 1, 0, "BLCK");
-	AddExState(&mapperFDS_blockstart, 2 | FCEUSTATE_RLSB, 1, "BLKS");
-	AddExState(&mapperFDS_blocklen, 2 | FCEUSTATE_RLSB, 1, "BLKL");
-	AddExState(&mapperFDS_diskaddr, 2 | FCEUSTATE_RLSB, 1, "DADR");
-	AddExState(&mapperFDS_diskaccess, 1, 0, "DACC");
-
-	CHRRAMSize = 8192;
-#ifndef TARGET_GNW
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
-#else
-	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSize);
-#endif
-	SetupCartCHRMapping(0, CHRRAM, CHRRAMSize, 1);
-	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
-
-	FDSRAMSize = 32768;
-#ifndef TARGET_GNW
-	FDSRAM = (uint8*)FCEU_gmalloc(FDSRAMSize);
-#else
-	FDSRAM = (uint8*)ahb_calloc(1, FDSRAMSize);
-#endif
-	SetupCartPRGMapping(1, FDSRAM, FDSRAMSize, 1);
-	AddExState(FDSRAM, FDSRAMSize, 0, "FDSR");
-
-	SetupCartMirroring(0, 0, 0);
-
-	FCEU_printf(" Code         : %02x\n", diskdata[0][0xf]);
-	FCEU_printf(" Manufacturer : %s\n", getManufacturer(diskdata[0][0xf]));
-	FCEU_printf(" # of Sides   : %d\n", TotalSides);
-	FCEU_printf(" ROM MD5      : 0x%s\n", md5_asciistr(GameInfo->MD5));
-
-	FCEUI_SetVidSystem(0);
-#endif
 	return 1;
 }
 
-#if 0
+#ifndef TARGET_GNW
 int FDSLoad(const char *name, FCEUFILE *fp) {
 	FCEUFILE *zp;
 	int x;
@@ -914,11 +794,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 	ResetCartMapping();
 
 	FDSBIOSsize = 8192;
-#ifndef TARGET_GNW
 	FDSBIOS = (uint8*)FCEU_gmalloc(FDSBIOSsize);
-#else
-	FDSBIOS = (uint8*)ahb_calloc(1, FDSBIOSsize);
-#endif
 	SetupCartPRGMapping(0, FDSBIOS, FDSBIOSsize, 0);
 
 	if (FCEU_fread(FDSBIOS, 1, FDSBIOSsize, zp) != FDSBIOSsize) {
@@ -942,7 +818,6 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 		return(0);
 	}
 
-	//TODO : Sylver fix memory usage for the G&W
 	for (x = 0; x < TotalSides; x++) {
 		diskdatao[x] = (uint8*)FCEU_malloc(65500);
 		memcpy(diskdatao[x], diskdata[x], 65500);
@@ -990,20 +865,12 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 	AddExState(&mapperFDS_diskaccess, 1, 0, "DACC");
 
 	CHRRAMSize = 8192;
-#ifndef TARGET_GNW
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
-#else
-	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSize);
-#endif
 	SetupCartCHRMapping(0, CHRRAM, CHRRAMSize, 1);
 	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
 
 	FDSRAMSize = 32768;
-#ifndef TARGET_GNW
 	FDSRAM = (uint8*)FCEU_gmalloc(FDSRAMSize);
-#else
-	FDSRAM = (uint8*)ahb_calloc(1, FDSRAMSize);
-#endif
 	SetupCartPRGMapping(1, FDSRAM, FDSRAMSize, 1);
 	AddExState(FDSRAM, FDSRAMSize, 0, "FDSR");
 
