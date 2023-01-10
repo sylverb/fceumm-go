@@ -966,7 +966,8 @@ DECLFW(Write_IRQFM) {
 }
 
 void SetNESSoundMap(void) {
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
+
 	SetWriteHandler(0x4000, 0x400F, Write_PSG);
 	SetWriteHandler(0x4010, 0x4013, Write_DMCRegs);
 	SetWriteHandler(0x4017, 0x4017, Write_IRQFM);

@@ -274,7 +274,7 @@ static void FDS_ESI(void) {
 			fdso.cycles /= FSettings.SndRate * 16;
 		}
 	}
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	SetReadHandler(0x4040, 0x407f, FDSWaveRead);
 	SetWriteHandler(0x4040, 0x407f, FDSWaveWrite);
 	SetWriteHandler(0x4080, 0x408A, FDSSWrite);

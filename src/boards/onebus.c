@@ -303,7 +303,7 @@ static void UNLOneBusCpuHook(int a) {
 				X6502_IRQBegin(FCEU_IQEXT);
 			} else {
 				uint16 addr = pcm_addr | ((apu40xx[0x30]^3) << 14);
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 				uint8 raw_pcm = ARead[addr](addr) >> 1;
 #else
 				uint8 raw_pcm = fceu_read(addr) >> 1;

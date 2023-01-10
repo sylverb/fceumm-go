@@ -74,7 +74,7 @@ static INPUTCFC *FCExp = 0;
 
 void (*InputScanlineHook)(uint8 *bg, uint8 *spr, uint32 linets, int final);
 
-static DECLFR(JPRead)
+DECLFR(JPRead)
 {
 	uint8 ret = 0;
 
@@ -90,7 +90,7 @@ static DECLFR(JPRead)
 	return(ret);
 }
 
-static DECLFW(B4016)
+DECLFW(B4016)
 {
 	if (FCExp)
 		if (FCExp->Write)
@@ -379,6 +379,7 @@ void InitializeInput(void)
    memset(joy,0,sizeof(joy));
    LastStrobe = 0;
 
+#ifdef FCEU_LOW_RAM
 #ifndef TARGET_GNW
    if (GameInfo && GameInfo->type == GIT_VSUNI)
    {
@@ -390,6 +391,7 @@ void InitializeInput(void)
       SetReadHandler(0x4016, 0x4017, JPRead);
 
    SetWriteHandler(0x4016, 0x4016, B4016);
+#endif
 
    SetInputStuff(0);
    SetInputStuff(1);

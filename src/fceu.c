@@ -54,12 +54,20 @@ void (*GameInterface)(int h);
 
 void (*GameStateRestore)(int version);
 
-#ifndef TARGET_GNW // It's using too much ram for the G&W, so we are using another method to handle that
+#ifdef TARGET_GNW
+static FCEUGI gameinfo_global;
+#endif
+
+// FCEU_LOW_RAM define allows to use a less RAM consuming method (but less CPU optimized)
+// for memory handlers (allows to save about 512KBytes of RAM)
+#ifndef FCEU_LOW_RAM
 readfunc ARead[0x10000];
 writefunc BWrite[0x10000];
+#ifndef TARGET_GNW
 static readfunc *AReadG = NULL;
 static writefunc *BWriteG = NULL;
 static int RWWrap = 0;
+#endif
 #else
 typedef struct
 {
@@ -159,12 +167,21 @@ void FlushGenieRW(void)
 
 readfunc FASTAPASS(1) GetReadHandler(int32 a)
 {
+#ifndef FCEU_LOW_RAM
 #ifndef TARGET_GNW
 	if (a >= 0x8000 && RWWrap)
 		return AReadG[a - 0x8000];
 	else
+#endif
 		return ARead[a];
 #else
+	/* Search in dynamically assigned functions */
+	for (int i = memRead_index-1; i >= 0; i--) {
+		if ((a >= MemRead[i].min_range) && (a <= MemRead[i].max_range) ) {
+			return MemRead[i].read_func;
+		}
+	}
+
 	switch (a>>11) {
 		case 0: /* 0-0x7FF */
 			return ARAML;
@@ -187,6 +204,8 @@ readfunc FASTAPASS(1) GetReadHandler(int32 a)
 		case 8: /* 0x4000 - 0x47FF */
 			if (a == 0x4015)
 				return StatusRead;
+			if ((a == 0x4016) || (a == 0x4017))
+				return JPRead;
 			else if (a == 0x4030)
 				return FDSRead4030;
 			else if (a == 0x4031)
@@ -201,19 +220,19 @@ readfunc FASTAPASS(1) GetReadHandler(int32 a)
 				return FDSSRead;
 	}
 
-	/* Search in dynamically assigned functions */
-	for (int i=0; i<memRead_index;i++) {
-		if ((a >= MemRead[i].min_range) && (a <= MemRead[i].max_range) ) {
-			return MemRead[i].read_func;
-		}
-	}
-
 	return ANull;
 #endif
 }
 
-#ifdef TARGET_GNW
+#ifdef FCEU_LOW_RAM
 uint8 fceu_read(int32 a) {
+	/* Search in dynamically assigned functions */
+	for (int i = memRead_index-1; i >= 0; i--) {
+		if ((a >= MemRead[i].min_range) && (a <= MemRead[i].max_range) ) {
+			return MemRead[i].read_func(a);
+		}
+	}
+
 	switch (a>>11) {
 		case 0: /* 0-0x7FF */
 			return RAM[a];
@@ -236,6 +255,8 @@ uint8 fceu_read(int32 a) {
 		case 8: /* 0x4000 - 0x47FF */
 			if (a == 0x4015)
 				return StatusRead(a);
+			if ((a == 0x4016) || (a == 0x4017))
+				return JPRead(a);
 			else if (a == 0x4030)
 				return FDSRead4030(a);
 			else if (a == 0x4031)
@@ -250,26 +271,20 @@ uint8 fceu_read(int32 a) {
 				return FDSSRead(a);
 	}
 
-	/* Search in dynamically assigned functions */
-	for (int i=0; i<memRead_index;i++) {
-		if ((a >= MemRead[i].min_range) && (a <= MemRead[i].max_range) ) {
-			return MemRead[i].read_func(a);
-		}
-	}
-
 	return(X.DB);
 }
 #endif
 
 void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 {
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	int32 x;
 #endif
 	printf("SetReadHandler %lx-%lx %lx\n",start,end,(int32)func);
 	if (!func)
 		func = ANull;
 
+#ifndef FCEU_LOW_RAM
 #ifndef TARGET_GNW
 	if (RWWrap)
 		for (x = end; x >= start; x--)
@@ -280,6 +295,7 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
             ARead[x] = func;
       }
 	else
+#endif
 		for (x = end; x >= start; x--)
 			ARead[x] = func;
 #else
@@ -296,12 +312,20 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 
 writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 {
+#ifndef FCEU_LOW_RAM
 #ifndef TARGET_GNW
 	if (RWWrap && a >= 0x8000)
 		return BWriteG[a - 0x8000];
 	else
+#endif
 		return BWrite[a];
 #else
+	/* Search in dynamically assigned functions */
+	for (int i = memWrite_index-1; i >= 0; i--) {
+		if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
+			return MemWrite[i].write_func;
+		}
+	}
 	switch (a>>11) {
 		case 0:
 			return BRAML;
@@ -336,8 +360,12 @@ writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 				return Write_PSG;
 			} else if (a < 0x4014) {
 				return Write_DMCRegs;
+			} else if (a == 0x4014) {
+				return B4014;
 			} else if (a == 0x4015) {
 				return StatusWrite;
+			} else if (a == 0x4016) {
+				return B4016;
 			} else if (a == 0x4017) {
 				return Write_IRQFM;
 			} else if ((a >= 0x4040) && (a < 0x4080)) {
@@ -346,22 +374,19 @@ writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 				return FDSSWrite;
 			}
 	}
-	/* Search in dynamically assigned functions */
-	for (int i=0; i<memWrite_index;i++) {
-		if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
-			return MemWrite[i].write_func;
-		}
-	}
-	if (a == 0x4014) {
-		return B4014;
-	}
 
 	return BNull;
 #endif
 }
 
-#ifdef TARGET_GNW
+#ifdef FCEU_LOW_RAM
 void fceu_write(int32 a,uint8 v) {
+	for (int i = memWrite_index-1; i >= 0; i--) {
+			if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
+				MemWrite[i].write_func(a,v);
+				return;
+			}
+	}
 	switch (a>>11) {
 		case 0:
 			RAM[a] = v;
@@ -408,9 +433,14 @@ void fceu_write(int32 a,uint8 v) {
 			} else if (a < 0x4014) {
 				Write_DMCRegs(a,v);
 				return;
+			} else if (a == 0x4014) {
+				B4014(a,v);
+				return;
 			} else if (a == 0x4015) {
 				StatusWrite(a,v);
 				return;
+			} else if (a == 0x4016) {
+				return B4016;
 			} else if (a == 0x4017) {
 				Write_IRQFM(a,v);
 				return;
@@ -422,22 +452,12 @@ void fceu_write(int32 a,uint8 v) {
 				return;
 			}
 	}
-	for (int i=0; i<memWrite_index;i++) {
-			if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
-				MemWrite[i].write_func(a,v);
-				return;
-			}
-			if (a == 0x4014) {
-				B4014(a,v);
-				return;
-			}
-	}
 }
 #endif
 
 void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 {
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	int32 x;
 #endif
 
@@ -445,6 +465,7 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 	if (!func)
 		func = BNull;
 
+#ifndef FCEU_LOW_RAM
 #ifndef TARGET_GNW
 	if (RWWrap)
 		for (x = end; x >= start; x--)
@@ -455,6 +476,7 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 				BWrite[x] = func;
 		}
 	else
+#endif
 		for (x = end; x >= start; x--)
 			BWrite[x] = func;
 #else
@@ -529,7 +551,7 @@ FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufs
 {
    ResetGameLoaded();
 
-   GameInfo = malloc(sizeof(FCEUGI));
+   GameInfo = &gameinfo_global;
    memset(GameInfo, 0, sizeof(FCEUGI));
 
    GameInfo->soundchan = 0;
@@ -740,14 +762,15 @@ void PowerNES(void)
 	FCEU_CheatAddRAM(2, 0, RAM);
 
 	FCEU_GeniePower();
-#else
+#endif
+#ifdef FCEU_LOW_RAM
 	memRead_index = 0;
 	memWrite_index = 0;
 #endif
 
 	FCEU_MemoryRand(RAM, 0x800);
 
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	SetReadHandler(0x0000, 0xFFFF, ANull);
 	SetWriteHandler(0x0000, 0xFFFF, BNull);
 

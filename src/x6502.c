@@ -58,7 +58,7 @@ void FP_FASTAPASS(1) (*MapIRQHook)(int a);
 }
 
 static INLINE uint8 RdMemNorm(uint32 A) {
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	return(_DB = ARead[A](A));
 #else
     return(_DB = fceu_read(A));
@@ -66,7 +66,7 @@ static INLINE uint8 RdMemNorm(uint32 A) {
 }
 
 static INLINE void WrMemNorm(uint32 A, uint8 V) {
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	BWrite[A](A, V);
 #else
 	fceu_write(A, V);
@@ -101,7 +101,7 @@ static INLINE void WrRAMFast(uint32 A, uint8 V) {
 
 uint8 FASTAPASS(1) X6502_DMR(uint32 A) {
 	ADDCYC(1);
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	return(X.DB = ARead[A](A));
 #else
     return(X.DB = fceu_read(A));
@@ -110,7 +110,7 @@ uint8 FASTAPASS(1) X6502_DMR(uint32 A) {
 
 void FASTAPASS(2) X6502_DMW(uint32 A, uint8 V) {
 	ADDCYC(1);
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	BWrite[A](A, V);
 #else
 	fceu_write(A, V);

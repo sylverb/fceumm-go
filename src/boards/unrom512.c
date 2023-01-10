@@ -37,16 +37,20 @@
 #include "mapinc.h"
 
 /* Workaround for libretro api compatibility */
+#ifndef TARGET_GNW
 #define ROM_size_max                32
 #define flashdata_size          (ROM_size_max * 0x4000)
 #define flash_write_count_size  (ROM_size_max * 4 * sizeof(uint32))
 static uint8 fceumm_flash_buf[flashdata_size + flash_write_count_size];
 static uint32 fceumm_flash_buf_size = sizeof(fceumm_flash_buf);
+#endif
 
 static uint8 latche, latcheinit, bus_conflict, chrram_mask, software_id=0;
 static uint16 latcha;
+#ifndef TARGET_GNW
 static uint8 *flashdata = fceumm_flash_buf + flash_write_count_size;
 static uint32 *flash_write_count = (uint32*)fceumm_flash_buf;
+#endif
 static uint8 *FlashPage[32];
 /* static uint32 *FlashWriteCountPage[32]; */
 /* static uint8 flashloaded = 0; */
@@ -72,16 +76,27 @@ static INLINE void setfpageptr(int s, uint32 A, uint8 *p) {
 void setfprg16(uint32 A, uint32 V) {
 	if (PRGsize[0] >= 16384) {
 		V &= PRGmask16[0];
+#ifndef TARGET_GNW
 		setfpageptr(16, A, flashdata ? (&flashdata[V << 14]) : 0);
+#else
+		setfpageptr(16, A, 0);
+#endif
 	} else {
 		int x;
+#ifndef TARGET_GNW
 		uint32 VA = V << 3;
+#endif
 
 		for (x = 0; x < 8; x++)
+#ifndef TARGET_GNW
 			setfpageptr(2, A + (x << 11), flashdata ? (&flashdata[((VA + x) & PRGmask2[0]) << 11]) : 0);
+#else
+			setfpageptr(2, A + (x << 11), 0);
+#endif
 	}
 }
 
+#ifndef TARGET_GNW
 void inc_flash_write_count(uint8 bank, uint32 A) {
 	flash_write_count[(bank * 4) + ((A & 0x3000) >> 12)]++;
 	if (!flash_write_count[(bank * 4) + ((A & 0x3000) >> 12)])
@@ -91,6 +106,7 @@ void inc_flash_write_count(uint8 bank, uint32 A) {
 uint32 GetFlashWriteCount(uint8 bank, uint32 A) {
 	return flash_write_count[(bank * 4) + ((A & 0x3000) >> 12)];
 }
+#endif
 
 static void StateRestore(int version) {
 	WHSync();
@@ -119,6 +135,7 @@ static DECLFR(UNROM512LatchRead) {
 		else
 			return 0xBF;
 	}
+#ifndef TARGET_GNW
 	if (flash_save) {
 		if (A < 0xC000) {
 			if (GetFlashWriteCount(flash_bank, A))
@@ -128,6 +145,7 @@ static DECLFR(UNROM512LatchRead) {
 				return FlashPage[A >> 11][A];
 		}
 	}
+#endif
 	return Page[A >> 11][A];
 }
 
@@ -135,9 +153,11 @@ static void UNROM512LatchPower(void) {
 	latche = latcheinit;
 	WHSync();
 	SetReadHandler(0x8000, 0xFFFF, UNROM512LatchRead);
+#ifndef TARGET_GNW
 	if (!flash_save)
 		SetWriteHandler(0x8000, 0xFFFF, UNROM512HLatchWrite);
 	else
+#endif
 	{
 		SetWriteHandler(0x8000, 0xBFFF, UNROM512LLatchWrite);
 		SetWriteHandler(0xC000, 0xFFFF, UNROM512HLatchWrite);
@@ -172,6 +192,7 @@ static void UNROM512LSync(void) {
 			flash_state = 0;
 		}
 	}
+#ifndef TARGET_GNW
 	else if (flash_mode == 1) {	/* Chip Erase or Sector Erase */
 		if (latche == 0x30) {
 			inc_flash_write_count(flash_bank,latcha);
@@ -195,6 +216,7 @@ static void UNROM512LSync(void) {
 		flash_state = 0;
 		flash_mode = 0;
 	}
+#endif
 }
 
 static void UNROM512HSync(void) {
@@ -211,10 +233,12 @@ static void UNROM512HSync(void) {
 void UNROM512_Init(CartInfo *info) {
 	int mirror;
 
+#ifndef TARGET_GNW
 	memset(fceumm_flash_buf, 0x00, fceumm_flash_buf_size);
 	flash_state = 0;
 	flash_bank = 0;
 	flash_save = info->battery;
+#endif
 
 	if (info->CHRRamSize == 8192)
 		chrram_mask = 0;
@@ -245,6 +269,7 @@ void UNROM512_Init(CartInfo *info) {
 	info->Power = UNROM512LatchPower;
 	info->Close = UNROM512LatchClose;
 	GameStateRestore = StateRestore;
+#ifndef TARGET_GNW
 	if (flash_save)
 	{
 		info->SaveGame[0] = fceumm_flash_buf;
@@ -256,6 +281,7 @@ void UNROM512_Init(CartInfo *info) {
 		AddExState(&flash_bank, 1, 0, "FLASH_BANK");
 		AddExState(&latcha, 2, 0, "LATA");
 	}
+#endif
 	AddExState(&latche, 1, 0, "LATC");
 	AddExState(&bus_conflict, 1, 0, "BUSC");
 }

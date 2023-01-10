@@ -27,4 +27,7 @@ extern void (*InputScanlineHook)(uint8 *bg, uint8 *spr, uint32 linets, int final
 
 void FCEU_DoSimpleCommand(int cmd);
 
+DECLFR(JPRead);
+DECLFW(B4016);
+
 #endif

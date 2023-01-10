@@ -1090,7 +1090,7 @@ void FCEUPPU_Reset(void) {
 }
 
 void FCEUPPU_Power(void) {
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	int x;
 #endif
 
@@ -1099,7 +1099,7 @@ void FCEUPPU_Power(void) {
 	memset(UPALRAM, 0x00, 0x03);
 	memset(SPRAM, 0x00, 0x100);
 	FCEUPPU_Reset();
-#ifndef TARGET_GNW
+#ifndef FCEU_LOW_RAM
 	for (x = 0x2000; x < 0x4000; x += 8) {
 		ARead[x] = A200x;
 		BWrite[x] = B2000;
