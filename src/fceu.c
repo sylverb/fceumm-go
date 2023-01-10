@@ -440,7 +440,7 @@ void fceu_write(int32 a,uint8 v) {
 				StatusWrite(a,v);
 				return;
 			} else if (a == 0x4016) {
-				return B4016;
+				return B4016(a,v);
 			} else if (a == 0x4017) {
 				Write_IRQFM(a,v);
 				return;
