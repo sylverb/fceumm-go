@@ -441,7 +441,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "UNROM",                      2, UNROM_Init             )
 #endif
 #ifdef NES_MAPPER_003
-	INES_BOARD( "CNROM",                      3, CNROM_Init             ) // Sylver : corrupted GFX
+	INES_BOARD( "CNROM",                      3, CNROM_Init             )
 #endif
 #ifdef NES_MAPPER_004
 	INES_BOARD( "MMC3",                       4, Mapper4_Init           )
@@ -465,7 +465,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "MMC4",                      10, Mapper10_Init          )
 #endif
 #ifdef NES_MAPPER_011
-	INES_BOARD( "Color Dreams",              11, Mapper11_Init          ) // Sylver : corrupted GFX
+	INES_BOARD( "Color Dreams",              11, Mapper11_Init          )
 #endif
 #ifdef NES_MAPPER_012
 	INES_BOARD( "REX DBZ 5",                 12, Mapper12_Init          )
@@ -1786,8 +1786,10 @@ int iNESLoad(const char *name, const uint8_t *rom, uint32_t rom_size)
 
    if (iNESCart.CHRRomSize)
    {
-	  VROM = (uint8 *)(rom + offset);
-	  offset+=iNESCart.CHRRomSize;
+      vrom_size_pow2 = uppow2(iNESCart.CHRRomSize);
+
+      VROM = (uint8 *)(rom + offset);
+      offset+=iNESCart.CHRRomSize;
    }
 
    iNESCart.PRGCRC32   = crc32_le(0, ROM, iNESCart.PRGRomSize);
@@ -1827,30 +1829,6 @@ int iNESLoad(const char *name, const uint8_t *rom, uint32_t rom_size)
    
    if (iNESCart.iNES2 < 1)
       CheckHInfo();
-
-/*   {
-      int x;
-      int mapper    = iNESCart.mapper;
-      int mirroring = iNESCart.mirror;
-
-      for (x = 0; x < 8; x++)
-         partialmd5 |= (uint64)iNESCart.MD5[7 - x] << (x * 8);
-
-      FCEU_VSUniCheck(partialmd5, &mapper, &mirroring);
-
-      if ((mapper != iNESCart.mapper) || (mirroring != iNESCart.mirror))
-      {
-         FCEU_PrintError("\n");
-         FCEU_PrintError(" Incorrect VS-Unisystem header information!\n");
-         if (mapper != iNESCart.mapper)
-            FCEU_PrintError(" Mapper:    %d\n", mapper);
-         if (mirroring != iNESCart.mirror)
-            FCEU_PrintError(" Mirroring: %s\n",
-                  (mirroring == 2) ? "None (Four-screen)" : mirroring ? "Vertical" : "Horizontal");
-         iNESCart.mapper = mapper;
-         iNESCart.mirror = mirroring;
-      }
-   }*/
 
    /* Must remain here because above functions might change value of
     * VROM_size and free(VROM).
