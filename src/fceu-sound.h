@@ -20,6 +20,7 @@
 
 #ifndef _FCEU_SOUND_H
 #define _FCEU_SOUND_H
+#include "fceu.h"
 
 typedef struct {
 	void (*Fill)(int Count);	/* Low quality ext sound. */

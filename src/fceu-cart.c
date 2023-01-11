@@ -70,6 +70,7 @@ uint32 CHRmask2[32];
 uint32 CHRmask4[32];
 uint32 CHRmask8[32];
 
+#ifndef TARGET_GNW
 int geniestage = 0;
 
 int modcon;
@@ -78,6 +79,7 @@ uint8 genieval[3];
 uint8 geniech[3];
 
 uint32 genieaddr[3];
+#endif
 
 static INLINE void setpageptr(int s, uint32 A, uint8 *p, int ram) {
 	uint32 AB = A >> 11;

@@ -69,7 +69,9 @@ typedef struct {
 	int reloaddec;
 } ENVUNIT;
 
+#ifndef TARGET_GNW
 unsigned DMC_7bit = 0; /* used to skip overclocking */
+#endif
 static ENVUNIT EnvUnits[3];
 
 static const int RectDuties[4] = { 1, 2, 4, 6 };
@@ -202,8 +204,10 @@ DECLFW(Write_PSG) {
 		DoSQ1();
 		EnvUnits[0].Mode = (V & 0x30) >> 4;
 		EnvUnits[0].Speed = (V & 0xF);
+#ifndef TARGET_GNW
 		if (swapDuty)
 			V = (V & 0x3F) | ((V & 0x80) >> 1) | ((V & 0x40) << 1);
+#endif
 		break;
 	case 0x1:
 		DoSQ1();
@@ -223,8 +227,10 @@ DECLFW(Write_PSG) {
 		DoSQ2();
 		EnvUnits[1].Mode = (V & 0x30) >> 4;
 		EnvUnits[1].Speed = (V & 0xF);
+#ifndef TARGET_GNW
 		if (swapDuty)
 			V = (V & 0x3F) | ((V & 0x80) >> 1) | ((V & 0x40) << 1);
+#endif
 		break;
 	case 0x5:
 		DoSQ2();
@@ -295,18 +301,24 @@ DECLFW(Write_DMCRegs) {
 		break;
 	case 0x01: DoPCM();
 		RawDALatch = V & 0x7F;
+#ifndef TARGET_GNW
 		if (RawDALatch)
 			DMC_7bit = 1;
+#endif
 		break;
 	case 0x02:
 		DMCAddressLatch = V;
+#ifndef TARGET_GNW
 		if (V)
 			DMC_7bit = 0;
+#endif
 		break;
 	case 0x03:
 		DMCSizeLatch = V;
+#ifndef TARGET_GNW
 		if (V)
 			DMC_7bit = 0;
+#endif
       break;
 	}
 }

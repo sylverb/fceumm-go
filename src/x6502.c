@@ -49,6 +49,7 @@ void FP_FASTAPASS(1) (*MapIRQHook)(int a);
 #define _IRQlow    X.IRQlow
 #define _jammed    X.jammed
 
+#ifndef TARGET_GNW
 #define ADDCYC(x) {									\
 	int __x = x;									\
 	_tcount += __x;									\
@@ -56,6 +57,15 @@ void FP_FASTAPASS(1) (*MapIRQHook)(int a);
 	timestamp += __x;  \
 	if (!overclocked) sound_timestamp +=  __x; \
 }
+#else
+#define ADDCYC(x) {									\
+	int __x = x;									\
+	_tcount += __x;									\
+	_count -= __x * 48;								\
+	timestamp += __x;  \
+	sound_timestamp +=  __x; \
+}
+#endif
 
 static INLINE uint8 RdMemNorm(uint32 A) {
 #ifndef FCEU_LOW_RAM
@@ -629,7 +639,9 @@ void X6502_Run(int32 cycles)
 		temp = _tcount;
 		_tcount = 0;
 		if (MapIRQHook) MapIRQHook(temp);
+#ifndef TARGET_GNW
 		if (!overclocked)
+#endif
 			FCEU_SoundCPUHook(temp);
 		X.PC = pbackus;
 		_PC++;

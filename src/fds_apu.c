@@ -83,7 +83,9 @@ DECLFR(FDSSRead) {
 }
 
 static void RenderSound(void);
+#ifndef TARGET_GNW
 static void RenderSoundHQ(void);
+#endif
 
 DECLFW(FDSSWrite) {
 	if (FSettings.SndRate) {

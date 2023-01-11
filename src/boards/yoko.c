@@ -36,7 +36,7 @@ static int32 IRQCount;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static uint8 is2kbank, dbzParty, isYoko;
+static uint8 is2kbank, dbzParty;
 
 static SFORMAT StateRegs[] =
 {
@@ -100,10 +100,10 @@ static void M83Sync(void) {
 			break;
 		case 2:
 		case 3:
-			setprg8(0x8000, bank <<1 &~0x1F | reg[8] &0x1F);
-			setprg8(0xA000, bank <<1 &~0x1F | reg[9] &0x1F);
-			setprg8(0xC000, bank <<1 &~0x1F | reg[10]&0x1F);
-			setprg8(0xE000, bank <<1 &~0x1F |         0x1F);
+			setprg8(0x8000, ((bank <<1) &~0x1F) | (reg[8] &0x1F));
+			setprg8(0xA000, ((bank <<1) &~0x1F) | (reg[9] &0x1F));
+			setprg8(0xC000, ((bank <<1) &~0x1F) | (reg[10]&0x1F));
+			setprg8(0xE000, ((bank <<1) &~0x1F) |         0x1F);
 			break;
 	}
 }

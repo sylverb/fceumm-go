@@ -38,7 +38,7 @@ static SFORMAT StateRegs[] =
 
 static void sync()
 {
-   setprg32(0x8000, reg[2] <<4 | reg[0] &0xF | (reg[3] &0x04? 0x00: 0x03));
+   setprg32(0x8000, (reg[2] <<4) | (reg[0] &0xF) | (reg[3] &0x04? 0x00: 0x03));
    setprg8r(0x10, 0x6000, 0);
    if (~reg[0] &0x80)
       setchr8(0);
@@ -65,7 +65,7 @@ static DECLFW(writeReg)
    
    /* Swap bits of registers 0-2 again if the "swap bits" bit is set. Exclude register 2 on when PRG-ROM is 1 MiB. */
    if (reg[3] &0x01 && index <= (ROM_size == 64? 1: 2))
-      V = V &~3 | V >>1 &1 | V <<1 &2;
+      V = (V &~3) | (V >>1 &1) | (V <<1 &2);
    
    if (A &1)
    {

@@ -821,8 +821,11 @@ void FCEU_ResetVidSys(void)
       dendy = 0;
 
    normal_scanlines = dendy ? 290 : 240;
+#ifndef TARGET_GNW
    totalscanlines = normal_scanlines + (overclock_enabled ? extrascanlines : 0);
-
+#else
+   totalscanlines = normal_scanlines;
+#endif
 	FCEUPPU_SetVideoSystem(w || dendy);
 	SetSoundVariables();
 }

@@ -238,8 +238,6 @@ endo:
    return ret;
 }
 
-extern int geniestage;
-
 void FCEUSS_Save_Mem(void)
 {
    memstream_t *mem = memstream_open(1);

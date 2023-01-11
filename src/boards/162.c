@@ -38,7 +38,7 @@ static SFORMAT StateRegs[] =
 
 static void sync()
 {
-   setprg32(0x8000, reg[2] <<4 | reg[0] &0x0C                                        /* PRG A17-A20 always normal from $5000 and $5200 */
+   setprg32(0x8000, (reg[2] <<4) | (reg[0] &0x0C)                                    /* PRG A17-A20 always normal from $5000 and $5200 */
                   | ( reg[3] &0x04                ?         0x00 : 0x02)             /* PRG A16 is 1       if $5300.2=0                */
 		  | ( reg[3] &0x04                ?(reg[0] &0x02): 0x00)             /* PRG A16 is $5000.1 if %5300.2=1                */
 		  | (                 reg[3] &0x01?         0x00 : reg[1] >>1 &0x01) /* PRG A15 is $5100.1 if               $5300.0=0  */

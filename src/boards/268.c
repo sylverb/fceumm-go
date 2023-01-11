@@ -38,40 +38,40 @@ static void Mapper268_PRGWrap(uint32 A, uint8 V) {
 	switch(submapper &~1) {
 	default:	/* Original implementation */
 		prgMaskGNROM =EXPREGS[3] &0x10? (EXPREGS[1] &0x02? 0x03: 0x01): 0x00;
-		prgOffset    =EXPREGS[3]     &0x00E
-		             |EXPREGS[0] <<4 &0x070
-			     |EXPREGS[1] <<3 &0x080
-			     |EXPREGS[1] <<6 &0x300
-			     |EXPREGS[0] <<6 &0xC00;
+		prgOffset    =(EXPREGS[3]     &0x00E)
+		             |(EXPREGS[0] <<4 &0x070)
+			     |(EXPREGS[1] <<3 &0x080)
+			     |(EXPREGS[1] <<6 &0x300)
+			     |(EXPREGS[0] <<6 &0xC00);
 		break;
 	case 2:		/* Later revision with different arrangement of register 1 */
-		prgMaskGNROM =EXPREGS[3] &0x10? (EXPREGS[1] &0x10? 0x01: 0x03): 0x00;
-		prgOffset    =EXPREGS[3]     &0x00E
-		             |EXPREGS[0] <<4 &0x070
-			     |EXPREGS[1] <<4 &0x080
-			     |EXPREGS[1] <<6 &0x100
-			     |EXPREGS[1] <<8 &0x200
-			     |EXPREGS[0] <<6 &0xC00;
+		prgMaskGNROM =(EXPREGS[3] &0x10)? (EXPREGS[1] &0x10? 0x01: 0x03): 0x00;
+		prgOffset    =(EXPREGS[3]     &0x00E)
+		             |(EXPREGS[0] <<4 &0x070)
+			     |(EXPREGS[1] <<4 &0x080)
+			     |(EXPREGS[1] <<6 &0x100)
+			     |(EXPREGS[1] <<8 &0x200)
+			     |(EXPREGS[0] <<6 &0xC00);
 		break;
 	case 4:		/* LD622D: PRG A20-21 moved to register 0 */
 		prgMaskGNROM =EXPREGS[3] &0x10? (EXPREGS[1] &0x02? 0x03: 0x01): 0x00;
-		prgOffset    =EXPREGS[3]     &0x00E
-		             |EXPREGS[0] <<4 &0x070
-			     |EXPREGS[0] <<3 &0x180;
+		prgOffset    =(EXPREGS[3]     &0x00E)
+		             |(EXPREGS[0] <<4 &0x070)
+			     |(EXPREGS[0] <<3 &0x180);
 		break;
 	case 6:		/* J-852C: CHR A17 selects between two PRG chips */
 		prgMaskGNROM =EXPREGS[3] &0x10? (EXPREGS[1] &0x02? 0x03: 0x01): 0x00;
-		prgOffset    =EXPREGS[3]     &0x00E
-		             |EXPREGS[0] <<4 &0x070
-			     |EXPREGS[1] <<3 &0x080
-			     |EXPREGS[1] <<6 &0x300
-			     |EXPREGS[0] <<6 &0xC00;
+		prgOffset    =(EXPREGS[3]     &0x00E)
+		             |(EXPREGS[0] <<4 &0x070)
+			     |(EXPREGS[1] <<3 &0x080)
+			     |(EXPREGS[1] <<6 &0x300)
+			     |(EXPREGS[0] <<6 &0xC00);
 		prgOffset &=ROM_size -1;
 		if (EXPREGS[0] &0x80? !!(EXPREGS[0] &0x08): !!(DRegBuf[0] &0x80)) prgOffset |=ROM_size;
 		break;
 	}
 	prgOffset &=~(prgMaskMMC3 | prgMaskGNROM);
-	setprg8(A, V &prgMaskMMC3 | prgOffset | A >>13 &prgMaskGNROM);
+	setprg8(A, (V &prgMaskMMC3) | prgOffset | (A >>13 &prgMaskGNROM));
 
 	/* CHR-RAM write protect on submapper 8/9) */
 	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], (submapper &~1) ==8 && EXPREGS[0] &0x10? 0: 1);
@@ -82,10 +82,10 @@ static void Mapper268_CHRWrap(uint32 A, uint8 V) {
 	
 	chrMaskMMC3  =EXPREGS[3] &0x10? 0x00: EXPREGS[0] &0x80? 0x7F: 0xFF;
 	chrMaskGNROM =EXPREGS[3] &0x10? 0x07: 0x00;
-	chrOffset    =EXPREGS[0] <<4 &0x380 | EXPREGS[2] <<3 &0x078;
+	chrOffset    =(EXPREGS[0] <<4 &0x380) | (EXPREGS[2] <<3 &0x078);
 	chrOffset   &=~(chrMaskMMC3 | chrMaskGNROM);
 	
-	setchr1r(CHRRAM && EXPREGS[4] &0x01 && (V &0xFE) ==(EXPREGS[4] &0xFE)? 0x10: 0x00, A, V &chrMaskMMC3 | chrOffset | A >>10 &chrMaskGNROM);
+	setchr1r(CHRRAM && EXPREGS[4] &0x01 && (V &0xFE) ==(EXPREGS[4] &0xFE)? 0x10: 0x00, A, (V &chrMaskMMC3) | chrOffset | (A >>10 &chrMaskGNROM));
 }
 
 static DECLFR(Mapper268_ReadWRAM) {
@@ -93,7 +93,7 @@ static DECLFR(Mapper268_ReadWRAM) {
 }
 
 static DECLFW(Mapper268_WriteWRAM) {
-	if (A001B &0x80 && ~A001B &0x40 || A001B &0x20) CartBW(A, V);
+	if ((A001B &0x80 && ~A001B &0x40) || (A001B &0x20)) CartBW(A, V);
 }
 
 static DECLFW(Mapper268_WriteReg) {
@@ -101,8 +101,8 @@ static DECLFW(Mapper268_WriteReg) {
 	if (~submapper &1) Mapper268_WriteWRAM(A, V);
 	if (~EXPREGS[3] &0x80 || index ==2) {
 		if (index ==2) {
-			if (EXPREGS[2] &0x80) V =V &0x0F | EXPREGS[2] &~0x0F;
-			V &=~EXPREGS[2] >>3 &0xE |0xF1;
+			if (EXPREGS[2] &0x80) V =(V &0x0F) | (EXPREGS[2] &~0x0F);
+			V &=(~EXPREGS[2] >>3 &0xE) |0xF1;
 		}		
 		EXPREGS[index] =V;
 		FixMMC3PRG(MMC3_cmd);

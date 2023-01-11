@@ -503,7 +503,11 @@ static void FASTAPASS(1) RefreshLine(int lastpixel) {
 	 */
 
 #define PPUT_MMC5
+#ifndef TARGET_GNW
 	if (MMC5Hack && geniestage != 1) {
+#else
+	if (MMC5Hack) {
+#endif
 		if (MMC5HackCHRMode == 0 && (MMC5HackSPMode & 0x80)) {
 			int tochange = MMC5HackSPMode & 0x1F;
 			tochange -= firsttile;
@@ -649,9 +653,10 @@ static void Fixit1(void) {
 void MMC5_hb(int);		/* Ugh ugh ugh. */
 static void DoLine(void)
 {
-	int x, colour_emphasis;
+	int x;
 	uint8 *target = NULL;
 #ifndef TARGET_GNW
+	int colour_emphasis;
 	uint8 *dtarget = NULL;
 #endif
 
@@ -801,7 +806,11 @@ static void FetchSpriteData(void) {
 					}
 
 					/* Fix this geniestage hack */
+#ifndef TARGET_GNW
 					if (MMC5Hack && geniestage != 1)
+#else
+					if (MMC5Hack)
+#endif
 						C = MMC5SPRVRAMADR(vadr);
 					else
 						C = VRAMADR(vadr);
@@ -1152,6 +1161,7 @@ int FCEUPPU_Loop(int skip) {
 				TriggerNMI();
 		}
 		X6502_Run((scanlines_per_frame - 242) * (256 + 85) - 12);
+#ifndef TARGET_GNW
 		if (overclock_enabled && vblankscanlines) {
 			if (!DMC_7bit || !skip_7bit_overclocking) {
 				overclocked = 1;
@@ -1159,6 +1169,7 @@ int FCEUPPU_Loop(int skip) {
 				overclocked = 0;
 			}
 		}
+#endif
 		PPU_status &= 0x1f;
 		X6502_Run(256);
 
@@ -1223,24 +1234,31 @@ int FCEUPPU_Loop(int skip) {
 			deemp = PPU[1] >> 5;
 
          /* manual samples can't play correctly with overclocking */
+#ifndef TARGET_GNW
 			if (DMC_7bit && skip_7bit_overclocking)
 				totalscanlines = normal_scanlines;
 			else
 				totalscanlines = normal_scanlines + (overclock_enabled ? extrascanlines : 0);
-
+#else
+				totalscanlines = normal_scanlines;
+#endif
 			for (scanline = 0; scanline < totalscanlines; ) {	/* scanline is incremented in  DoLine.  Evil. :/ */
 				deempcnt[deemp]++;
 				DoLine();
-				if (scanline < normal_scanlines || scanline == totalscanlines)
+#ifndef TARGET_GNW
+				if (scanline < normal_scanlines || scanline == totalscanlines) {
 					overclocked = 0;
-				else {
+				} else {
 					if (DMC_7bit && skip_7bit_overclocking) /* 7bit sample started after 240th line */
 						break;
 					overclocked = 1;
 				}
+#endif
 			}
 
+#ifndef TARGET_GNW
 			DMC_7bit = 0;
+#endif
 			if (MMC5Hack && (ScreenON || SpriteON)) MMC5_hb(scanline);
 			for (x = 1, max = 0, maxref = 0; x < 7; x++) {
 				if (deempcnt[x] > max) {

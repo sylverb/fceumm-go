@@ -6,22 +6,28 @@
 extern int fceuindbg;
 
 /* Overclocking-related */
+#ifndef TARGET_GNW
 extern unsigned overclock_enabled;
 extern unsigned overclocked;
 extern unsigned skip_7bit_overclocking;
 extern unsigned DMC_7bit;
+#endif
 extern unsigned totalscanlines;
 extern unsigned normal_scanlines;
+#ifndef TARGET_GNW
 extern unsigned extrascanlines;
 extern unsigned vblankscanlines;
+#endif
 
 /* Region selection */
 extern unsigned dendy;
 
 /* Audio mods*/
+#ifndef TARGET_GNW
 extern unsigned swapDuty; /* Swap bits 6 & 7 of $4000/$4004 to mimic bug
                            * found on some famiclones/Dendy models.
                            */
+#endif
 
 void ResetGameLoaded(void);
 

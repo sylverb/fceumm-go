@@ -96,6 +96,7 @@ void FASTAPASS(3) setntamem(uint8 *p, int ram, uint32 b);
 #define MI_0 2
 #define MI_1 3
 
+#ifndef TARGET_GNW
 extern int geniestage;
 
 void FCEU_GeniePower(void);
@@ -103,5 +104,6 @@ void FCEU_GeniePower(void);
 void FCEU_OpenGenie(void);
 void FCEU_CloseGenie(void);
 void FCEU_KillGenie(void);
+#endif
 
 #endif

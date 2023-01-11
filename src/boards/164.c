@@ -44,9 +44,9 @@ static SFORMAT StateRegs[] =
 
 static void sync()
 {
-   uint8 prgLow  = reg[0] &0x0F | reg[0] >>1 &0x10;
+   uint8 prgLow  = (reg[0] &0x0F) | (reg[0] >>1 &0x10);
    uint8 prgHigh = reg[1] <<5;
-   switch (reg[0] >>5 &2 | reg[0] >>4 &1)
+   switch ((reg[0] >>5 &2) | (reg[0] >>4 &1))
    {
       case 0: /* UNROM-512 */
          setprg16(0x8000, prgHigh | prgLow);
@@ -61,8 +61,8 @@ static void sync()
       case 3: /* UNROM-128 or BNROM */
          if (prgLow &0x10)
          {
-            setprg16(0x8000, prgHigh | prgLow <<1 &0x10 | prgLow &0x0F);
-            setprg16(0xC000, prgHigh | prgLow <<1 &0x10 |         0x0F);
+            setprg16(0x8000, prgHigh | (prgLow <<1 &0x10) | (prgLow &0x0F));
+            setprg16(0xC000, prgHigh | (prgLow <<1 &0x10) |         0x0F);
          }
          else
             setprg32(0x8000, prgHigh >>1 | prgLow);

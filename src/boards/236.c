@@ -36,7 +36,7 @@ static void Sync(void)
 	int chr;
 	if (chrramvariant)
 	{
-		prg = reg[1] &7 | reg[0] <<3;
+		prg = (reg[1] &7) | (reg[0] <<3);
 		chr = 0;
 	}
 	else
@@ -66,7 +66,7 @@ static void Sync(void)
 static DECLFR(M236Read)
 {
 	if ((reg[1] >>4 &3) ==1)
-		return CartBR(A &~0xF | dip &0xF);
+		return CartBR((A &~0xF) | (dip &0xF));
 	else
 		return CartBR(A);
 }
