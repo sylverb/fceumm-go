@@ -19,12 +19,15 @@
  */
 
 #include "mapinc.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint16 IRQCount;
 static uint8 IRQa;
 
-static uint8 WRAM[8192];
-static uint8 IRAM[128];
+static uint8 *WRAM;
+static uint8 *IRAM;
 
 static DECLFR(AWRAM) {
 	return(WRAM[A - 0x6000]);
@@ -438,10 +441,35 @@ static void N106_Power(void) {
 		FixCache(x, IRAM[x]);
 }
 
+#ifndef TARGET_GNW
+static void N106_Close(void) {
+	if (WRAM)
+		FCEU_gfree(WRAM);
+	WRAM = NULL;
+	if (IRAM)
+		FCEU_gfree(IRAM);
+	IRAM = NULL;
+}
+#endif
+
 void Mapper19_Init(CartInfo *info) {
 	is210 = 0;
 	battery = info->battery;
 	info->Power = N106_Power;
+#ifndef TARGET_GNW
+	info->Close = N106_Close;
+#endif
+#ifndef TARGET_GNW
+	WRAM = (uint8*)FCEU_gmalloc(8192);
+#else
+	WRAM = (uint8*)itc_calloc(1,8192);
+#endif
+
+#ifndef TARGET_GNW
+	IRAM = (uint8*)FCEU_gmalloc(128);
+#else
+	IRAM = (uint8*)itc_calloc(1,128);
+#endif
 
 	MapIRQHook = NamcoIRQHook;
 	GameStateRestore = Mapper19_StateRestore;
@@ -472,6 +500,19 @@ void Mapper210_Init(CartInfo *info) {
 	is210 = 1;
 	GameStateRestore = Mapper210_StateRestore;
 	info->Power = N106_Power;
+#ifndef TARGET_GNW
+	info->Close = N106_Close;
+#endif
+#ifndef TARGET_GNW
+	WRAM = (uint8*)FCEU_gmalloc(8192);
+#else
+	WRAM = (uint8*)itc_calloc(1,8192);
+#endif
+#ifndef TARGET_GNW
+	IRAM = (uint8*)FCEU_gmalloc(128);
+#else
+	IRAM = (uint8*)itc_calloc(1,128);
+#endif
 	AddExState(WRAM, 8192, 0, "WRAM");
 	AddExState(N106_StateRegs, ~0, 0, 0);
 }
