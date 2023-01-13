@@ -22,10 +22,13 @@
 
 #include "mapinc.h"
 #include "../fds_apu.h"
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#endif
 
 static uint8 preg;
 static uint8 mirr;
-static uint8 WRAM[8192];
+static uint8 *WRAM;
 
 static SFORMAT StateRegs[] =
 {
@@ -94,12 +97,28 @@ static void M539Power(void) {
 	SetWriteHandler(0x6000, 0xFFFF, M539Write);
 }
 
+#ifndef TARGET_GNW
+static void M539Close(void) {
+	if (WRAM)
+		FCEU_gfree(WRAM);
+	WRAM = NULL;
+}
+#endif
+
 static void StateRestore(int version) {
 	Sync();
 }
 
 void Mapper539_Init(CartInfo *info) {
 	info->Power = M539Power;
+#ifndef TARGET_GNW
+	info->Close = M539Close;
+#endif
+#ifndef TARGET_GNW
+	WRAM = (uint8*)FCEU_gmalloc(8192);
+#else
+	WRAM = (uint8*)itc_calloc(1,8192);
+#endif
 	GameStateRestore = StateRestore;
 	AddExState(WRAM, 8192, 0, "WRAM");
 	AddExState(&StateRegs, ~0, 0, 0);
