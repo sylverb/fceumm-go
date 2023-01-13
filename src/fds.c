@@ -37,8 +37,10 @@
 #include "fceu-memory.h"
 #include "fceu-cart.h"
 #include "md5.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
+#endif
+#ifdef TARGET_GNW
 #include "rom_manager.h"
 #endif
 
@@ -897,12 +899,20 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	AddExState(&mapperFDS_diskaccess, 1, 0, "DACC");
 
 	CHRRAMSize = 8192;
+#ifndef FCEU_NO_MALLOC
+	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
+#else
 	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSize);
+#endif
 	SetupCartCHRMapping(0, CHRRAM, CHRRAMSize, 1);
 	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
 
 	FDSRAMSize = 32768;
+#ifndef FCEU_NO_MALLOC
+	FDSRAM = (uint8*)FCEU_gmalloc(FDSRAMSize);
+#else
 	FDSRAM = (uint8*)ahb_calloc(1, FDSRAMSize);
+#endif
 	SetupCartPRGMapping(1, FDSRAM, FDSRAMSize, 1);
 	AddExState(FDSRAM, FDSRAMSize, 0, "FDSR");
 

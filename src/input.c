@@ -438,6 +438,7 @@ void FCEU_DoSimpleCommand(int cmd)
       case FCEUNPCMD_FDSEJECT:
          FCEU_FDSEject();
          break;
+#ifndef TARGET_GNW
       case FCEUNPCMD_VSUNICOIN:
          FCEU_VSUniCoin();
          break;
@@ -451,6 +452,7 @@ void FCEU_DoSimpleCommand(int cmd)
       case (FCEUNPCMD_VSUNIDIP0 + 7):
          FCEU_VSUniToggleDIP(cmd - FCEUNPCMD_VSUNIDIP0);
          break;
+#endif
       case FCEUNPCMD_POWER:
          PowerNES();
          break;

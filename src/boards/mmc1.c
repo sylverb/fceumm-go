@@ -20,7 +20,7 @@
  */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -326,7 +326,7 @@ static void GenMMC1Init(CartInfo *info, int prg, int chr, int wram, int saveram)
 	CHRmask8[0] &= (chr >> 13) - 1;
 
 	if (WRAMSIZE) {
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 #else
 		WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
@@ -339,7 +339,7 @@ static void GenMMC1Init(CartInfo *info, int prg, int chr, int wram, int saveram)
 		}
 	}
 	if (!chr) {
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 		CHRRAM = (uint8*)FCEU_gmalloc(8192);
 #else
 		CHRRAM = (uint8*)ahb_calloc(1, 8192);

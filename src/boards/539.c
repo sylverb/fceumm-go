@@ -22,7 +22,7 @@
 
 #include "mapinc.h"
 #include "../fds_apu.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -97,7 +97,7 @@ static void M539Power(void) {
 	SetWriteHandler(0x6000, 0xFFFF, M539Write);
 }
 
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 static void M539Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
@@ -111,10 +111,10 @@ static void StateRestore(int version) {
 
 void Mapper539_Init(CartInfo *info) {
 	info->Power = M539Power;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	info->Close = M539Close;
 #endif
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	WRAM = (uint8*)FCEU_gmalloc(8192);
 #else
 	WRAM = (uint8*)itc_calloc(1,8192);

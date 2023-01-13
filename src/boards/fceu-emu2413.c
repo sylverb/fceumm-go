@@ -47,7 +47,7 @@
 
 **************************************************************************************/
 #include "fceu-emu2413.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -563,7 +563,7 @@ OPLL *OPLL_new(uint32 _clk, uint32 _rate) {
 
 	maketables(_clk, _rate);
 
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	opll = (OPLL*)calloc(sizeof(OPLL), 1);
 #else
 	opll = (OPLL*)ahb_calloc(1, sizeof(OPLL), 1);

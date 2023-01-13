@@ -23,7 +23,7 @@
  */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -134,7 +134,7 @@ void Mapper330_Init(CartInfo *info) {
 	MapIRQHook = M330IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	WRAM = (uint8 *)FCEU_gmalloc(8192);
 #else
 	WRAM = (uint8*)ahb_calloc(1, 8192);

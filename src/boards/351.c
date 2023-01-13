@@ -19,7 +19,7 @@
  */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -327,7 +327,7 @@ void Mapper351_Init (CartInfo *info) {
 	AddExState(stateRegs, ~0, 0, 0);
 	
 	if (CHRRAMSIZE) {
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 		CHRRAM =(uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 #else
 		CHRRAM =(uint8 *)ahb_calloc(1, CHRRAMSIZE);
@@ -336,7 +336,7 @@ void Mapper351_Init (CartInfo *info) {
 		AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 		
 		/* This crazy thing can map CHR-ROM into CPU address space. Allocate a combined PRG+CHR address space and treat it a second "chip". */
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 		PRGCHR =(uint8 *)FCEU_gmalloc(PRGsize[0] +CHRsize[0]);
 #else
 		PRGCHR =(uint8 *)ahb_calloc(1, PRGsize[0] +CHRsize[0]);

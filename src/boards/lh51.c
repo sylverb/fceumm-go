@@ -27,7 +27,7 @@
 
 #include "mapinc.h"
 #include "../fds_apu.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -84,7 +84,7 @@ void LH51_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 #else
 	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);

@@ -23,7 +23,7 @@
  */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -253,7 +253,7 @@ static void VRC24_Init(CartInfo *info, uint32 hasWRAM) {
 
 	if (hasWRAM) {
 		WRAMSIZE = 8192;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 #else
 		WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);

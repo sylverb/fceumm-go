@@ -21,7 +21,7 @@
 /* None of this code should use any of the iNES bank switching wrappers. */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -665,7 +665,7 @@ void Mapper5_ESI(void) {
 void NSFMMC5_Init(void) {
 	memset(&MMC5Sound, 0, sizeof(MMC5Sound));
 	mul[0] = mul[1] = 0;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	ExRAM = (uint8*)FCEU_gmalloc(1024);
 #else
 	ExRAM = (uint8*)ahb_calloc(1, 1024);
@@ -796,7 +796,7 @@ static SFORMAT MMC5_StateRegs[] = {
 
 static void GenMMC5_Init(CartInfo *info, int wsize, int battery) {
 	if (wsize) {
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 		WRAM = (uint8*)FCEU_gmalloc(wsize * 1024);
 #else
 		WRAM = (uint8*)ahb_calloc(1, wsize * 1024);
@@ -805,7 +805,7 @@ static void GenMMC5_Init(CartInfo *info, int wsize, int battery) {
 		AddExState(WRAM, wsize * 1024, 0, "WRAM");
 	}
 
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	MMC5fill = (uint8*)FCEU_gmalloc(1024);
 	ExRAM = (uint8*)FCEU_gmalloc(1024);
 #else

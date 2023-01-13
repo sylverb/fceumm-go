@@ -155,6 +155,7 @@ static SFORMAT *CheckS(SFORMAT *sf, uint32 tsize, char *desc)
    return(0);
 }
 
+#ifndef TARGET_GNW
 static int ReadStateChunk(memstream_t *mem, SFORMAT *sf, int size)
 {
    SFORMAT *tmp;
@@ -237,9 +238,11 @@ static int ReadStateChunks(memstream_t *st, int32 totalsize)
 endo:
    return ret;
 }
+#endif
 
 void FCEUSS_Save_Mem(void)
 {
+#ifndef TARGET_GNW
    memstream_t *mem = memstream_open(1);
 
    uint32 totalsize;
@@ -272,10 +275,12 @@ void FCEUSS_Save_Mem(void)
    write32le_mem(totalsize, mem);
 
    memstream_close(mem);
+#endif
 }
 
 void FCEUSS_Load_Mem(void)
 {
+#ifndef TARGET_GNW
    memstream_t *mem = memstream_open(0);
 
    uint8 header[16];
@@ -310,6 +315,7 @@ void FCEUSS_Load_Mem(void)
    }
 
    memstream_close(mem);
+#endif
 }
 
 void ResetExState(void (*PreSave)(void), void (*PostSave)(void))

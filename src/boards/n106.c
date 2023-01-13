@@ -19,7 +19,7 @@
  */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -441,7 +441,7 @@ static void N106_Power(void) {
 		FixCache(x, IRAM[x]);
 }
 
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 static void N106_Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
@@ -456,16 +456,16 @@ void Mapper19_Init(CartInfo *info) {
 	is210 = 0;
 	battery = info->battery;
 	info->Power = N106_Power;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	info->Close = N106_Close;
 #endif
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	WRAM = (uint8*)FCEU_gmalloc(8192);
 #else
 	WRAM = (uint8*)itc_calloc(1,8192);
 #endif
 
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	IRAM = (uint8*)FCEU_gmalloc(128);
 #else
 	IRAM = (uint8*)itc_calloc(1,128);
@@ -500,15 +500,15 @@ void Mapper210_Init(CartInfo *info) {
 	is210 = 1;
 	GameStateRestore = Mapper210_StateRestore;
 	info->Power = N106_Power;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	info->Close = N106_Close;
 #endif
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	WRAM = (uint8*)FCEU_gmalloc(8192);
 #else
 	WRAM = (uint8*)itc_calloc(1,8192);
 #endif
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	IRAM = (uint8*)FCEU_gmalloc(128);
 #else
 	IRAM = (uint8*)itc_calloc(1,128);

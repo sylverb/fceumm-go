@@ -22,7 +22,7 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -458,7 +458,7 @@ void JYASIC_init (CartInfo *info)
 
    if (WRAMSIZE)
    {
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
       WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 #else
       WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);

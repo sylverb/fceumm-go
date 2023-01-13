@@ -19,7 +19,7 @@
  */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #else
 // TODO : Fix OPLL support, for now emu2413 is using too much ram for the G&W
@@ -202,7 +202,7 @@ void Mapper85_Init(CartInfo *info) {
 	info->Close = VRC7Close;
 	MapIRQHook = VRC7IRQHook;
 	WRAMSIZE = 8192;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 #else
 	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);

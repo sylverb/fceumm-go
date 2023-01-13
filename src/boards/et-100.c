@@ -40,7 +40,7 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -95,7 +95,7 @@ static void BMC1024CA1Close(void) {
 void BMC1024CA1_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 8, 0);
 	CHRRAMSize = 8192;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
 #else
 	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSize);

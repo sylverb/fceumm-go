@@ -20,7 +20,7 @@
  */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -90,7 +90,7 @@ void Mapper185_Init(CartInfo *info) {
 	info->Power = MPower;
 	info->Close = MClose;
 	GameStateRestore = MRestore;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	DummyCHR = (uint8*)FCEU_gmalloc(8192);
 #else
 	DummyCHR = (uint8*)ahb_calloc(1, 8192);
@@ -107,7 +107,7 @@ void Mapper181_Init(CartInfo *info) {
 	info->Power = MPower;
 	info->Close = MClose;
 	GameStateRestore = MRestore;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	DummyCHR = (uint8*)FCEU_gmalloc(8192);
 #else
 	DummyCHR = (uint8*)ahb_calloc(1, 8192);

@@ -20,7 +20,7 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -76,7 +76,7 @@ void UNLSHeroes_Init(CartInfo *info) {
 	info->Power = MSHPower;
 	info->Reset = MSHReset;
 	info->Close = MSHClose;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRRAM = (uint8*)FCEU_gmalloc(8192);
 #else
 	CHRRAM = (uint8*)ahb_calloc(1, 8192);

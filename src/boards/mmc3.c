@@ -26,7 +26,7 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -297,7 +297,7 @@ void GenMMC3_Init(CartInfo *info, int prg, int chr, int wram, int battery) {
 
 	if (wram) {
 		mmc3opts |= 1;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 #else
 		WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);
@@ -707,7 +707,7 @@ void Mapper52_Init(CartInfo *info) {
 	AddExState(EXPREGS, 2, 0, "EXPR");
 	if (info->iNES2 && info->submapper ==13) {
 		CHRRAMSIZE = 8192;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 		CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
 #else
 		CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
@@ -742,7 +742,7 @@ void Mapper74_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = M74CW;
 	CHRRAMSIZE = 2048;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
 #else
 	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
@@ -910,7 +910,7 @@ void Mapper119_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 64, 0, 0);
 	cwrap = TQWRAP;
 	CHRRAMSIZE = 8192;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
 #else
 	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
@@ -970,7 +970,7 @@ void Mapper165_Init(CartInfo *info) {
 	PPU_hook = M165PPU;
 	info->Power = M165Power;
 	CHRRAMSIZE = 4096;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
 #else
 	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
@@ -990,7 +990,7 @@ void Mapper191_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 8, info->battery);
 	cwrap = M191CW;
 	CHRRAMSIZE = 2048;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
 #else
 	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
@@ -1015,7 +1015,7 @@ void Mapper192_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = M192CW;
 	CHRRAMSIZE = 4096;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
 #else
 	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
@@ -1037,7 +1037,7 @@ void Mapper194_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = M194CW;
 	CHRRAMSIZE = 2048;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
 #else
 	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);
@@ -1435,7 +1435,7 @@ void TQROM_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 64, 0, 0);
 	cwrap = TQWRAP;
 	CHRRAMSIZE = 8192;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
 #else
 	CHRRAM = (uint8*)ahb_calloc(1, CHRRAMSIZE);

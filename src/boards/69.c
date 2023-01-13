@@ -20,7 +20,7 @@
  */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -328,7 +328,7 @@ void Mapper69_Init(CartInfo *info) {
 	info->Close = M69Close;
 	MapIRQHook = M69IRQHook;
 	WRAMSIZE = 8192;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 #else
 	WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);

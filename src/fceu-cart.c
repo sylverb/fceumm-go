@@ -102,12 +102,12 @@ void ResetCartMapping(void) {
 	int x;
 
 	for (x = 0; x < 32; x++) {
-		Page[x] = nothing - x * 2048;
+		Page[x] = nothing + x * 2048;
 		PRGptr[x] = CHRptr[x] = 0;
 		PRGsize[x] = CHRsize[x] = 0;
 	}
 	for (x = 0; x < 8; x++) {
-		MMC5SPRVPage[x] = MMC5BGVPage[x] = VPageR[x] = nothing - 0x400 * x;
+		MMC5SPRVPage[x] = MMC5BGVPage[x] = VPageR[x] = nothing + 0x400 * x;
 	}
 }
 

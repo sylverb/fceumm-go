@@ -24,7 +24,7 @@
 
 #include "mapinc.h"
 #include "eeprom_93C66.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -124,7 +124,7 @@ void Mapper558_Init (CartInfo *info)
    AddExState(StateRegs, ~0, 0, 0);
 
    WRAMSIZE = info->PRGRamSize + (info->PRGRamSaveSize &~0x7FF);
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
    WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 #else
    WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);

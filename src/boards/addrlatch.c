@@ -19,7 +19,7 @@
  */
 
 #include "mapinc.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -80,7 +80,7 @@ static void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint16
 	info->Close = LatchClose;
 	if (wram) {
 		WRAMSIZE = 8192;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 #else
 		WRAM = (uint8*)ahb_calloc(1, WRAMSIZE);

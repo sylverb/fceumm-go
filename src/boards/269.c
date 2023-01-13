@@ -26,7 +26,7 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
-#ifdef TARGET_GNW
+#ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
 
@@ -93,7 +93,7 @@ void Mapper269_Init(CartInfo *info) {
 	AddExState(EXPREGS, 5, 0, "EXPR");
 
 	CHRROMSIZE = PRGsize[0];
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_MALLOC
 	CHRROM = (uint8*)FCEU_gmalloc(CHRROMSIZE);
 #else
 	CHRROM = (uint8*)ahb_calloc(1, CHRROMSIZE);
