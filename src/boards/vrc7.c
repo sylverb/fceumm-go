@@ -21,7 +21,8 @@
 #include "mapinc.h"
 #ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
-#else
+#endif
+#ifndef TARGET_GNW
 // TODO : Fix OPLL support, for now emu2413 is using too much ram for the G&W
 #include "fceu-emu2413.h"
 #endif
