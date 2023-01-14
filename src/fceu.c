@@ -299,6 +299,14 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 		for (x = end; x >= start; x--)
 			ARead[x] = func;
 #else
+	// Check if entry is already existing
+	for (int i = 0; i < memRead_index; i++) {
+		if ((MemRead[i].min_range == start) &&
+			(MemRead[i].max_range == end)) {
+				MemRead[i].read_func = func;
+				return;
+			}
+	}
 	if (memRead_index == MAX_MEM_HANDLER_READ_COUNT) {
 		printf("SetReadHandler increase MAX_MEM_HANDLER_READ_COUNT\n");
 		while(1) {};
@@ -480,6 +488,14 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 		for (x = end; x >= start; x--)
 			BWrite[x] = func;
 #else
+	// Check if entry is already existing
+	for (int i = 0; i < memWrite_index; i++) {
+		if ((MemWrite[i].min_range == start) &&
+			(MemWrite[i].max_range == end)) {
+				MemWrite[i].write_func = func;
+				return;
+			}
+	}
 	if (memWrite_index == MAX_MEM_HANDLER_WRITE_COUNT) {
 		printf("SetWriteHandler increase MAX_MEM_HANDLER_WRITE_COUNT\n");
 		while(1) {};
