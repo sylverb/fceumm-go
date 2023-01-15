@@ -598,23 +598,21 @@ static const char *getManufacturer(uint8 code)
 
 static void FreeFDSMemory(void) {
 	if (FDSROM)
-		free(FDSROM);
+		FCEU_gfree(FDSROM);
 	FDSROM = NULL;
 	if (FDSBIOS)
-		free(FDSBIOS);
+		FCEU_gfree(FDSBIOS);
 	FDSBIOS = NULL;
 	if (FDSRAM)
-		free(FDSRAM);
+		FCEU_gfree(FDSRAM);
 	FDSRAM = NULL;
 	if (CHRRAM)
-		free(CHRRAM);
+		FCEU_gfree(CHRRAM);
 	CHRRAM = NULL;
 }
 
+#ifdef TARGET_GNW
 static int SubLoadRom(uint8 *fds, uint32_t rom_size) {
-#ifndef TARGET_GNW
-	struct md5_context md5;
-#endif
 	uint8 header[16];
 	int x;
 
@@ -634,22 +632,20 @@ static int SubLoadRom(uint8 *fds, uint32_t rom_size) {
 	if (TotalSides < 1) TotalSides = 1;
 
 	FDSROMSize = TotalSides * BYTES_PER_SIDE;
+#ifndef LINUX_EMU
 	FDSROM = fds;
-
+#else
+	FDSROM = (uint8*)FCEU_malloc(FDSROMSize);
+	if (!FDSROM)
+		return (0);
+	memcpy(FDSROM,fds,FDSROMSize);
+#endif
 	for (x = 0; x < TotalSides; x++)
 		diskdata[x] = &FDSROM[x * BYTES_PER_SIDE];
 
-#ifndef TARGET_GNW
-	md5_starts(&md5);
-
-	for (x = 0; x < TotalSides; x++) {
-		FCEU_fread(diskdata[x], 1, 65500, fp);
-		md5_update(&md5, diskdata[x], 65500);
-	}
-	md5_finish(&md5, GameInfo->MD5);
-#endif
 	return(1);
 }
+#endif
 
 #ifndef TARGET_GNW
 static int SubLoad(FCEUFILE *fp) {
@@ -677,7 +673,7 @@ static int SubLoad(FCEUFILE *fp) {
 
 	FDSROMSize = TotalSides * BYTES_PER_SIDE;
 	FDSROM = (uint8*)FCEU_malloc(FDSROMSize);
-if (!FDSROM)
+	if (!FDSROM)
 		return (0);
 
 	for (x = 0; x < TotalSides; x++)
@@ -738,7 +734,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 
 	if (FCEU_fread(FDSBIOS, 1, FDSBIOSsize, zp) != FDSBIOSsize) {
 		if (FDSBIOS)
-			free(FDSBIOS);
+			FCEU_gfree(FDSBIOS);
 		FDSBIOS = NULL;
 		FCEU_fclose(zp);
 		FCEU_PrintError("Error reading FDS BIOS ROM image.\n");
@@ -752,7 +748,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 
 	if (!SubLoad(fp)) {
 		if (FDSBIOS)
-			free(FDSBIOS);
+			FCEU_gfree(FDSBIOS);
 		FDSBIOS = NULL;
 		return(0);
 	}
@@ -829,6 +825,7 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	int x;
 	FCEU_PrintError("FDSLoad\n");
 
+#ifndef LINUX_EMU
 	retro_emulator_file_t *rom_file;
 
 	rom_system_t *rom_system = (rom_system_t *)rom_manager_system(&rom_mgr, "NES_BIOS");
@@ -838,17 +835,35 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
 		return 0;
 	}
+#else
+	FILE *fdsbiosfile = fopen("disksys.rom","r");
+	if (fdsbiosfile == NULL) {
+		FCEU_PrintError("FDS BIOS ROM image missing!\n");
+		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing\n");
+		return 0;
+	}
+#endif
 
 	FreeFDSMemory();
 
 	ResetCartMapping();
 
 	FDSBIOSsize = 8192;
-	FDSBIOS = (uint8_t *)rom_file->address;
 
+#ifndef LINUX_EMU
+	FDSBIOS = (uint8_t *)rom_file->address;
+#else
+	FDSBIOS = (uint8*)FCEU_gmalloc(FDSBIOSsize);
+	fread(FDSBIOS,1,FDSBIOSsize,fdsbiosfile);
+	fclose(fdsbiosfile);
+#endif
 	SetupCartPRGMapping(0, FDSBIOS, FDSBIOSsize, 0);
 
 	if (!SubLoadRom((uint8 *)rom, rom_size)) {
+#ifdef LINUX_EMU
+		if (FDSBIOS)
+			FCEU_gfree(FDSBIOS);
+#endif
 		FDSBIOS = NULL;
 		return(0);
 	}
