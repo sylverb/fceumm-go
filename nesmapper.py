@@ -932,9 +932,8 @@ def analyzeRom(nesFile,fileName):
             hash = zlib.crc32(s, hash)
             hashString = "%08x" % (hash & 0xFFFFFFFF)
         mapper = ChecksumDict.get(hashString)
-        if mapper:
-            print("found mapper in database : "+str(mapper))
-        else:
+        if mapper == None :
+            # Get mapper for iNes header
             if nesBytes[7] & 0xc == 8: # NES 2.0 header
                 mapper = ((nesBytes[8] & 0x0f) << 8) + (nesBytes[7] & 0xf0) + ((nesBytes[6] & 0xf0) >> 4)
             else :
