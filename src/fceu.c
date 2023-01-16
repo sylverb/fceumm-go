@@ -804,7 +804,8 @@ void PowerNES(void)
 	/* Have the external game hardware "powered" after the internal NES stuff.
 		Needed for the NSF code and VS System code.
 	*/
-	GameInterface(GI_POWER);
+	if (GameInterface)
+		GameInterface(GI_POWER);
 #ifndef TARGET_GNW
 	if (GameInfo->type == GIT_VSUNI)
 		FCEU_VSUniPower();

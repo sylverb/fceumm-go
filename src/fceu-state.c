@@ -121,7 +121,6 @@ static int SubWrite(memstream_t *mem, SFORMAT *sf)
 static int WriteStateChunk(memstream_t *mem, int type, SFORMAT *sf)
 {
    int bsize;
-
    memstream_putc(mem, type);
 
    bsize = SubWrite(0, sf);
@@ -155,7 +154,6 @@ static SFORMAT *CheckS(SFORMAT *sf, uint32 tsize, char *desc)
    return(0);
 }
 
-#ifndef TARGET_GNW
 static int ReadStateChunk(memstream_t *mem, SFORMAT *sf, int size)
 {
    SFORMAT *tmp;
@@ -238,16 +236,16 @@ static int ReadStateChunks(memstream_t *st, int32 totalsize)
 endo:
    return ret;
 }
-#endif
 
 void FCEUSS_Save_Mem(void)
 {
-#ifndef TARGET_GNW
    memstream_t *mem = memstream_open(1);
 
    uint32 totalsize;
    uint8 header[16] = {0};
 
+   // Set to FF so it can be updated in flash later
+   memset(header,0xff,16);
    header[0] = 'F';
    header[1] = 'C';
    header[2] = 'S';
@@ -275,12 +273,10 @@ void FCEUSS_Save_Mem(void)
    write32le_mem(totalsize, mem);
 
    memstream_close(mem);
-#endif
 }
 
 void FCEUSS_Load_Mem(void)
 {
-#ifndef TARGET_GNW
    memstream_t *mem = memstream_open(0);
 
    uint8 header[16];
@@ -315,7 +311,6 @@ void FCEUSS_Load_Mem(void)
    }
 
    memstream_close(mem);
-#endif
 }
 
 void ResetExState(void (*PreSave)(void), void (*PostSave)(void))
@@ -328,7 +323,6 @@ void ResetExState(void (*PreSave)(void), void (*PostSave)(void))
 
 void AddExState(void *v, uint32 s, int type, char *desc)
 {
-   printf("AddExState s = %d type = %d %s\n",s,type,desc);
    /* prevent adding a terminator to the list if a NULL pointer was provided */
    if (v == NULL) return;
    memset(SFMDATA[SFEXINDEX].desc, 0, sizeof(SFMDATA[SFEXINDEX].desc));

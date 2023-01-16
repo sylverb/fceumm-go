@@ -76,7 +76,9 @@ static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSize;
 
 /* Original disk data backup, to help in creating save states. */
+#ifndef TARGET_GNW
 static uint8 *diskdatao[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+#endif
 static uint8 *diskdata[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static uint32 TotalSides;
@@ -128,12 +130,14 @@ static void FDSStateRestore(int version) {
 
 	setmirror(((FDSRegs[5] & 8) >> 3) ^ 1);
 
+#ifndef TARGET_GNW
 	if (version >= 9810)
 		for (x = 0; x < TotalSides; x++) {
 			int b;
 			for (b = 0; b < 65500; b++)
 				diskdata[x][b] ^= diskdatao[x][b];
 		}
+#endif
 }
 
 static void FDSInit(void) {
@@ -435,6 +439,7 @@ static DECLFW(FDSWrite) {
 	FDSRegs[A & 7] = V;
 }
 
+#ifndef TARGET_GNW
 struct codes_t {
 	uint8 code;
 	char *name;
@@ -595,6 +600,7 @@ static const char *getManufacturer(uint8 code)
 
 	return ret;
 }
+#endif
 
 static void FreeFDSMemory(void) {
 	if (FDSROM)
@@ -690,6 +696,7 @@ static int SubLoad(FCEUFILE *fp) {
 }
 #endif
 
+#ifndef TARGET_GNW
 static void PreSave(void) {
 	int x;
 	for (x = 0; x < TotalSides; x++) {
@@ -708,7 +715,6 @@ static void PostSave(void) {
 	}
 }
 
-#ifndef TARGET_GNW
 int FDSLoad(const char *name, FCEUFILE *fp) {
 	FCEUFILE *zp;
 	int x;
@@ -868,10 +874,12 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 		return(0);
 	}
 
+#ifndef TARGET_GNW
 	for (x = 0; x < TotalSides; x++) {
 		diskdatao[x] = diskdata[x];
 	}
-	
+#endif
+
 	DiskWritten = 1;
 
 	GameInfo->type = GIT_FDS;
@@ -880,7 +888,6 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	SelectDisk = 0;
 	InDisk = 255;
 
-	ResetExState(PreSave, PostSave);
 	FDSSoundStateAdd();
 
 	for (x = 0; x < TotalSides; x++) {
@@ -934,7 +941,6 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	SetupCartMirroring(0, 0, 0);
 
 	FCEU_printf(" Code         : %02x\n", diskdata[0][0xf]);
-	FCEU_printf(" Manufacturer : %s\n", getManufacturer(diskdata[0][0xf]));
 	FCEU_printf(" # of Sides   : %d\n", TotalSides);
 
 	FCEUI_SetVidSystem(0);
@@ -947,11 +953,13 @@ void FDSClose(void) {
 
 	if (!DiskWritten) return;
 
+#ifndef TARGET_GNW
 	for (x = 0; x < TotalSides; x++)
 		if (diskdatao[x]) {
 			free(diskdatao[x]);
 			diskdatao[x] = 0;
 		}
+#endif
 
 	FreeFDSMemory();
 }
