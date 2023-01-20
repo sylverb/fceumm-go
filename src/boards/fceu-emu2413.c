@@ -566,7 +566,7 @@ OPLL *OPLL_new(uint32 _clk, uint32 _rate) {
 #ifndef FCEU_NO_MALLOC
 	opll = (OPLL*)calloc(sizeof(OPLL), 1);
 #else
-	opll = (OPLL*)ahb_calloc(1, sizeof(OPLL), 1);
+	opll = (OPLL*)ahb_calloc(sizeof(OPLL), 1);
 #endif
 	if (opll == NULL)
 		return NULL;

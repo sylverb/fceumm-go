@@ -551,7 +551,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "IREM I-IM/BNROM",           34, Mapper34_Init          )
 #endif
 #if defined(LINUX_EMU) || defined(NES_MAPPER_035)
-	INES_BOARD( "EL870914C",                 35, Mapper35_Init          ) // Sylver : using too much ram for the G&W
+	INES_BOARD( "EL870914C",                 35, Mapper35_Init          ) // Modified to fit in the G&W, can cause bugs.
 #endif
 #if defined(LINUX_EMU) || defined(NES_MAPPER_036)
 	INES_BOARD( "TXC Policeman",             36, Mapper36_Init          )
@@ -795,8 +795,8 @@ INES_BOARD_BEGIN()
 /*    INES_BOARD( "",                            122, Mapper122_Init ) */
 #if defined(LINUX_EMU) || defined(NES_MAPPER_123)
 	INES_BOARD( "MMC3 PIRATE H2288",        123, UNLH2288_Init          )
-/*    INES_BOARD( "",                            124, Mapper124_Init ) */
 #endif
+/*    INES_BOARD( "",                            124, Mapper124_Init ) */
 #if defined(LINUX_EMU) || defined(NES_MAPPER_125)
 	INES_BOARD( "FDS LH32",                 125, LH32_Init              )
 #endif

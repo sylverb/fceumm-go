@@ -126,7 +126,9 @@ void FDSGI(int h) {
 }
 
 static void FDSStateRestore(int version) {
+#ifndef TARGET_GNW
 	int x;
+#endif
 
 	setmirror(((FDSRegs[5] & 8) >> 3) ^ 1);
 
@@ -949,7 +951,9 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 #endif
 
 void FDSClose(void) {
+#ifndef TARGET_GNW
 	int x;
+#endif
 
 	if (!DiskWritten) return;
 

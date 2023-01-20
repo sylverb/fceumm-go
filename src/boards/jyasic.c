@@ -49,8 +49,13 @@ static uint8	adder;
 static uint8	test;
 static uint8    dipSwitch;
 
+// On the G&W we can't afford using 256kB of memory for this
+// this mapper is hacked to build but it may not work correctly
+// because of that
+#ifndef TARGET_GNW
 static uint8 cpuWriteHandlersSet;
 static writefunc cpuWriteHandlers[0x10000]; /* Actual write handlers for CPU write trapping as a method fo IRQ clocking */
+#endif
 
 static SFORMAT JYASIC_stateRegs[] = {
 	{ &irqControl,   1,                  "IRQM" },
@@ -209,12 +214,14 @@ static void clockIRQ (void)
       }
 }
 
+#ifndef TARGET_GNW
 static DECLFW(trapCPUWrite)
 {
 	if ((irqControl &0x03) ==0x03)
       clockIRQ(); /* Clock IRQ counter on CPU writes */
 	cpuWriteHandlers[A](A, V);
 }
+#endif
 
 static void FP_FASTAPASS(1) trapPPUAddressChange (uint32 A)
 {
@@ -380,12 +387,14 @@ static DECLFW(writeMode)
 
 static void JYASIC_restoreWriteHandlers(void)
 {
+#ifndef TARGET_GNW
    int i;
    if (cpuWriteHandlersSet) 
    {
 	   for (i =0; i <0x10000; i++) SetWriteHandler(i, i, cpuWriteHandlers[i]);
 	   cpuWriteHandlersSet =0;
    }
+#endif
 }
 
 static void JYASIC_power(void)
@@ -402,9 +411,11 @@ static void JYASIC_power(void)
    SetWriteHandler(0xD000, 0xD7FF, writeMode);    /* D800-DFFF ignored */
 
    JYASIC_restoreWriteHandlers();
+#ifndef TARGET_GNW
    for (i =0; i <0x10000; i++) cpuWriteHandlers[i] =GetWriteHandler(i);
    SetWriteHandler(0x0000, 0xFFFF, trapCPUWrite); /* Trap all CPU writes for IRQ clocking purposes */
    cpuWriteHandlersSet =1;
+#endif
 
    SetReadHandler(0x5000, 0x5FFF, readALU_DIP);
    SetReadHandler(0x6000, 0xFFFF, CartBR);
@@ -440,7 +451,9 @@ static void JYASIC_restore (int version)
 
 void JYASIC_init (CartInfo *info)
 {
+#ifndef TARGET_GNW
    cpuWriteHandlersSet =0;
+#endif
    info->Reset = JYASIC_reset;
    info->Power = JYASIC_power;
    info->Close = JYASIC_close;
@@ -760,9 +773,11 @@ static void Mapper394_restore (int version)
 		SetWriteHandler(0xC000, 0xCFFF, writeIRQ);
 		SetWriteHandler(0xD000, 0xD7FF, writeMode);    /* D800-DFFF ignored */
 		
+#ifndef TARGET_GNW
 		for (i =0; i <0x10000; i++) cpuWriteHandlers[i] =GetWriteHandler(i);
 		SetWriteHandler(0x0000, 0xFFFF, trapCPUWrite); /* Trap all CPU writes for IRQ clocking purposes */
 		cpuWriteHandlersSet =1;
+#endif
 		
 		SetReadHandler(0x5000, 0x5FFF, readALU_DIP);
 		SetReadHandler(0x6000, 0xFFFF, CartBR);
