@@ -6,7 +6,7 @@
 extern int fceuindbg;
 
 /* Overclocking-related */
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 extern unsigned overclock_enabled;
 extern unsigned overclocked;
 extern unsigned skip_7bit_overclocking;
@@ -14,7 +14,7 @@ extern unsigned DMC_7bit;
 #endif
 extern unsigned totalscanlines;
 extern unsigned normal_scanlines;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 extern unsigned extrascanlines;
 extern unsigned vblankscanlines;
 #endif

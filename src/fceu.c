@@ -838,7 +838,7 @@ void FCEU_ResetVidSys(void)
       dendy = 0;
 
    normal_scanlines = dendy ? 290 : 240;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
    totalscanlines = normal_scanlines + (overclock_enabled ? extrascanlines : 0);
 #else
    totalscanlines = normal_scanlines;

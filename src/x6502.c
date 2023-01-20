@@ -49,7 +49,7 @@ void FP_FASTAPASS(1) (*MapIRQHook)(int a);
 #define _IRQlow    X.IRQlow
 #define _jammed    X.jammed
 
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 #define ADDCYC(x) {									\
 	int __x = x;									\
 	_tcount += __x;									\
@@ -639,7 +639,7 @@ void X6502_Run(int32 cycles)
 		temp = _tcount;
 		_tcount = 0;
 		if (MapIRQHook) MapIRQHook(temp);
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 		if (!overclocked)
 #endif
 			FCEU_SoundCPUHook(temp);

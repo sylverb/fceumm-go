@@ -69,7 +69,7 @@ typedef struct {
 	int reloaddec;
 } ENVUNIT;
 
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 unsigned DMC_7bit = 0; /* used to skip overclocking */
 #endif
 static ENVUNIT EnvUnits[3];
@@ -301,21 +301,21 @@ DECLFW(Write_DMCRegs) {
 		break;
 	case 0x01: DoPCM();
 		RawDALatch = V & 0x7F;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 		if (RawDALatch)
 			DMC_7bit = 1;
 #endif
 		break;
 	case 0x02:
 		DMCAddressLatch = V;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 		if (V)
 			DMC_7bit = 0;
 #endif
 		break;
 	case 0x03:
 		DMCSizeLatch = V;
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 		if (V)
 			DMC_7bit = 0;
 #endif

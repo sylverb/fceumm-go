@@ -1161,7 +1161,7 @@ int FCEUPPU_Loop(int skip) {
 				TriggerNMI();
 		}
 		X6502_Run((scanlines_per_frame - 242) * (256 + 85) - 12);
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 		if (overclock_enabled && vblankscanlines) {
 			if (!DMC_7bit || !skip_7bit_overclocking) {
 				overclocked = 1;
@@ -1234,7 +1234,7 @@ int FCEUPPU_Loop(int skip) {
 			deemp = PPU[1] >> 5;
 
          /* manual samples can't play correctly with overclocking */
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 			if (DMC_7bit && skip_7bit_overclocking)
 				totalscanlines = normal_scanlines;
 			else
@@ -1245,7 +1245,7 @@ int FCEUPPU_Loop(int skip) {
 			for (scanline = 0; scanline < totalscanlines; ) {	/* scanline is incremented in  DoLine.  Evil. :/ */
 				deempcnt[deemp]++;
 				DoLine();
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 				if (scanline < normal_scanlines || scanline == totalscanlines) {
 					overclocked = 0;
 				} else {
@@ -1256,7 +1256,7 @@ int FCEUPPU_Loop(int skip) {
 #endif
 			}
 
-#ifndef TARGET_GNW
+#ifndef FCEU_NO_OVERCLOCKING
 			DMC_7bit = 0;
 #endif
 			if (MMC5Hack && (ScreenON || SpriteON)) MMC5_hb(scanline);
