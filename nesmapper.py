@@ -2,6 +2,7 @@
 import os
 import sys
 import zlib
+import math
 
 #Use the same database as fceumm to always have same mapper
 ChecksumDict = {
@@ -922,47 +923,81 @@ ChecksumDict = {
 def analyzeRom(nesFile,fileName):
     mapper = -1
     nesBytes = nesFile.read(16)
-    idString = nesBytes[0:3].decode("utf-8")
-    if idString == "NES" and nesBytes[3] == 0x1a:
-        hash = 0
-        while True:
-            s = nesFile.read(65536)
-            if not s:
-                break
-            hash = zlib.crc32(s, hash)
-            hashString = "%08x" % (hash & 0xFFFFFFFF)
-        mapper = ChecksumDict.get(hashString)
-        if mapper == None :
-            # Get mapper for iNes header
-            if nesBytes[7] & 0xc == 8: # NES 2.0 header
-                mapper = ((nesBytes[8] & 0x0f) << 8) + (nesBytes[7] & 0xf0) + ((nesBytes[6] & 0xf0) >> 4)
-            else :
-                mapper = (nesBytes[7] & 0xf0) + ((nesBytes[6] & 0xf0) >> 4)
-        
+    try :
+        idString = nesBytes[0:3].decode("utf-8",errors='ignore')
+        if idString == "NES" and nesBytes[3] == 0x1a:
+            hash = 0
+            while True:
+                s = nesFile.read(65536)
+                if not s:
+                    break
+                hash = zlib.crc32(s, hash)
+                hashString = "%08x" % (hash & 0xFFFFFFFF)
+            mapper = ChecksumDict.get(hashString)
+            if mapper == None :
+                # Get mapper for iNes header
+                if nesBytes[7] & 0xc == 8: # NES 2.0 header
+                    mapper = ((nesBytes[8] & 0x0f) << 8) + (nesBytes[7] & 0xf0) + ((nesBytes[6] & 0xf0) >> 4)
+                else :
+                    mapper = (nesBytes[7] & 0xf0) + ((nesBytes[6] & 0xf0) >> 4)
+        else:
+            idString = nesBytes[1:15].decode("utf-8")
+            if idString == "*NINTENDO-HVC*":
+                mapper = -2
+    except Exception:
+        mapper = -1
     return mapper
+
+def getSaveSize(mapper,fileSize):
+    size = 0
+    #TODO : find reliable way to know exact save size
+    if mapper == -2: # FDS
+        size = 46926
+        sides = math.ceil(fileSize/65500)
+        size+=sides*65508
+    elif mapper == -1: # Unknown file format
+        size = 0
+    elif mapper == 28:
+        size = 38347
+    elif mapper == 29:
+        size = 46520
+    elif mapper == 30:
+        size = 40376
+    else:
+        size = 24*1024 # 24KB by default
+    return size
 
 n = len(sys.argv)
 
-if n < 1: print("Usage :\nnesmapper.py file.nes\n"); sys.exit(0)
+if n < 3: print("Usage :\nnesmapper.py [mapper|savesize] file.nes\n"); sys.exit(0)
 
-nesFile = open(sys.argv[1], 'rb')
+nesFileName = sys.argv[2]
+nesFile = open(nesFileName, 'rb')
 # Open file and find its size
-mapper = analyzeRom(nesFile,sys.argv[1])
+mapper = analyzeRom(nesFile,nesFileName)
 nesFile.close()
-print(str(mapper))
+if sys.argv[1] == "savesize":
+    #get save state size
+    save = getSaveSize(mapper,os.stat(nesFileName).st_size)
+    save = math.ceil(save/4096)*4096 # round to upper 4kB size (flash block size)
+    print(str(save))
+elif sys.argv[1] == "mapper":
+    print(str(mapper))
 
-if mapper >= 0:
-    addMapper = 1
-    mappersFile = "./build/mappers.h"
-    # Add mapper #define in file if needed
-    mapperString = "{:03d}".format(mapper)
-    if os.path.exists(mappersFile):
-        mappers = open(mappersFile, 'r')
-        if mapperString in mappers.read():
-            addMapper = 0
-        mappers.close
-    if addMapper:
-        mappers = open(mappersFile, 'a+')
-        mappers.write("#define NES_MAPPER_"+mapperString+"\n")
-        mappers.close
+    if mapper >= 0:
+        addMapper = 1
+        mappersFile = "./build/mappers.h"
+        # Add mapper #define in file if needed
+        mapperString = "{:03d}".format(mapper)
+        if os.path.exists(mappersFile):
+            mappers = open(mappersFile, 'r')
+            if mapperString in mappers.read():
+                addMapper = 0
+            mappers.close
+        if addMapper:
+            mappers = open(mappersFile, 'a+')
+            mappers.write("#define NES_MAPPER_"+mapperString+"\n")
+            mappers.close
+else:
+    print("unknown command")
 sys.exit(0)
