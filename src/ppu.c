@@ -1204,7 +1204,7 @@ int FCEUPPU_Loop(int skip) {
 			X6502_Run((256 + 85) * normal_scanlines);
 		else
 #endif
-		#ifdef FRAMESKIP
+		#if defined(FRAMESKIP) || defined(TARGET_GNW)
 		if (skip) {
 			int y;
 
@@ -1271,7 +1271,7 @@ int FCEUPPU_Loop(int skip) {
 		}
 	}
 
-	#ifdef FRAMESKIP
+	#if defined(FRAMESKIP) || defined(TARGET_GNW)
 	if (skip) {
 		FCEU_PutImageDummy();
 		return(0);
