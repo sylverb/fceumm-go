@@ -957,12 +957,350 @@ def getSaveSize(mapper,fileSize):
         size+=sides*65508
     elif mapper == -1: # Unknown file format
         size = 0
+    elif mapper == 0:
+        size = 13726
+    elif mapper == 1:
+        size = 13772
+    elif mapper == 2:
+        size = 21944
+    elif mapper == 3:
+        size = 13744
+    elif mapper == 4:
+        size = 13805
+    elif mapper == 5:
+        size = 7133
+    elif mapper == 6:
+        size = 13796
+    elif mapper == 7:
+        size = 13744
+    elif mapper == 8:
+        size = 13744
+    elif mapper == 9:
+        size = 5574
+    elif mapper == 10:
+        size = 13744
+    elif mapper == 11:
+        size = 5544
+    elif mapper == 12:
+        size = 13815
+    elif mapper == 13:
+        size = 21936
+    elif mapper == 14:
+        size = 5666
+    elif mapper == 15:
+        size = 21945
+    elif mapper == 16:
+        size = 6035
+    elif mapper == 17:
+        size = 21996
+    elif mapper == 18:
+        size = 13796
+    elif mapper == 19:
+        size = 14151
+    #20 Unsupported
+    elif mapper == 21:
+        size = 13907
+    elif mapper == 22:
+        size = 5707
+    elif mapper == 23:
+        size = 13907
+    elif mapper == 24:
+        size = 5760
+    elif mapper == 25:
+        size = 13907
+    elif mapper == 26:
+        size = 13960
+    elif mapper == 27:
+        size = 5536
     elif mapper == 28:
         size = 38347
     elif mapper == 29:
         size = 46520
     elif mapper == 30:
         size = 40376
+    elif mapper == 32:
+        size = 13763
+    elif mapper == 33:
+        size = 5580
+    elif mapper == 34:
+        size = 21937
+    elif mapper == 35:
+        size = 13906
+    elif mapper == 36:
+        size = 13798
+    elif mapper == 37:
+        size = 13814
+    elif mapper == 38:
+        size = 5544
+    #39 Unsupported
+    elif mapper == 40:
+        size = 5568
+    elif mapper == 41:
+        size = 5568
+    elif mapper == 42:
+        size = 5553
+    #43 ?
+    elif mapper == 44:
+        size = 13814
+    elif mapper == 45:
+        size = 13814
+    elif mapper == 46:
+        size = 5544
+    elif mapper == 47:
+        size = 13814
+    elif mapper == 48:
+        size = 5580
+    elif mapper == 49:
+        size = 5614
+    #50 ?
+    elif mapper == 51:
+        size = 13744
+    elif mapper == 52:
+        size = 13815
+    elif mapper == 53:
+        size = 13744
+    #54 Unsupported
+    #55 Unsupported
+    #56 ?
+    elif mapper == 57:
+        size = 5545
+    elif mapper == 58:
+        size = 13736
+    elif mapper == 59:
+        size = 5545
+    elif mapper == 60:
+        size = 5535
+    elif mapper == 61:
+        size = 13736
+    elif mapper == 62:
+        size = 5545
+    #63 ?
+    #64 ?
+    #65 ?
+    #66 ?
+    #67 ?
+    #68 ?
+    #69 ?
+    #70 ?
+    elif mapper == 71:
+        size = 13744
+    #72 ?
+    #73 ?
+    #74 ?
+    #75 ?
+    #76 ?
+    #77 ?
+    #78 ?
+    #79 ?
+    #80 ?
+    #81 Unsupported
+    #82 ?
+    elif mapper == 83:
+        size = 13805
+    #84 Unsupported
+    #85 ?
+    #86 ?
+    #87 ?
+    #88 ?
+    #89 ?
+    #90 ?
+    #91 ?
+    #92 ?
+    #93 ?
+    #94 ?
+    #95 ?
+    #96 ?
+    #97 ?
+    #98 Unsupported
+    #99 ?
+    #100 Unsupported
+    #101 ?
+    #102 Unsupported
+    #103 ?
+    elif mapper == 104:
+        size = 21936
+    elif mapper == 105:
+        size = 21972
+    #106 ?
+    #107 ?
+    #108 ?
+    #109 Unsupported
+    #110 Unsupported
+    #111 ?
+    #112 ?
+    elif mapper == 113:
+        size = 5544
+    #114 ?
+    #115 ?
+    #116 ?
+    #117 ?
+    #118 ?
+    #119 ?
+    #120 ?
+    #121 ?
+    #122 Unsupported
+    #123 ?
+    #124 Unsupported
+    #125 ?
+    #126 ?
+    #127 Unsupported
+    #128 Unsupported
+    #129 Unsupported
+    #130 Unsupported
+    #131 Unsupported
+    #132 ?
+    #133 ?
+    #134 ?
+    #135 Unsupported
+    #136 ?
+    #137 ?
+    #138 ?
+    #139 ?
+    #140 ?
+    elif mapper == 141:
+        size = 5551
+    #142 ?
+    #143 ?
+    #144 ?
+    #145 ?
+    #146 ?
+    #147 ?
+    #148 ?
+    #149 ?
+    elif mapper == 150:
+        size = 5551
+    #151 ?
+    #152 ?
+    #153 ?
+    #154 ?
+    #155 ?
+    #156 ?
+    #157 ?
+    #158 ?
+    #159 ?
+    #160 ?
+    #161 Unsupported
+    #162 ?
+    #163 ?
+    #164 ?
+    #165 ?
+    #166 ?
+    #167 ?
+    #168 ?
+    #169 Unsupported
+    #170 ?
+    #171 ?
+    #172 ?
+    #173 ?
+    #174 Unsupported
+    elif mapper == 175:
+        size = 5544
+    #176 ?
+    #177 ?
+    #178 ?
+    #179 Unsupported
+    #180 ?
+    #181 ?
+    #182 Unsupported
+    #183 ?
+    #184 ?
+    #185 ?
+    #186 ?
+    #187 ?
+    #188 ?
+    #189 ?
+    #190 ?
+    #191 ?
+    #192 ?
+    #193 ?
+    #194 ?
+    #195 ?
+    #196 ?
+    #197 ?
+    #198 ?
+    #199 ?
+    elif mapper == 200:
+        size = 5536
+    elif mapper == 201:
+        size = 5536
+    elif mapper == 202:
+        size = 5536
+    elif mapper == 203:
+        size = 5544
+    elif mapper == 204:
+        size = 5536
+    elif mapper == 205:
+        size = 13814
+    #206 ?
+    #207 ?
+    #208 ?
+    #209 ?
+    #210 ?
+    #211 ?
+    elif mapper == 212:
+        size = 5536
+    elif mapper == 213:
+        size = 5536
+    elif mapper == 214:
+        size = 5536
+    elif mapper == 215:
+        size = 5617
+    #216 ?
+    #217 ?
+    #218 ?
+    #219 ?
+    #220 Unsupported
+    elif mapper == 221:
+        size = 13746
+    #222 ?
+    #223 Unsupported
+    #224 ?
+    elif mapper == 225:
+        size = 5574
+    elif mapper == 226:
+        size = 13745
+    elif mapper == 227:
+        size = 21936
+    #228 ?
+    elif mapper == 229:
+        size = 5536
+    elif mapper == 230:
+        size = 13744
+    elif mapper == 231:
+        size = 13736
+    elif mapper == 232:
+        size = 13744
+    elif mapper == 233:
+        size = 13744
+    elif mapper == 234:
+        size = 5544
+    elif mapper == 235:
+        size = 13763
+    #236 ?
+    #237 ?
+    #238 ?
+    #239 Unsupported
+    #240 ?
+    elif mapper == 241:
+        size = 21944
+    #242 ?
+    #243 ?
+    #244 ?
+    #245 ?
+    #246 ?
+    #247 Unsupported
+    #248 Unsupported
+    #249 ?
+    #250 ?
+    #251 Unsupported
+    #252 ?
+    #253 ?
+    #254 ?
+    #255 ?
+    # NES 2.0 mapper
+    #256 ?
+    #258 ?
+    #...
     else:
         size = 24*1024 # 24KB by default
     return size
