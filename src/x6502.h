@@ -48,8 +48,13 @@ extern X6502 X;
 
 extern void FP_FASTAPASS(1) (*MapIRQHook)(int a);
 
+#ifndef TARGET_GNW
 #define NTSC_CPU (dendy ? 1773447.467 : 1789772.7272727272727272)
 #define PAL_CPU  1662607.125
+#else
+#define NTSC_CPU    1786830 // 60 * 29780.5
+#define PAL_CPU     1662375 // 50 * 33247.5
+#endif
 
 #define FCEU_IQEXT      0x001
 #define FCEU_IQEXT2     0x002

@@ -56,7 +56,6 @@ extern int32 WaveHi[];
 #else
 extern int32 Wave[1000];
 extern int32 WaveFinal[1000];
-extern int32 WaveHi[1000];
 #endif
 extern uint32 soundtsinc;
 

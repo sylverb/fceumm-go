@@ -26,7 +26,7 @@
 #include "fceu-sound.h"
 #include "fceu-state.h"
 
-#define FDSClock (1789772.7272727272727272 / 2)
+#define FDSClock (NTSC_CPU / 2)
 
 typedef struct {
 	int64 cycles;		/* Cycles per PCM sample */

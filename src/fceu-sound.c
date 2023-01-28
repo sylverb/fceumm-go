@@ -39,7 +39,6 @@ int32 WaveHi[40000];
 int32 WaveFinal[2048 + 512];
 #else
 int32 Wave[1000];
-//int32 WaveHi[1000];
 int32 WaveFinal[1000];
 #endif
 
@@ -513,9 +512,13 @@ void FASTAPASS(1) FCEU_SoundCPUHook(int cycles) {
 			int t = ((DMCShift & 1) << 2) - 2;
 			/* Unbelievably ugly hack */
 			if (FSettings.SndRate) {
+#ifndef TARGET_GNW
 				soundtsoffs += DMCacc;
 				DoPCM();
 				soundtsoffs -= DMCacc;
+#else
+				DoPCM();
+#endif
 			}
 			RawDALatch += t;
 			if (RawDALatch & 0x80)
@@ -539,7 +542,6 @@ void RDoPCM(void) {
 
 	ChannelBC[4] = SOUNDTS;
 }
-#endif
 
 /* This has the correct phase.  Don't mess with it. */
 static INLINE void RDoSQ(int x) {
@@ -578,10 +580,8 @@ static INLINE void RDoSQ(int x) {
 		 * but is "close enough" and avoids the need for using double values
 		 * or implicit cohersion which are slower (we need speed here) */
 		/* TODO: Optimize this. */
-#ifndef TARGET_GNW
 		if (FSettings.SquareVolume[x] != 256)
 			amp = (amp * FSettings.SquareVolume[x]) / 256;
-#endif
 
 		amp <<= 24;
 		dutyCycle = (PSG[(x << 2)] & 0xC0) >> 6;
@@ -608,7 +608,6 @@ static INLINE void RDoSQ(int x) {
 	ChannelBC[x] = SOUNDTS;
 }
 
-#ifndef TARGET_GNW
 static void RDoSQ1(void) {
 	RDoSQ(0);
 }
@@ -729,11 +728,7 @@ static void RDoTriangle(void) {
 		int32 *start = &WaveHi[ChannelBC[2]];
 		int32 count = SOUNDTS - ChannelBC[2];
 		while (count--) {
-#ifndef TARGET_GNW
 			*start += (tcout / 256 * FSettings.TriangleVolume) & (~0xFFFF);  /* TODO OPTIMIZE ME */
-#else
-			*start += (tcout) & (~0xFFFF);
-#endif
 			start++;
 		}
 
@@ -743,11 +738,7 @@ static void RDoTriangle(void) {
 
 	} else {
 		for (V = ChannelBC[2]; V < SOUNDTS; V++) {
-#ifndef TARGET_GNW
 			WaveHi[V] += (tcout / 256 * FSettings.TriangleVolume) & (~0xFFFF);  /* TODO OPTIMIZE ME! */
-#else
-			WaveHi[V] += (tcout) & (~0xFFFF);
-#endif
 			wlcount[2]--;
 			if (!wlcount[2]) {
 				wlcount[2] = (PSG[0xa] | ((PSG[0xb] & 7) << 8)) + 1;
@@ -910,10 +901,8 @@ static void RDoNoise(void) {
 	* but is "close enough" and avoids the need for using double vales
 	* or implicit cohersion which are slower (we need speed here)
 	* TODO: Optimize this. */
-#ifndef TARGET_GNW
 	if (FSettings.NoiseVolume != 256)
 		amptab[0] = (amptab[0] * FSettings.NoiseVolume) / 256;
-#endif
 
 	amptab[0] <<= 16;
 	amptab[1] = 0;
@@ -1017,9 +1006,7 @@ int FlushEmulateSound(void) {
 	if (FSettings.soundq >= 1) {
 		int32 *tmpo = &WaveHi[soundtsoffs];
 
-#ifndef TARGET_GNW
 		if (GameExpSound.HiFill) GameExpSound.HiFill();
-#endif
 
 		for (x = sound_timestamp; x; x--) {
 			uint32 b = *tmpo;
@@ -1032,15 +1019,19 @@ int FlushEmulateSound(void) {
 		memmove(WaveHi, WaveHi + SOUNDTS - left, left * sizeof(uint32));
 		memset(WaveHi + left, 0, sizeof(WaveHi) - left * sizeof(uint32));
 
-#ifndef TARGET_GNW
 		if (GameExpSound.HiSync) GameExpSound.HiSync(left);
-#endif
+
 		for (x = 0; x < 5; x++)
 			ChannelBC[x] = left;
 	} else
 #endif
 	{
+#ifndef TARGET_GNW
 		end = (SOUNDTS << 16) / soundtsinc;
+#else
+		// We need precise 50 or 60Hz on the G&W
+		end = (FSettings.SndRate/(PAL?50:60))<<4;
+#endif
 		if (GameExpSound.Fill)
 			GameExpSound.Fill(end & 0xF);
 

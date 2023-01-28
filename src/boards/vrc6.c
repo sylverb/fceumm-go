@@ -261,6 +261,7 @@ static void DoSawV(void) {
 	}
 }
 
+#ifndef TARGET_GNW
 static INLINE void DoSQVHQ(int x) {
 	int32 V;
 	int32 amp = ((vpsg1[x << 2] & 15) << 8) * 6 / 8;
@@ -290,7 +291,6 @@ static INLINE void DoSQVHQ(int x) {
 	cvbc[x] = SOUNDTS;
 }
 
-#ifndef TARGET_GNW
 static void DoSQV1HQ(void) {
 	DoSQVHQ(0);
 }
