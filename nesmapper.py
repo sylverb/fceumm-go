@@ -1303,7 +1303,7 @@ def getSaveSize(mapper,fileSize):
     #...
     else:
         size = 24*1024 # 24KB by default
-    return size
+    return size + 4 # +4 to include G&W specific data
 
 n = len(sys.argv)
 
