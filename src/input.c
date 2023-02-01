@@ -379,7 +379,7 @@ void InitializeInput(void)
    memset(joy,0,sizeof(joy));
    LastStrobe = 0;
 
-#ifdef FCEU_LOW_RAM
+#ifndef FCEU_LOW_RAM
 #ifndef TARGET_GNW
    if (GameInfo && GameInfo->type == GIT_VSUNI)
    {
