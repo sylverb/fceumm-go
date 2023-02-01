@@ -63,11 +63,6 @@ static FCEUGI gameinfo_global;
 #ifndef FCEU_LOW_RAM
 readfunc ARead[0x10000];
 writefunc BWrite[0x10000];
-#ifndef TARGET_GNW
-static readfunc *AReadG = NULL;
-static writefunc *BWriteG = NULL;
-static int RWWrap = 0;
-#endif
 #else
 typedef struct
 {
@@ -81,14 +76,32 @@ typedef struct
    writefunc write_func;
 } mem_write_handler_t;
 
+#if CHEAT_CODES == 1
+#define MAX_MEM_HANDLER_READ_COUNT 20
+#define MAX_MEM_HANDLER_WRITE_COUNT 20
+#else
 #define MAX_MEM_HANDLER_READ_COUNT 10
 #define MAX_MEM_HANDLER_WRITE_COUNT 10
+#endif
 mem_read_handler_t MemRead[MAX_MEM_HANDLER_READ_COUNT];
 mem_write_handler_t MemWrite[MAX_MEM_HANDLER_WRITE_COUNT];
-static uint8 memRead_index = 0;
-static uint8 memWrite_index = 0;
+static uint8 memRead_index;
+static uint8 memWrite_index;
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
+mem_read_handler_t MemReadG[MAX_MEM_HANDLER_READ_COUNT];
+mem_write_handler_t MemWriteG[MAX_MEM_HANDLER_WRITE_COUNT];
+static uint8 memReadG_index;
+static uint8 memWriteG_index;
+#endif
 #endif
 
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
+#ifndef FCEU_LOW_RAM
+static readfunc *AReadG = NULL;
+static writefunc *BWriteG = NULL;
+#endif
+static int RWWrap = 0;
+#endif
 uint8 RAM[0x800];
 uint8 PAL = 0;
 
@@ -122,9 +135,10 @@ static DECLFR(ARAMH)
 	return RAM[A & 0x7FF];
 }
 
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 int AllocGenieRW(void)
 {
+#ifndef FCEU_LOW_RAM
    if (!AReadG)
    {
       if (!(AReadG = (readfunc*)FCEU_malloc(0x8000 * sizeof(readfunc))))
@@ -140,6 +154,7 @@ int AllocGenieRW(void)
    }
    else
       memset(BWriteG, 0, 0x8000 * sizeof(writefunc));
+#endif
 
    RWWrap = 1;
    return 1;
@@ -151,6 +166,7 @@ void FlushGenieRW(void)
 
    if (RWWrap)
    {
+#ifndef FCEU_LOW_RAM
       for (x = 0; x < 0x8000; x++)
       {
          ARead[x + 0x8000] = AReadG[x];
@@ -160,6 +176,36 @@ void FlushGenieRW(void)
       free(BWriteG);
       AReadG = NULL;
       BWriteG = NULL;
+#else
+	  bool merged = false;
+	  for (int i = 0; i < memReadG_index; i++) {
+		merged = false;
+		for (int j = 0; j < memRead_index; j++) {
+			// We check if it can be merged to an existing range
+			if ((MemRead[j].max_range == MemReadG[i].min_range+0x7fff) &&
+				(MemRead[j].read_func == MemReadG[i].read_func)) {
+					merged = true;
+					MemRead[j].max_range = MemReadG[i].max_range + 0x8000;
+					break;
+				}
+		}
+		if (!merged) {
+			MemRead[memRead_index].min_range = MemReadG[i].min_range + 0x8000;
+			MemRead[memRead_index].max_range = MemReadG[i].max_range + 0x8000;
+			MemRead[memRead_index].read_func = MemReadG[i].read_func;
+			memRead_index++;
+		}
+	  }
+	  memReadG_index = 0;
+
+	  for (int i = 0; i < memWriteG_index; i++) {
+	    MemWrite[memWrite_index].min_range = MemWriteG[i].min_range + 0x8000;
+	    MemWrite[memWrite_index].max_range = MemWriteG[i].max_range + 0x8000;
+	    MemWrite[memWrite_index].write_func = MemWriteG[i].write_func;
+		memWrite_index++;
+	  }
+	  memWriteG_index = 0;
+#endif
    }
    RWWrap = 0;
 }
@@ -168,13 +214,23 @@ void FlushGenieRW(void)
 readfunc FASTAPASS(1) GetReadHandler(int32 a)
 {
 #ifndef FCEU_LOW_RAM
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 	if (a >= 0x8000 && RWWrap)
 		return AReadG[a - 0x8000];
 	else
 #endif
 		return ARead[a];
 #else
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
+	if (RWWrap && a >= 0x8000) {
+		/* Search in dynamically assigned functions */
+		for (int i = memReadG_index-1; i >= 0; i--) {
+			if ((a >= MemReadG[i].min_range) && (a <= MemReadG[i].max_range) ) {
+				return MemReadG[i].read_func;
+			}
+		}
+	}
+#endif
 	/* Search in dynamically assigned functions */
 	for (int i = memRead_index-1; i >= 0; i--) {
 		if ((a >= MemRead[i].min_range) && (a <= MemRead[i].max_range) ) {
@@ -277,7 +333,7 @@ uint8 fceu_read(int32 a) {
 
 void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 {
-#ifndef FCEU_LOW_RAM
+#if !defined(FCEU_LOW_RAM) || defined(FCEU_ENABLE_GAMEGENIE_ROM)
 	int32 x;
 #endif
 	printf("SetReadHandler %lx-%lx %lx\n",start,end,(int32)func);
@@ -285,20 +341,44 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 		func = ANull;
 
 #ifndef FCEU_LOW_RAM
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 	if (RWWrap)
 		for (x = end; x >= start; x--)
-      {
+      	{
          if (x >= 0x8000)
             AReadG[x - 0x8000] = func;
          else
             ARead[x] = func;
-      }
+      	}
 	else
 #endif
 		for (x = end; x >= start; x--)
 			ARead[x] = func;
 #else
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
+	if (RWWrap) {
+		if (end < 0x8000) {
+			goto read_range;
+		}
+		if (start >= 0x8000) {
+			MemReadG[memReadG_index].min_range = start-0x8000;
+			MemReadG[memReadG_index].max_range = end-0x8000;
+			MemReadG[memReadG_index].read_func = func;
+			memReadG_index++;
+		}
+		if ((start < 0x8000) && (end >= 0x8000)) {
+			MemReadG[memReadG_index].min_range = 0;
+			MemReadG[memReadG_index].max_range = end-0x8000;
+			MemReadG[memReadG_index].read_func = func;
+			memReadG_index++;
+
+			end = 0x7fff;
+			goto read_range;
+		} 
+	} else
+#endif
+	{
+read_range:
 	// Check if entry is already existing
 	for (int i = 0; i < memRead_index; i++) {
 		if ((MemRead[i].min_range == start) &&
@@ -315,19 +395,32 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 	MemRead[memRead_index].max_range = end;
 	MemRead[memRead_index].read_func = func;
 	memRead_index++;
+	}
+//	printf("memRead_index %d memReadG_index %d\n",memRead_index,memReadG_index);
+
 #endif
 }
 
 writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 {
 #ifndef FCEU_LOW_RAM
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 	if (RWWrap && a >= 0x8000)
 		return BWriteG[a - 0x8000];
 	else
 #endif
 		return BWrite[a];
 #else
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
+	if (RWWrap && a >= 0x8000) {
+		/* Search in dynamically assigned functions */
+		for (int i = memWriteG_index-1; i >= 0; i--) {
+			if ((a >= MemWriteG[i].min_range) && (a <= MemWriteG[i].max_range) ) {
+				return MemWriteG[i].write_func;
+			}
+		}
+	}
+#endif
 	/* Search in dynamically assigned functions */
 	for (int i = memWrite_index-1; i >= 0; i--) {
 		if ((a >= MemWrite[i].min_range) && (a <= MemWrite[i].max_range) ) {
@@ -465,7 +558,7 @@ void fceu_write(int32 a,uint8 v) {
 
 void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 {
-#ifndef FCEU_LOW_RAM
+#if !defined(FCEU_LOW_RAM) || defined(FCEU_ENABLE_GAMEGENIE_ROM)
 	int32 x;
 #endif
 
@@ -474,10 +567,10 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 		func = BNull;
 
 #ifndef FCEU_LOW_RAM
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 	if (RWWrap)
 		for (x = end; x >= start; x--)
-      {
+		{
 			if (x >= 0x8000)
 				BWriteG[x - 0x8000] = func;
 			else
@@ -488,6 +581,30 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 		for (x = end; x >= start; x--)
 			BWrite[x] = func;
 #else
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
+	if (RWWrap) {
+		if (end < 0x8000) {
+			goto write_range;
+		}
+		if (start >= 0x8000) {
+			MemWriteG[memWriteG_index].min_range = start-0x8000;
+			MemWriteG[memWriteG_index].max_range = end-0x8000;
+			MemWriteG[memWriteG_index].write_func = func;
+			memWriteG_index++;
+		}
+		if ((start < 0x8000) && (end >= 0x8000)) {
+			MemWriteG[memWriteG_index].min_range = 0;
+			MemWriteG[memWriteG_index].max_range = end-0x8000;
+			MemWriteG[memWriteG_index].write_func = func;
+			memWriteG_index++;
+
+			end = 0x7fff;
+			goto write_range;
+		} 
+	} else
+#endif
+	{
+write_range:
 	// Check if entry is already existing
 	for (int i = 0; i < memWrite_index; i++) {
 		if ((MemWrite[i].min_range == start) &&
@@ -504,6 +621,7 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 	MemWrite[memWrite_index].max_range = end;
 	MemWrite[memWrite_index].write_func = func;
 	memWrite_index++;
+	}
 #endif
 }
 
@@ -521,12 +639,16 @@ void FCEUI_CloseGame(void)
 #ifndef TARGET_GNW
    if (GameInfo->type != GIT_NSF)
       FCEU_FlushGameCheats();
+#elif CHEAT_CODES == 1
+   FCEU_FlushGameCheats();
 #endif
    GameInterface(GI_CLOSE);
    ResetExState(0, 0);
 #ifndef TARGET_GNW
    FCEU_CloseGenie();
    free(GameInfo);
+#elif defined(FCEU_ENABLE_GAMEGENIE_ROM)
+   FCEU_CloseGenie();
 #endif
    GameInfo = 0;
 }
@@ -592,16 +714,15 @@ endlseq:
       (*frontend_post_load_init_cb)();
 
    FCEU_ResetVidSys();
-//   if (GameInfo->type != GIT_NSF)
-//      if (FSettings.GameGenie)
-//         FCEU_OpenGenie();
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
+    FCEU_OpenGenie();
+#endif
 
    PowerNES();
 
-//   if (GameInfo->type != GIT_NSF) {
-//      FCEU_LoadGamePalette();
-//      FCEU_LoadGameCheats();
-//   }
+#if CHEAT_CODES == 1
+      FCEU_LoadGameCheats();
+#endif
 
    FCEU_ResetPalette();
 
@@ -698,7 +819,7 @@ int FCEUI_Initialize(void) {
 
 void FCEUI_Kill(void) {
 	FCEU_KillVirtualVideo();
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 	FCEU_KillGenie();
 #endif
 }
@@ -707,8 +828,12 @@ void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int ski
 	int ssize;
 
 	FCEU_UpdateInput();
-#ifndef TARGET_GNW
+#if CHEAT_CODES == 1
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 	if (geniestage != 1) FCEU_ApplyPeriodicCheats();
+#else
+	FCEU_ApplyPeriodicCheats();
+#endif
 #endif
 	FCEUPPU_Loop(skip);
 
@@ -770,18 +895,22 @@ void hand(X6502 *X, int type, uint32 A)
 
 void PowerNES(void)
 {
+	FCEU_PrintError("PowerNES\n");
 	if (!GameInfo)
       return;
 
-#ifndef TARGET_GNW
-	FCEU_CheatResetRAM();
-	FCEU_CheatAddRAM(2, 0, RAM);
-
-	FCEU_GeniePower();
-#endif
 #ifdef FCEU_LOW_RAM
 	memRead_index = 0;
 	memWrite_index = 0;
+#endif
+
+#if CHEAT_CODES == 1
+	FCEU_CheatResetRAM();
+	FCEU_CheatAddRAM(2, 0, RAM);
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
+	RWWrap = 0;
+	FCEU_GeniePower();
+#endif
 #endif
 
 	FCEU_MemoryRand(RAM, 0x800);
@@ -813,7 +942,7 @@ void PowerNES(void)
 
 	timestampbase = 0;
 	X6502_Power();
-#ifndef TARGET_GNW
+#if CHEAT_CODES == 1
 	FCEU_PowerCheats();
 #endif
 }

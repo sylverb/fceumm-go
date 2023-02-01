@@ -503,7 +503,7 @@ static void FASTAPASS(1) RefreshLine(int lastpixel) {
 	 */
 
 #define PPUT_MMC5
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 	if (MMC5Hack && geniestage != 1) {
 #else
 	if (MMC5Hack) {
@@ -806,7 +806,7 @@ static void FetchSpriteData(void) {
 					}
 
 					/* Fix this geniestage hack */
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 					if (MMC5Hack && geniestage != 1)
 #else
 					if (MMC5Hack)

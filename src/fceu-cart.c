@@ -35,6 +35,11 @@
 
 #include "general.h"
 
+#ifdef TARGET_GNW
+#include "gw_malloc.h"
+#include "rom_manager.h"
+#endif
+
 /*
 		This file contains all code for coordinating the mapping in of the
 		address space external to the NES.
@@ -70,7 +75,7 @@ uint32 CHRmask2[32];
 uint32 CHRmask4[32];
 uint32 CHRmask8[32];
 
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 int geniestage = 0;
 
 int modcon;
@@ -338,15 +343,16 @@ void SetupCartMirroring(int m, int hard, uint8 *extra) {
 	mirrorhard = hard;
 }
 
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 static uint8 *GENIEROM = 0;
 
 void FixGenieMap(void);
 
 /* Called when a game(file) is opened successfully. */
 void FCEU_OpenGenie(void) {
-	RFILE *fp = NULL;
 	int x;
+#ifndef TARGET_GNW
+	RFILE *fp = NULL;
 
 	if (!GENIEROM) {
 		char *fn;
@@ -396,7 +402,79 @@ void FCEU_OpenGenie(void) {
 		for (x = 0; x < 4; x++)
 			memcpy(GENIEROM + 4096 + (x << 8), GENIEROM + 4096, 256);
 	}
+#else
+#ifndef LINUX_EMU
+	if (!GENIEROM) {
+		retro_emulator_file_t *rom_file;
 
+		rom_system_t *rom_system = (rom_system_t *)rom_manager_system(&rom_mgr, "NES_BIOS");
+		rom_file = (retro_emulator_file_t *)rom_manager_get_file((const rom_system_t *)rom_system,"disksys.rom");
+		if (rom_file == NULL) {
+			FCEU_PrintError("Game Genie ROM image missing!\n");
+			FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
+			return;
+		}
+		if (rom_file->address[0] == 0x4E) {	/* iNES ROM image */
+			GENIEROM = (uint8*)ahb_malloc(4096 + 1024);
+			memcpy(GENIEROM, rom_file->address+16, 4096);
+			memcpy(GENIEROM+ 4096, rom_file->address+16+16384, 256);
+
+			/* Workaround for the FCE Ultra CHR page size only being 1KB */
+			for (x = 0; x < 4; x++)
+				memcpy(GENIEROM + 4096 + (x << 8), GENIEROM + 4096, 256);
+		}
+
+	}
+#else
+	if (!GENIEROM) {
+		if (!(GENIEROM = (uint8*)FCEU_malloc(4096 + 1024))) return;
+
+		FILE *fp = fopen("gamegenie.nes","r");
+		if (fp == NULL) {
+				FCEU_PrintError("Error reading from Game Genie ROM image!\n");
+				FCEUD_DispMessage(RETRO_LOG_WARN, 3000, "Failed to read Game Genie ROM image (gamegenie.nes)");
+			return;
+		}
+
+		char *buffer = (char *)FCEU_malloc(64*1024);
+		fread(buffer, 1, 64*1024, fp);
+		if (buffer[0] == 0x4E) {	/* iNES ROM image */
+			printf("gg.nes ok\n");
+			memcpy(GENIEROM, buffer+16, 4096);
+			memcpy(GENIEROM + 4096, buffer+16+16384, 256);
+			fclose(fp);
+		}
+
+#if 0
+		if (fread(GENIEROM, 1, 16, fp) != 16) {
+ grerr:
+			FCEU_PrintError("Error reading from Game Genie ROM image!\n");
+			FCEUD_DispMessage(RETRO_LOG_WARN, 3000, "Failed to read Game Genie ROM image (gamegenie.nes)");
+			FCEU_free(GENIEROM);
+			GENIEROM = 0;
+			fclose(fp);
+			return;
+		}
+
+		if (GENIEROM[0] == 0x4E) {	/* iNES ROM image */
+			if (fread(GENIEROM, 1, 4096, fp) != 4096)
+				goto grerr;
+			if (fseek(fp, 16384 - 4096, SEEK_CUR))
+				goto grerr;
+			if (fread(GENIEROM + 4096, 1, 256, fp) != 256)
+				goto grerr;
+		} else {
+			if (fread(GENIEROM + 16, 1, 4352 - 16, fp) != (4352 - 16))
+				goto grerr;
+		}
+		fclose(fp);
+#endif
+		/* Workaround for the FCE Ultra CHR page size only being 1KB */
+		for (x = 0; x < 4; x++)
+			memcpy(GENIEROM + 4096 + (x << 8), GENIEROM + 4096, 256);
+	}
+#endif
+#endif
 	geniestage = 1;
 }
 

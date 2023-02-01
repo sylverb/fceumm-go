@@ -96,7 +96,7 @@ void FASTAPASS(3) setntamem(uint8 *p, int ram, uint32 b);
 #define MI_0 2
 #define MI_1 3
 
-#ifndef TARGET_GNW
+#ifdef FCEU_ENABLE_GAMEGENIE_ROM
 extern int geniestage;
 
 void FCEU_GeniePower(void);

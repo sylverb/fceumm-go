@@ -207,6 +207,7 @@ void FCEU_ResetCheats(void)
 
 
 int FCEUI_AddCheat(const char *name, uint32 addr, uint8 val, int compare, int type) {
+#ifndef TARGET_GNW
 	char *t;
 	if (!(t = (char*)malloc(strlen(name) + 1)))
 	{
@@ -218,6 +219,11 @@ int FCEUI_AddCheat(const char *name, uint32 addr, uint8 val, int compare, int ty
 		free(t);
 		return(0);
 	}
+#else
+	if (!AddCheatEntry(NULL, addr, val, compare, 1, type)) {
+		return(0);
+	}
+#endif
 	savecheats = 1;
 	RebuildSubCheats();
 	return(1);
