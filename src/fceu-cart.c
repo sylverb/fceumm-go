@@ -408,10 +408,10 @@ void FCEU_OpenGenie(void) {
 		retro_emulator_file_t *rom_file;
 
 		rom_system_t *rom_system = (rom_system_t *)rom_manager_system(&rom_mgr, "NES_BIOS");
-		rom_file = (retro_emulator_file_t *)rom_manager_get_file((const rom_system_t *)rom_system,"disksys.rom");
+		rom_file = (retro_emulator_file_t *)rom_manager_get_file((const rom_system_t *)rom_system,"gamegenie.nes");
 		if (rom_file == NULL) {
-			FCEU_PrintError("Game Genie ROM image missing!\n");
-			FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
+			FCEU_PrintError("Error reading from Game Genie ROM image!\n");
+			FCEUD_DispMessage(RETRO_LOG_WARN, 3000, "Failed to read Game Genie ROM image (gamegenie.nes)");
 			return;
 		}
 		if (rom_file->address[0] == 0x4E) {	/* iNES ROM image */
