@@ -622,10 +622,10 @@ static void FreeFDSMemory(void) {
 #ifdef TARGET_GNW
 static int SubLoadRom(uint8 *fds, uint32_t rom_size) {
 	uint8 header[16];
+	int offset = 0;
 	int x;
 
 	memcpy(header,fds,16);
-
 	if (memcmp(header, "FDS\x1a", 4)) {
 		if (!(memcmp(header + 1, "*NINTENDO-HVC*", 14))) {
 			if (rom_size < 65500)
@@ -633,20 +633,22 @@ static int SubLoadRom(uint8 *fds, uint32_t rom_size) {
 			TotalSides = rom_size / 65500;
 		} else
 			return(0);
-	} else
+	} else {
+		offset+=16;
 		TotalSides = header[4];
+	}
 
 	if (TotalSides > 8) TotalSides = 8;
 	if (TotalSides < 1) TotalSides = 1;
 
 	FDSROMSize = TotalSides * BYTES_PER_SIDE;
 #ifndef LINUX_EMU
-	FDSROM = fds;
+	FDSROM = fds+offset;
 #else
 	FDSROM = (uint8*)FCEU_malloc(FDSROMSize);
 	if (!FDSROM)
 		return (0);
-	memcpy(FDSROM,fds,FDSROMSize);
+	memcpy(FDSROM,fds+offset,FDSROMSize);
 #endif
 	for (x = 0; x < TotalSides; x++)
 		diskdata[x] = &FDSROM[x * BYTES_PER_SIDE];
