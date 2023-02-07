@@ -173,7 +173,7 @@ void MakeFilters(int32 rate) {
 		nco = NCOEFFS;
 
 	mrindex = (nco + 1) << 16;
-	mrratio = (PAL ? (int64)(PAL_CPU * 65536) : (int64)(NTSC_CPU * 65536)) / rate;
+	mrratio = (PAL ? ((int64)PAL_CPU * 65536) : ((int64)NTSC_CPU * 65536)) / rate;
 
 #ifndef TARGET_GNW
 	if (FSettings.soundq == 2)

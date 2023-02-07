@@ -191,7 +191,9 @@ void FCEU_ResetCheats(void)
    {
       struct CHEATF *next = cheats;
       for (;; ) {
+#ifndef TARGET_GNW
          struct CHEATF *last = next;
+#endif
          next = next->next;
 #ifndef TARGET_GNW
          free(last->name);

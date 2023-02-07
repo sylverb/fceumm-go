@@ -399,7 +399,9 @@ static void JYASIC_restoreWriteHandlers(void)
 
 static void JYASIC_power(void)
 {
+#ifndef TARGET_GNW
    unsigned int i;
+#endif
 
    SetWriteHandler(0x5000, 0x5FFF, writeALU);
    SetWriteHandler(0x6000, 0x7fff, CartBW);
@@ -760,7 +762,9 @@ static DECLFW(Mapper394_Write)
 }
 static void Mapper394_restore (int version)
 {
+#ifndef TARGET_GNW
 	int i;
+#endif
 	JYASIC_restoreWriteHandlers();
 	if (HSK007Reg[1] &0x10)
 	{		

@@ -55,7 +55,10 @@ static uint8 *FlashPage[32];
 /* static uint32 *FlashWriteCountPage[32]; */
 /* static uint8 flashloaded = 0; */
 
-static uint8 flash_save = 0, flash_state = 0, flash_mode = 0, flash_bank;
+#ifndef TARGET_GNW
+static uint8 flash_save = 0;
+#endif
+static uint8 flash_state = 0, flash_mode = 0, flash_bank;
 static void (*WLSync)(void);
 static void (*WHSync)(void);
 

@@ -376,9 +376,9 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 			goto read_range;
 		} 
 	} else
+read_range:
 #endif
 	{
-read_range:
 	// Check if entry is already existing
 	for (int i = 0; i < memRead_index; i++) {
 		if ((MemRead[i].min_range == start) &&
@@ -602,9 +602,9 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 			goto write_range;
 		} 
 	} else
+write_range:
 #endif
 	{
-write_range:
 	// Check if entry is already existing
 	for (int i = 0; i < memWrite_index; i++) {
 		if ((MemWrite[i].min_range == start) &&

@@ -96,9 +96,7 @@ static void UNLKS7017Power(void) {
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-#ifndef TARGET_GNW
 	SetReadHandler(0x4030, 0x4030, FDSRead4030);
-#endif
 	SetWriteHandler(0x4020, 0x5FFF, UNLKS7017Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }

@@ -27,8 +27,8 @@
 #include "fceu-emu2413.h"
 #endif
 
-static int32 dwave = 0;
 #ifndef TARGET_GNW
+static int32 dwave = 0;
 static OPLL *VRC7Sound = NULL;
 #endif
 static uint8 vrc7idx, preg[3], creg[8], mirr;
@@ -56,10 +56,8 @@ static SFORMAT StateRegs[] =
 #ifndef TARGET_GNW
 void DoVRC7Sound(void) {
 	int32 z, a;
-#ifndef TARGET_GNW
 	if (FSettings.soundq >= 1)
 		return;
-#endif
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
 	a = z - dwave;
 	OPLL_fillbuf(VRC7Sound, &Wave[dwave], a, 1);
