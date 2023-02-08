@@ -922,7 +922,7 @@ ChecksumDict = {
 
 def analyzeRom(nesFile,fileName):
     mapper = -1
-    nesBytes = nesFile.read(16)
+    nesBytes = nesFile.read(32)
     try :
         idString = nesBytes[0:3].decode("utf-8",errors='ignore')
         if idString == "NES" and nesBytes[3] == 0x1a:
@@ -944,6 +944,10 @@ def analyzeRom(nesFile,fileName):
             idString = nesBytes[1:15].decode("utf-8")
             if idString == "*NINTENDO-HVC*":
                 mapper = -2
+            else: # check if it's a FDS file with header
+                idString = nesBytes[17:31].decode("utf-8")
+                if idString == "*NINTENDO-HVC*":
+                    mapper = -2
     except Exception:
         mapper = -1
     return mapper
