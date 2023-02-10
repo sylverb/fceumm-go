@@ -72,7 +72,7 @@ typedef struct {
 
 static CHEATF_SUBFAST SubCheats[256];
 static int numsubcheats = 0;
-struct CHEATF *cheats = 0, *cheatsl = 0;
+static struct CHEATF *cheats = 0, *cheatsl = 0;
 
 
 #define CHEATC_NONE     0x8000
