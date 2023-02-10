@@ -25,6 +25,7 @@
 typedef struct {
 	void (*Fill)(int Count);	/* Low quality ext sound. */
 
+#ifndef TARGET_GNW
 	/* NeoFill is for sound devices that are emulated in a more
 		high-level manner(VRC7) in HQ mode.  Interestingly,
 		this device has slightly better sound quality(updated more
@@ -32,7 +33,6 @@ typedef struct {
 		should be fixed. :)
 	*/
 	void (*NeoFill)(int32 *Wave, int Count);
-#ifndef TARGET_GNW
 	void (*HiFill)(void);
 	void (*HiSync)(int32 ts);
 #endif

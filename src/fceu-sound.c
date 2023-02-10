@@ -45,7 +45,7 @@ int32 WaveFinal[1000];
 #ifndef TARGET_GNW
 EXPSOUND GameExpSound = { 0, 0, 0, 0, 0, 0 };
 #else
-EXPSOUND GameExpSound = { 0, 0, 0, 0 };
+EXPSOUND GameExpSound = { 0, 0, 0};
 #endif
 static uint8 TriCount = 0;
 static uint8 TriMode = 0;
@@ -511,15 +511,15 @@ void FASTAPASS(1) FCEU_SoundCPUHook(int cycles) {
 			uint8 bah = RawDALatch;
 			int t = ((DMCShift & 1) << 2) - 2;
 			/* Unbelievably ugly hack */
-			if (FSettings.SndRate) {
 #ifndef TARGET_GNW
+			if (FSettings.SndRate) {
 				soundtsoffs += DMCacc;
 				DoPCM();
 				soundtsoffs -= DMCacc;
-#else
-				DoPCM();
-#endif
 			}
+#else
+			DoPCM();
+#endif
 			RawDALatch += t;
 			if (RawDALatch & 0x80)
 				RawDALatch = bah;
