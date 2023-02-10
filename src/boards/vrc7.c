@@ -21,16 +21,13 @@
 #include "mapinc.h"
 #ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
-#endif
-#ifndef TARGET_GNW
-// TODO : Fix OPLL support, for now emu2413 is using too much ram for the G&W
+#include "emu2413_nes.h"
+#else
 #include "fceu-emu2413.h"
 #endif
 
-#ifndef TARGET_GNW
 static int32 dwave = 0;
 static OPLL *VRC7Sound = NULL;
-#endif
 static uint8 vrc7idx, preg[3], creg[8], mirr;
 static uint8 IRQLatch, IRQa, IRQd;
 static int32 IRQCount, CycleCount;
@@ -67,35 +64,49 @@ void DoVRC7Sound(void) {
 void UpdateOPLNEO(int32 *Wave, int Count) {
 	OPLL_fillbuf(VRC7Sound, Wave, Count, 4);
 }
+#endif
 
 void UpdateOPL(int Count) {
+#ifndef TARGET_GNW
 	int32 z, a;
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
 	a = z - dwave;
 	if (VRC7Sound && a)
 		OPLL_fillbuf(VRC7Sound, &Wave[dwave], a, 1);
 	dwave = 0;
+#else
+	OPLL_NES_fillbuf(VRC7Sound, Wave, (FSettings.SndRate/(PAL?50:60)), 1);
+#endif
 }
 
 static void VRC7SC(void) {
 	if (VRC7Sound)
+#ifndef TARGET_GNW
 		OPLL_set_rate(VRC7Sound, FSettings.SndRate);
+#else
+		OPLL_NES_setRate(VRC7Sound, FSettings.SndRate);
+#endif
 }
 
+#ifndef TARGET_GNW
 static void VRC7SKill(void) {
 	if (VRC7Sound)
-		OPLL_delete(VRC7Sound);
+		OPLL_NES_delete(VRC7Sound);
 	VRC7Sound = NULL;
 }
+#endif
 
 static void VRC7_ESI(void) {
 	GameExpSound.RChange = VRC7SC;
+#ifndef TARGET_GNW
 	GameExpSound.Kill = VRC7SKill;
 	VRC7Sound = OPLL_new(3579545, FSettings.SndRate ? FSettings.SndRate : 44100);
 	OPLL_reset(VRC7Sound);
-	OPLL_reset(VRC7Sound);
-}
+#else
+	VRC7Sound = OPLL_NES_new(3579545, FSettings.SndRate ? FSettings.SndRate : 44100);
+	OPLL_NES_reset(VRC7Sound);
 #endif
+}
 
 /* VRC7 Sound */
 
@@ -116,15 +127,18 @@ static void Sync(void) {
 	}
 }
 
-#ifndef TARGET_GNW
 static DECLFW(VRC7SW) {
-	if (FSettings.SndRate) {
+#ifndef TARGET_GNW
+	if (FSettings.SndRate)
+#endif
+	{
+#ifndef TARGET_GNW
 		OPLL_writeReg(VRC7Sound, vrc7idx, V);
-		GameExpSound.Fill = UpdateOPL;
-		GameExpSound.NeoFill = UpdateOPLNEO;
+#else
+		OPLL_NES_writeReg(VRC7Sound, vrc7idx, V);
+#endif
 	}
 }
-#endif
 
 static DECLFW(VRC7Write) {
 	A |= (A & 8) << 1;	/* another two-in-oooone */
@@ -132,10 +146,8 @@ static DECLFW(VRC7Write) {
 		A &= 0xF010;
 		creg[((A >> 4) & 1) | ((A - 0xA000) >> 11)] = V;
 		Sync();
-#ifndef TARGET_GNW
 	} else if (A == 0x9030) {
 		VRC7SW(A, V);
-#endif
 	} else switch (A & 0xF010) {
 		case 0x8000: preg[0] = V; Sync(); break;
 		case 0x8010: preg[1] = V; Sync(); break;
@@ -189,9 +201,11 @@ static void VRC7IRQHook(int a) {
 static void StateRestore(int version) {
 	Sync();
 
-#ifndef TARGET_GNW
 #ifndef GEKKO
+#ifndef TARGET_GNW
 	OPLL_forceRefresh(VRC7Sound);
+#else
+	OPLL_NES_forceRefresh(VRC7Sound);
 #endif
 #endif
 }
@@ -213,10 +227,13 @@ void Mapper85_Init(CartInfo *info) {
 		info->SaveGameLen[0] = WRAMSIZE;
 	}
 	GameStateRestore = StateRestore;
-#ifndef TARGET_GNW
 	VRC7_ESI();
-#endif
 	AddExState(&StateRegs, ~0, 0, 0);
+
+	GameExpSound.Fill = UpdateOPL;
+#ifndef TARGET_GNW
+	GameExpSound.NeoFill = UpdateOPLNEO;
+#endif
 
 /* Ignoring these sound state files for Wii since it causes states unable to load */
 #ifndef TARGET_GNW
@@ -249,7 +266,5 @@ void Mapper85_Init(CartInfo *info) {
 void NSFVRC7_Init(void) {
 	SetWriteHandler(0x9010, 0x901F, VRC7Write);
 	SetWriteHandler(0x9030, 0x903F, VRC7Write);
-#ifndef TARGET_GNW
 	VRC7_ESI();
-#endif
 }
