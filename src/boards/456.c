@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -56,3 +61,4 @@ void Mapper456_Init(CartInfo *info) {
 	info->Reset = Mapper456_Reset;
 	AddExState(EXPREGS, 1, 0, "EXPR");
 }
+#endif

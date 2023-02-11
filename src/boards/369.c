@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -192,3 +197,4 @@ void Mapper369_Init(CartInfo *info) {
 	GameHBIRQHook = MMC3IRQHook;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
+#endif

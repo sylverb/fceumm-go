@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -142,3 +147,4 @@ void Mapper164_Init (CartInfo *info)
    info->SaveGame[0] = eeprom_data;
    info->SaveGameLen[0] = 512;
 }
+#endif

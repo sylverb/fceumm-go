@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -54,3 +59,4 @@ static void UNLRT01Power(void) {
 void UNLRT01_Init(CartInfo *info) {
 	info->Power = UNLRT01Power;
 }
+#endif

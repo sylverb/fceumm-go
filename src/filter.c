@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 #include <math.h>
 #include "fceu-types.h"
 
@@ -186,3 +191,4 @@ void MakeFilters(int32 rate) {
 		for (x = 0; x < (NCOEFFS >> 1); x++)
 			coeffs[x] = coeffs[NCOEFFS - 1 - x] = tmp[x];
 }
+#endif

@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -1054,3 +1059,4 @@ int32 FCEUI_GetDesiredFPS(void)
 	else
 		return(1008307711);	/* ~60.1 */
 }
+#endif

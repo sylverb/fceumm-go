@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -400,3 +405,4 @@ void BTL900218_Init(CartInfo *info) {
 	VRC24_Init(info, 1);
 	MapIRQHook = BTL900218IRQHook;
 }
+#endif

@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -516,3 +521,4 @@ void Mapper210_Init(CartInfo *info) {
 	AddExState(WRAM, 8192, 0, "WRAM");
 	AddExState(N106_StateRegs, ~0, 0, 0);
 }
+#endif

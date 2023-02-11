@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -44,19 +49,15 @@
 
 #ifndef TARGET_GNW
 static char BaseDirectory[2048] = {0};
-#endif
 
-#ifndef TARGET_GNW
 void FCEUI_SetBaseDirectory(const char *dir)
 {
 	strncpy(BaseDirectory, dir, 2047);
 	BaseDirectory[2047] = 0;
 }
-#endif
 
 char *FCEU_MakeFName(int type, int id1, char *cd1)
 {
-#ifndef TARGET_GNW
    char tmp[4096 + 512] = {0}; /* +512 for no reason :D */
    char *ret      = 0;
 
@@ -84,10 +85,8 @@ char *FCEU_MakeFName(int type, int id1, char *cd1)
    strcpy(ret, tmp);
 
    return(ret);
-#else
-   return 0;
-#endif
 }
+#endif
 
 uint32 uppow2(uint32 n)
 {
@@ -102,3 +101,4 @@ uint32 uppow2(uint32 n)
       }
    return n;
 }
+#endif

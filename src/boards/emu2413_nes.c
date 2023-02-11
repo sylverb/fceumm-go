@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /**
  * emu2413 v1.5.7
  * https://github.com/digital-sound-antiques/emu2413
@@ -1563,3 +1568,4 @@ uint32_t OPLL_NES_toggleMask(OPLL *opll, uint32_t mask) {
   } else
     return 0;
 }
+#endif

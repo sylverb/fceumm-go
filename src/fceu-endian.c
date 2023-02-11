@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -80,3 +85,4 @@ uint32 FCEU_de32lsb(const uint8 *morp)
 {
    return(morp[0] | (morp[1] << 8) | (morp[2] << 16) | (morp[3] << 24));
 }
+#endif

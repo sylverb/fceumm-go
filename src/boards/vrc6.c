@@ -1,3 +1,8 @@
+#ifdef TARGET_GNW
+#include "build/config.h"
+#endif
+
+#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -414,3 +419,4 @@ void NSFVRC6_Init(void) {
 	SetWriteHandler(0x8000, 0xbfff, VRC6SW);
 	AddExState(&SStateRegs, ~0, 0, 0);
 }
+#endif
