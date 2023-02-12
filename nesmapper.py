@@ -1102,7 +1102,8 @@ def getSaveSize(mapper,fileSize):
     elif mapper == 83:
         size = 13805
     #84 Unsupported
-    #85 ?
+    elif mapper == 85:
+        size = 25835
     #86 ?
     #87 ?
     #88 ?
