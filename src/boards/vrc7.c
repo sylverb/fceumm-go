@@ -31,7 +31,9 @@
 #include "fceu-emu2413.h"
 #endif
 
+#ifndef TARGET_GNW
 static int32 dwave = 0;
+#endif
 static OPLL *VRC7Sound = NULL;
 static uint8 vrc7idx, preg[3], creg[8], mirr;
 static uint8 IRQLatch, IRQa, IRQd;
@@ -241,8 +243,8 @@ void Mapper85_Init(CartInfo *info) {
 #endif
 
 /* Ignoring these sound state files for Wii since it causes states unable to load */
-#ifndef TARGET_GNW
 #ifndef GEKKO
+#ifndef TARGET_GNW
 	/* Sound states */
 	AddExState(&VRC7Sound->adr, sizeof(VRC7Sound->adr), 0, "ADDR");
 	AddExState(&VRC7Sound->out, sizeof(VRC7Sound->out), 0, "OUT0");
@@ -264,6 +266,33 @@ void Mapper85_Init(CartInfo *info) {
 	AddExState(&VRC7Sound->key_status, sizeof(VRC7Sound->key_status), 0, "KET");
 	AddExState(&VRC7Sound->mask, sizeof(VRC7Sound->mask), 0, "MASK");
 	AddExState((uint8 *)VRC7Sound->slot, sizeof(VRC7Sound->slot), 0, "SLOT");
+#else
+	/* Sound states */
+	AddExState(&VRC7Sound->clk, sizeof(VRC7Sound->clk), 0, "CLK0");
+	AddExState(&VRC7Sound->rate, sizeof(VRC7Sound->rate), 0, "RAT0");
+	AddExState(&VRC7Sound->chip_type, sizeof(VRC7Sound->chip_type), 0, "CHIP");
+	AddExState(&VRC7Sound->adr, sizeof(VRC7Sound->adr), 0, "ADDR");
+	AddExState(&VRC7Sound->inp_step, sizeof(VRC7Sound->inp_step), 0, "STEI");
+	AddExState(&VRC7Sound->out_step, sizeof(VRC7Sound->out_step), 0, "STEO");
+	AddExState(&VRC7Sound->out_time, sizeof(VRC7Sound->out_time), 0, "TIMO");
+	AddExState(&VRC7Sound->reg, sizeof(VRC7Sound->reg), 0, "REG0");
+	AddExState(&VRC7Sound->test_flag, sizeof(VRC7Sound->test_flag), 0, "TFLA");
+	AddExState(&VRC7Sound->slot_key_status, sizeof(VRC7Sound->slot_key_status), 0, "SLKS");
+	AddExState(&VRC7Sound->rhythm_mode, sizeof(VRC7Sound->rhythm_mode), 0, "RHMO");
+	AddExState(&VRC7Sound->eg_counter, sizeof(VRC7Sound->eg_counter), 0, "RHMO");
+	AddExState(&VRC7Sound->pm_phase, sizeof(VRC7Sound->pm_phase), 0, "PMPH");
+	AddExState(&VRC7Sound->am_phase, sizeof(VRC7Sound->am_phase), 0, "AMPH");
+	AddExState(&VRC7Sound->lfo_am, sizeof(VRC7Sound->lfo_am), 0, "ALFO");
+	AddExState(&VRC7Sound->noise, sizeof(VRC7Sound->noise), 0, "NOIS");
+	AddExState(&VRC7Sound->short_noise, sizeof(VRC7Sound->short_noise), 0, "SNOI");
+	AddExState(&VRC7Sound->patch_number, sizeof(VRC7Sound->patch_number), 0, "PNUM");
+	AddExState(&VRC7Sound->slot, sizeof(VRC7Sound->slot), 0, "SLOT");
+	AddExState(&VRC7Sound->patch, sizeof(VRC7Sound->patch), 0, "PATC");
+	AddExState(&VRC7Sound->pan, sizeof(VRC7Sound->pan), 0, "PAN0");
+	AddExState(&VRC7Sound->pan_fine, sizeof(VRC7Sound->pan_fine), 0, "PANF");
+	AddExState(&VRC7Sound->mask, sizeof(VRC7Sound->mask), 0, "MASK");
+	AddExState(&VRC7Sound->ch_out, sizeof(VRC7Sound->ch_out), 0, "CHOU");
+	AddExState(&VRC7Sound->mix_out, sizeof(VRC7Sound->mix_out), 0, "MIXO");
 #endif
 #endif
 }
