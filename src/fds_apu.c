@@ -31,7 +31,11 @@
 #include "fceu-sound.h"
 #include "fceu-state.h"
 
-#define FDSClock (NTSC_CPU / 2)
+#ifndef TARGET_GNW
+#define FDSClock (1789772.7272727272727272 / 2)
+#else
+#define FDSClock (1789000 / 2) // this value allow to reduce audio glitches on G&W with FDS Games
+#endif
 
 typedef struct {
 	int64 cycles;		/* Cycles per PCM sample */

@@ -51,9 +51,9 @@ extern void FP_FASTAPASS(1) (*MapIRQHook)(int a);
 #ifndef TARGET_GNW
 #define NTSC_CPU (dendy ? 1773447.467 : 1789772.7272727272727272)
 #define PAL_CPU  1662607.125
-#else
-#define NTSC_CPU    1786830 // 60 * 29780.5
-#define PAL_CPU     1662375 // 50 * 33247.5
+#else // On G&W we want to be as close as possible to real 50 and 60Hz
+#define NTSC_CPU    1786730 
+#define PAL_CPU     1662375
 #endif
 
 #define FCEU_IQEXT      0x001
