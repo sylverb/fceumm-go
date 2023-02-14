@@ -110,8 +110,10 @@ static void VRC7_ESI(void) {
 	VRC7Sound = OPLL_new(3579545, FSettings.SndRate ? FSettings.SndRate : 44100);
 	OPLL_reset(VRC7Sound);
 #else
-	VRC7Sound = OPLL_NES_new(3579545, FSettings.SndRate ? FSettings.SndRate : 44100);
-	OPLL_NES_reset(VRC7Sound);
+	VRC7Sound = OPLL_NES_new(3579545, FSettings.SndRate);
+	// Use the VRC7 profile
+	OPLL_NES_setChipType(VRC7Sound, 1);
+	OPLL_NES_resetPatch(VRC7Sound, 1);
 #endif
 }
 
