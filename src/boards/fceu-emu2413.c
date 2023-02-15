@@ -193,11 +193,26 @@ static uint32 dphaseARTable[16][16];
 static uint32 dphaseDRTable[16][16];
 
 /* KSL + TL Table */
+#define dB2(x) ((x) * 2)
+
+static double kltable[16] = {
+	dB2(0.000), dB2(9.000), dB2(12.000), dB2(13.875), dB2(15.000), dB2(16.125), dB2(16.875), dB2(17.625),
+	dB2(18.000), dB2(18.750), dB2(19.125), dB2(19.500), dB2(19.875), dB2(20.250), dB2(20.625), dB2(21.000)
+};
+
+#ifndef TARGET_GNW
+// 128KBytes table !
 static uint32 tllTable[16][8][1 << TL_BITS][4];
+#endif
 static int32 rksTable[2][8][2];
 
+static uint32 mltable[16] =
+	{ 1, 1 * 2, 2 * 2, 3 * 2, 4 * 2, 5 * 2, 6 * 2, 7 * 2, 8 * 2, 9 * 2, 10 * 2, 10 * 2, 12 * 2, 12 * 2, 15 * 2, 15 * 2 };
 /* Phase incr table for PG */
+// 256KBytes table !
+#ifndef TARGET_GNW
 static uint32 dphaseTable[512][8][16];
+#endif
 
 /***************************************************
 
@@ -280,25 +295,19 @@ static void makeAmTable(void) {
 }
 
 /* Phase increment counter table */
+#ifndef TARGET_GNW
 static void makeDphaseTable(void) {
 	uint32 fnum, block, ML;
-	uint32 mltable[16] =
-	{ 1, 1 * 2, 2 * 2, 3 * 2, 4 * 2, 5 * 2, 6 * 2, 7 * 2, 8 * 2, 9 * 2, 10 * 2, 10 * 2, 12 * 2, 12 * 2, 15 * 2, 15 * 2 };
 
 	for (fnum = 0; fnum < 512; fnum++)
 		for (block = 0; block < 8; block++)
 			for (ML = 0; ML < 16; ML++)
 				dphaseTable[fnum][block][ML] = rate_adjust(((fnum * mltable[ML]) << block) >> (20 - DP_BITS));
 }
+#endif
 
+#ifndef TARGET_GNW
 static void makeTllTable(void) {
-#define dB2(x) ((x) * 2)
-
-	static double kltable[16] = {
-		dB2(0.000), dB2(9.000), dB2(12.000), dB2(13.875), dB2(15.000), dB2(16.125), dB2(16.875), dB2(17.625),
-		dB2(18.000), dB2(18.750), dB2(19.125), dB2(19.500), dB2(19.875), dB2(20.250), dB2(20.625), dB2(21.000)
-	};
-
 	int32 tmp;
 	int32 fnum, block, TL, KL;
 
@@ -317,6 +326,7 @@ static void makeTllTable(void) {
 					}
 				}
 }
+#endif
 
 /* Rate Table for Attack */
 static void makeDphaseARTable(void) {
@@ -417,11 +427,34 @@ INLINE static uint32 calc_eg_dphase(OPLL_SLOT * slot) {
 
 *************************************************************/
 
+#ifndef TARGET_GNW
 #define UPDATE_PG(S)  (S)->dphase = dphaseTable[(S)->fnum][(S)->block][(S)->patch.ML]
+#else
+#define UPDATE_PG(S)  (S)->dphase = rate_adjust((((S)->fnum * mltable[(S)->patch.ML]) << (S)->block) >> (20 - DP_BITS))
+#endif
+
+#ifndef TARGET_GNW
 #define UPDATE_TLL(S) \
 	(((S)->type == 0) ?	\
 	 ((S)->tll = tllTable[((S)->fnum) >> 5][(S)->block][(S)->patch.TL][(S)->patch.KL]) : \
 	 ((S)->tll = tllTable[((S)->fnum) >> 5][(S)->block][(S)->volume][(S)->patch.KL]))
+#else
+#define UPDATE_TLL(S)\
+    if ((S)->type == 0) { \
+      tl_index = (S)->patch.TL; \
+    } else { \
+      tl_index = (S)->volume; \
+    } \
+    if ((S)->patch.KL == 0) { \
+      (S)->tll = TL2EG(tl_index); \
+    } else { \
+      int32_t tmp = (int32_t)(kltable[(S)->fnum&0xf] - dB2(3.000) * (7 - ((S)->fnum>>4))); \
+      if (tmp <= 0) \
+        (S)->tll = TL2EG(tl_index); \
+      else \
+        (S)->tll = (uint32_t)((tmp >> (3 - (S)->patch.KL)) / EG_STEP) + TL2EG(tl_index); \
+    }
+#endif
 #define UPDATE_RKS(S) (S)->rks = rksTable[((S)->fnum) >> 8][(S)->block][(S)->patch.KR]
 #define UPDATE_WF(S)  (S)->sintbl = waveform[(S)->patch.WF]
 #define UPDATE_EG(S)  (S)->eg_dphase = calc_eg_dphase(S)
@@ -532,7 +565,9 @@ static void OPLL_SLOT_reset(OPLL_SLOT * slot, int type) {
 }
 
 static void internal_refresh(void) {
+#ifndef TARGET_GNW
 	makeDphaseTable();
+#endif
 	makeDphaseARTable();
 	makeDphaseDRTable();
 	pm_dphase = (uint32)rate_adjust(PM_SPEED * PM_DP_WIDTH / (clk / 72));
@@ -546,7 +581,9 @@ static void maketables(uint32 c, uint32 r) {
 		makeAmTable();
 		makeDB2LinTable();
 		makeAdjustTable();
+#ifndef TARGET_GNW
 		makeTllTable();
+#endif
 		makeRksTable();
 		makeSinTable();
 		/* makeDefaultPatch (); */
@@ -558,7 +595,7 @@ static void maketables(uint32 c, uint32 r) {
 	}
 }
 
-OPLL *OPLL_new(uint32 _clk, uint32 _rate) {
+OPLL *OPLL_FCEU_new(uint32 _clk, uint32 _rate) {
 	OPLL *opll;
 
 	maketables(_clk, _rate);
@@ -573,7 +610,7 @@ OPLL *OPLL_new(uint32 _clk, uint32 _rate) {
 
 	opll->mask = 0;
 
-	OPLL_reset(opll);
+	OPLL_FCEU_reset(opll);
 
 	return opll;
 }
@@ -586,7 +623,7 @@ void OPLL_delete(OPLL * opll) {
 }
 
 /* Reset whole of OPLL except patch datas. */
-void OPLL_reset(OPLL * opll) {
+void OPLL_FCEU_reset(OPLL * opll) {
 	int32 i;
 
 	if (!opll)
@@ -609,7 +646,7 @@ void OPLL_reset(OPLL * opll) {
 	}
 
 	for (i = 0; i < 0x40; i++)
-		OPLL_writeReg(opll, i, 0);
+		OPLL_FCEU_writeReg(opll, i, 0);
 
 	opll->realstep = (uint32)((1 << 31) / rate);
 	opll->opllstep = (uint32)((1 << 31) / (clk / 72));
@@ -617,8 +654,9 @@ void OPLL_reset(OPLL * opll) {
 }
 
 /* Force Refresh (When external program changes some parameters). */
-void OPLL_forceRefresh(OPLL * opll) {
+void OPLL_FCEU_forceRefresh(OPLL * opll) {
 	int32 i;
+    uint16_t tl_index;
 
 	if (opll == NULL)
 		return;
@@ -632,7 +670,7 @@ void OPLL_forceRefresh(OPLL * opll) {
 	}
 }
 
-void OPLL_set_rate(OPLL * opll, uint32 r) {
+void OPLL_FCEU_set_rate(OPLL * opll, uint32 r) {
 	if (opll->quality)
 		rate = 49716;
 	else
@@ -643,7 +681,7 @@ void OPLL_set_rate(OPLL * opll, uint32 r) {
 
 void OPLL_set_quality(OPLL * opll, uint32 q) {
 	opll->quality = q;
-	OPLL_set_rate(opll, rate);
+	OPLL_FCEU_set_rate(opll, rate);
 }
 
 /*********************************************************
@@ -827,7 +865,7 @@ static INLINE int16 calc(OPLL * opll) {
 	return (int16)out;
 }
 
-void OPLL_fillbuf(OPLL* opll, int32 *buf, int32 len, int shift) {
+void OPLL_FCEU_fillbuf(OPLL* opll, int32 *buf, int32 len, int shift) {
 	while (len > 0) {
 		*buf += (calc(opll) + 32768) << shift;
 		buf++;
@@ -930,8 +968,9 @@ static void setInstrument(OPLL * opll, uint32 i, uint32 inst) {
 }
 
 
-void OPLL_writeReg(OPLL * opll, uint32 reg, uint32 data) {
+void OPLL_FCEU_writeReg(OPLL * opll, uint32 reg, uint32 data) {
 	int32 i, v, ch;
+    uint16_t tl_index;
 
 	data = data & 0xff;
 	reg = reg & 0x3f;
@@ -1078,7 +1117,7 @@ void OPLL_writeReg(OPLL * opll, uint32 reg, uint32 data) {
 
 void OPLL_writeIO(OPLL * opll, uint32 adr, uint32 val) {
 	if (adr & 1)
-		OPLL_writeReg(opll, opll->adr, val);
+		OPLL_FCEU_writeReg(opll, opll->adr, val);
 	else
 		opll->adr = val;
 }
