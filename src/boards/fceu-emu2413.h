@@ -100,18 +100,18 @@ void OPLL_FCEU_set_rate(OPLL *opll, uint32 r);
 void OPLL_set_quality(OPLL *opll, uint32 q);
 
 /* Port/Register access */
-void OPLL_writeIO(OPLL *, uint32 reg, uint32 val);
+void OPLL_FCEU_writeIO(OPLL *, uint32 reg, uint32 val);
 void OPLL_FCEU_writeReg(OPLL *, uint32 reg, uint32 val);
 
 /* Synthsize */
-int16 OPLL_calc(OPLL *);
+int16 OPLL_FCEU_calc(OPLL *);
 
 /* Misc */
 void OPLL_FCEU_forceRefresh(OPLL *);
 
 /* Channel Mask */
-uint32 OPLL_setMask(OPLL *, uint32 mask);
-uint32 OPLL_toggleMask(OPLL *, uint32 mask);
+uint32 OPLL_FCEU_setMask(OPLL *, uint32 mask);
+uint32 OPLL_FCEU_toggleMask(OPLL *, uint32 mask);
 
 
 void OPLL_FCEU_fillbuf(OPLL* opll, int32 *buf, int32 len, int shift);

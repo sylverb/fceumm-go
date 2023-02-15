@@ -873,7 +873,7 @@ void OPLL_FCEU_fillbuf(OPLL* opll, int32 *buf, int32 len, int shift) {
 	}
 }
 
-int16 OPLL_calc(OPLL * opll) {
+int16 OPLL_FCEU_calc(OPLL * opll) {
 	if (!opll->quality)
 		return calc(opll);
 
@@ -890,7 +890,7 @@ int16 OPLL_calc(OPLL * opll) {
 	return (int16)opll->out;
 }
 
-uint32 OPLL_setMask(OPLL * opll, uint32 mask) {
+uint32 OPLL_FCEU_setMask(OPLL * opll, uint32 mask) {
 	uint32 ret;
 
 	if (opll) {
@@ -901,7 +901,7 @@ uint32 OPLL_setMask(OPLL * opll, uint32 mask) {
 		return 0;
 }
 
-uint32 OPLL_toggleMask(OPLL * opll, uint32 mask) {
+uint32 OPLL_FCEU_toggleMask(OPLL * opll, uint32 mask) {
 	uint32 ret;
 
 	if (opll) {
@@ -1115,7 +1115,7 @@ void OPLL_FCEU_writeReg(OPLL * opll, uint32 reg, uint32 data) {
 	}
 }
 
-void OPLL_writeIO(OPLL * opll, uint32 adr, uint32 val) {
+void OPLL_FCEU_writeIO(OPLL * opll, uint32 adr, uint32 val) {
 	if (adr & 1)
 		OPLL_FCEU_writeReg(opll, opll->adr, val);
 	else
