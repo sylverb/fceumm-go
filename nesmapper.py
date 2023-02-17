@@ -988,7 +988,6 @@ def analyzeRom(nesFile,fileName):
                     break
                 hash = zlib.crc32(s, hash)
                 hashString = "%08x" % (hash & 0xFFFFFFFF)
-            print("hashString "+str(hashString))
             if ChecksumDict.get(hashString) != None:
                 mapper = ChecksumDict.get(hashString)[0]
             if mapper == -1 :
