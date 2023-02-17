@@ -162,6 +162,7 @@
 	{ 0x0afb395e,    5, DEFAULT, DEFAULT, 0,       0,        0, DEFAULT, NOEXTRA }, /* Gun Sight */
 	{ 0xb0480ae9,    5, DEFAULT, DEFAULT, 0,       0,        0, DEFAULT, NOEXTRA }, /* Laser Invasion */
 	{ 0xb4735fac,    5, DEFAULT, DEFAULT, 0,       0,        0, DEFAULT, NOEXTRA }, /* Metal Slader Glory */
+	{ 0xc4fe19f7,    5, DEFAULT, DEFAULT, 0,       0,        0, DEFAULT, NOEXTRA }, /* Metal Slader Glory (English translation) */
 	{ 0xbb7f829a,    5, DEFAULT, DEFAULT, 0,       0,        0, DEFAULT, NOEXTRA }, /* Uchuu Keibitai SDF */
 	{ 0x0ec6c023,    5, DEFAULT, DEFAULT, 1,    0x70,        0, DEFAULT, NOEXTRA }, /* Gemfire */
 	{ 0x9cbadc25,    5, DEFAULT, DEFAULT, 1,    0x70,        0, DEFAULT, NOEXTRA }, /* Just Breed */

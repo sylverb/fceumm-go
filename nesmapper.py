@@ -163,6 +163,7 @@ ChecksumDict = {
 "0afb395e": [    5,      -1,      -1, 0,       0,        0,      -1, -1], # Gun Sight
 "b0480ae9": [    5,      -1,      -1, 0,       0,        0,      -1, -1], # Laser Invasion
 "b4735fac": [    5,      -1,      -1, 0,       0,        0,      -1, -1], # Metal Slader Glory
+"c4fe19f7": [    5,      -1,      -1, 0,       0,        0,      -1, -1], # Metal Slader Glory (EN translation)
 "bb7f829a": [    5,      -1,      -1, 0,       0,        0,      -1, -1], # Uchuu Keibitai SDF
 "0ec6c023": [    5,      -1,      -1, 1,    0x70,        0,      -1, -1], # Gemfire
 "9cbadc25": [    5,      -1,      -1, 1,    0x70,        0,      -1, -1], # Just Breed
@@ -987,7 +988,7 @@ def analyzeRom(nesFile,fileName):
                     break
                 hash = zlib.crc32(s, hash)
                 hashString = "%08x" % (hash & 0xFFFFFFFF)
-
+            print("hashString "+str(hashString))
             if ChecksumDict.get(hashString) != None:
                 mapper = ChecksumDict.get(hashString)[0]
             if mapper == -1 :
