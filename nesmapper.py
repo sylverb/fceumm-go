@@ -974,6 +974,8 @@ def analyzeRom(nesFile,fileName):
     mapper = -1
     PRGRamSize = 0
     PRGRamSaveSize = 0
+    CHRRamSize = 0
+    CHRRamSaveSize = 0
     ines2header = 0
     hasBattery = 0
     nesBytes = nesFile.read(32) # read 32 bytes for FDS files with headers
@@ -1006,6 +1008,11 @@ def analyzeRom(nesFile,fileName):
                     PRGRamSize = 64 << ((PRGRam >> 0) & 0x0F)
                 if PRGRam & 0xF0 != 0:
                     PRGRamSaveSize = 64 << ((PRGRam >> 4) & 0x0F)
+                CHRRam = nesBytes[11]
+                if CHRRam & 0x0F != 0:
+                    CHRRamSize = 64 << ((CHRRam >> 0) & 0x0F)
+                if CHRRam & 0xF0 != 0:
+                    CHRRamSaveSize = 64 << ((CHRRam >> 4) & 0x0F)
             else:
                 if ChecksumDict.get(hashString) != None:
                     ines2header = 1 # force ines2 header as we have prgRam info in database
@@ -1015,6 +1022,11 @@ def analyzeRom(nesFile,fileName):
                         PRGRamSize = 64 << ((PRGRam >> 0) & 0x0F)
                     if PRGRam & 0xF0 != 0:
                         PRGRamSaveSize = 64 << ((PRGRam >> 4) & 0x0F)
+                    CHRRam = ChecksumDict.get(hashString)[5]
+                    if CHRRam & 0x0F != 0:
+                        CHRRamSize = 64 << ((CHRRam >> 0) & 0x0F)
+                    if CHRRam & 0xF0 != 0:
+                        CHRRamSaveSize = 64 << ((CHRRam >> 4) & 0x0F)
         else:
             idString = nesBytes[1:15].decode("utf-8")
             if idString == "*NINTENDO-HVC*":
@@ -1025,9 +1037,9 @@ def analyzeRom(nesFile,fileName):
                     mapper = -2
     except Exception as e:
         mapper = -1
-    return mapper,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery
+    return mapper,ines2header,PRGRamSize,PRGRamSaveSize,CHRRamSize,CHRRamSaveSize,hasBattery
 
-def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery):
+def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,CHRRamSize,CHRRamSaveSize,hasBattery):
     size = 0
     #TODO : find reliable way to know exact save size
     if mapper == -2: # FDS
@@ -1132,7 +1144,11 @@ def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery
     elif mapper == 34:
         size = 21937
     elif mapper == 35:
-        size = 13906
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 8192
+        size = 5714 + WRAMSize
     elif mapper == 36:
         size = 13798
     elif mapper == 37:
@@ -1211,7 +1227,12 @@ def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery
     #87 ?
     #88 ?
     #89 ?
-    #90 ?
+    elif mapper == 90:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
     #91 ?
     #92 ?
     #93 ?
@@ -1296,8 +1317,13 @@ def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery
     #159 ?
     #160 ?
     #161 Unsupported
-    #162 ?
-    #163 ?
+    #162 ? (Only unif file format ?)
+    elif mapper == 163:
+        if ines2header:
+            WRAMSize = (PRGRamSize + PRGRamSaveSize)
+        else:
+            WRAMSize = 8*1024
+        size = 13746 + WRAMSize
     #164 ?
     #165 ?
     #166 ?
@@ -1312,7 +1338,7 @@ def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery
     #174 Unsupported
     elif mapper == 175:
         size = 5544
-    #176 ?
+    #176 Unsupported : Allocating too much RAM for the G&W
     #177 ?
     #178 ?
     #179 Unsupported
@@ -1351,9 +1377,19 @@ def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery
     #206 ?
     #207 ?
     #208 ?
-    #209 ?
+    elif mapper == 209:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
     #210 ?
-    #211 ?
+    elif mapper == 211:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
     elif mapper == 212:
         size = 5536
     elif mapper == 213:
@@ -1418,13 +1454,70 @@ def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery
     #256 ?
     #258 ?
     #...
+    #268 Unsupported : Allocating too much RAM for the G&W
+    #...
+    elif mapper == 281:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
+    elif mapper == 282:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
+    #...
+    elif mapper == 295:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
+    #...
     elif mapper == 297: # To check (MMC1)
         size = 7133
+    #...
+    elif mapper == 358:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
     #...
     elif mapper == 374: # To check (MMC1)
         size = 7133
     #...
+    elif mapper == 386 or mapper == 387 or mapper == 388 :
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
+    #...
+    elif mapper == 394:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
+    #...
+    elif mapper == 397:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
+    #...
     #404 ? (MMC1)
+    #...
+    elif mapper == 421:
+        if ines2header:
+            WRAMSize = PRGRamSize + PRGRamSaveSize
+        else:
+            WRAMSize = 0
+        size = 5714 + WRAMSize
     #...
     #543 ? (MMC1)
     #...
@@ -1440,11 +1533,11 @@ if n < 3: print("Usage :\nnesmapper.py [mapper|savesize] file.nes\n"); sys.exit(
 nesFileName = sys.argv[2]
 nesFile = open(nesFileName, 'rb')
 # Open file and find its size
-mapper,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery = analyzeRom(nesFile,nesFileName)
+mapper,ines2header,PRGRamSize,PRGRamSaveSize,CHRRamSize,CHRRamSaveSize,hasBattery = analyzeRom(nesFile,nesFileName)
 nesFile.close()
 if sys.argv[1] == "savesize":
     #get save state size
-    save = getSaveSize(mapper,os.stat(nesFileName).st_size,ines2header,PRGRamSize,PRGRamSaveSize,hasBattery)
+    save = getSaveSize(mapper,os.stat(nesFileName).st_size,ines2header,PRGRamSize,PRGRamSaveSize,CHRRamSize,CHRRamSaveSize,hasBattery)
     save = math.ceil(save/4096)*4096 # round to upper 4kB size (flash block size)
     print(str(save))
 elif sys.argv[1] == "mapper":
