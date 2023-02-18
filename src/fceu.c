@@ -1,5 +1,6 @@
 #ifdef TARGET_GNW
 #include "build/config.h"
+#include "build/mappers.h"
 #endif
 
 #if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
@@ -641,11 +642,11 @@ void FCEUI_CloseGame(void)
       free(GameInfo->name);
 #endif
    GameInfo->name = 0;
-#ifndef TARGET_GNW
+#if CHEAT_CODES == 1
+#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
    if (GameInfo->type != GIT_NSF)
+#endif
       FCEU_FlushGameCheats();
-#elif CHEAT_CODES == 1
-   FCEU_FlushGameCheats();
 #endif
    GameInterface(GI_CLOSE);
    ResetExState(0, 0);
@@ -681,6 +682,7 @@ void ResetGameLoaded(void)
 #ifdef TARGET_GNW
 int iNESLoad(const char *name, const uint8_t *rom, uint32_t rom_size);
 int FDSLoad(const char *name, const char *rom, uint32_t rom_size);
+int NSFLoad(const char *name, const char *rom, uint32_t rom_size);
 #else
 int UNIFLoad(const char *name, FCEUFILE *fp);
 int iNESLoad(const char *name, FCEUFILE *fp);
@@ -708,6 +710,10 @@ FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufs
 
    if (iNESLoad(name, (const uint8_t *)databuf, databufsize))
       goto endlseq;
+#ifdef NES_MAPPER_NSF
+   if (NSFLoad(name, (const char *)databuf, databufsize))
+      goto endlseq;
+#endif
    if (FDSLoad(name, (const char *)databuf, databufsize))
       goto endlseq;
 
@@ -720,12 +726,18 @@ endlseq:
 
    FCEU_ResetVidSys();
 #ifdef FCEU_ENABLE_GAMEGENIE_ROM
-    FCEU_OpenGenie();
+#ifdef NES_MAPPER_NSF
+   if (GameInfo->type != GIT_NSF)
+#endif
+      FCEU_OpenGenie();
 #endif
 
    PowerNES();
 
 #if CHEAT_CODES == 1
+#ifdef NES_MAPPER_NSF
+   if (GameInfo->type != GIT_NSF)
+#endif
       FCEU_LoadGameCheats();
 #endif
 

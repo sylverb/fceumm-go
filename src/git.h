@@ -4,10 +4,8 @@
 /* Mmm...git. Almost as funny as "gimp". */
 #define GIT_CART  0		/* Cart. */
 #define GIT_FDS   1		/* Famicom Disk System. */
-#ifndef TARGET_GNW
 #define GIT_VSUNI 2		/* VS Unisystem. */
 #define GIT_NSF   3		/* NES Sound Format. */
-#endif
 
 #define GIV_NTSC  0		/* NTSC emulation. */
 #define GIV_PAL   1		/* PAL emulation. */

@@ -17,6 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+#ifdef TARGET_GNW
+#include "build/mappers.h"
+#endif
+
+#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +41,9 @@
 #include "fds_apu.h"
 #include "fceu-cart.h"
 #include "input.h"
+#ifdef FCEU_NO_MALLOC
+#include "gw_malloc.h"
+#endif
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -133,6 +141,104 @@ static INLINE void BANKSET(uint32 A, uint32 bank) {
 		setprg4(A, bank);
 }
 
+#ifdef TARGET_GNW
+int NSFLoad(const char *name, const uint8_t *rom, uint32_t rom_size) {
+	int x;
+
+	memcpy(&NSFHeader,rom,0x80);
+
+	if (memcmp(NSFHeader.ID, "NESM\x1a", 5))
+		return 0;
+	NSFHeader.SongName[31] = NSFHeader.Artist[31] = NSFHeader.Copyright[31] = 0;
+
+	LoadAddr = NSFHeader.LoadAddressLow;
+	LoadAddr |= NSFHeader.LoadAddressHigh << 8;
+
+	if (LoadAddr < 0x6000) {
+		FCEUD_PrintError("Invalid load address.");
+		return(0);
+	}
+	InitAddr = NSFHeader.InitAddressLow;
+	InitAddr |= NSFHeader.InitAddressHigh << 8;
+
+	PlayAddr = NSFHeader.PlayAddressLow;
+	PlayAddr |= NSFHeader.PlayAddressHigh << 8;
+
+	NSFSize = rom_size - 0x80;
+
+	NSFMaxBank = ((NSFSize + (LoadAddr & 0xfff) + 4095) / 4096);
+	NSFMaxBank = uppow2(NSFMaxBank);
+
+#ifndef FCEU_NO_MALLOC
+	if (!(NSFDATA = (uint8*)FCEU_malloc(NSFMaxBank * 4096)))
+		return 0;
+#else
+	NSFDATA = (uint8*)ahb_malloc(NSFMaxBank * 4096);
+#endif
+
+	memset(NSFDATA, 0x00, NSFMaxBank * 4096);
+	memcpy(NSFDATA + (LoadAddr & 0xfff),rom+0x80,NSFSize);
+
+	NSFMaxBank--;
+
+	BSon = 0;
+	for (x = 0; x < 8; x++)
+		BSon |= NSFHeader.BankSwitch[x];
+
+	GameInfo->type = GIT_NSF;
+	GameInfo->input[0] = GameInfo->input[1] = SI_GAMEPAD;
+	GameInfo->cspecial = SIS_NSF;
+
+	for (x = 0;; x++) {
+		if (NSFROM[x] == 0x20) {
+			NSFROM[x + 1] = InitAddr & 0xFF;
+			NSFROM[x + 2] = InitAddr >> 8;
+			NSFROM[x + 8] = PlayAddr & 0xFF;
+			NSFROM[x + 9] = PlayAddr >> 8;
+			break;
+		}
+	}
+
+	if (NSFHeader.VideoSystem == 0)
+		GameInfo->vidsys = GIV_NTSC;
+	else if (NSFHeader.VideoSystem == 1)
+		GameInfo->vidsys = GIV_PAL;
+
+	GameInterface = NSFGI;
+
+	FCEU_printf("NSF Loaded.  File information:\n\n");
+	FCEU_printf(" Name:       %s\n Artist:     %s\n Copyright:  %s\n\n", NSFHeader.SongName, NSFHeader.Artist, NSFHeader.Copyright);
+	if (NSFHeader.SoundChip) {
+		static char *tab[6] = { "Konami VRCVI", "Konami VRCVII", "Nintendo FDS", "Nintendo MMC5", "Namco 106", "Sunsoft FME-07" };
+
+		for (x = 0; x < 6; x++)
+			if (NSFHeader.SoundChip & (1 << x)) {
+				FCEU_printf(" Expansion hardware:  %s\n", tab[x]);
+				NSFHeader.SoundChip = 1 << x;	/* Prevent confusing weirdness if more than one bit is set. */
+				break;
+			}
+	}
+	if (BSon)
+		FCEU_printf(" Bank-switched.\n");
+	FCEU_printf(" Load address:  $%04x\n Init address:  $%04x\n Play address:  $%04x\n", LoadAddr, InitAddr, PlayAddr);
+	FCEU_printf(" %s\n", (NSFHeader.VideoSystem & 1) ? "PAL" : "NTSC");
+	FCEU_printf(" Starting song:  %d / %d\n\n", NSFHeader.StartingSong, NSFHeader.TotalSongs);
+
+	if (NSFHeader.SoundChip & 4)
+#ifndef FCEU_NO_MALLOC
+	    ExWRAM = (uint8*)FCEU_gmalloc(32768 + 8192);
+#else
+	    ExWRAM = (uint8*)ahb_malloc(32768 + 8192);
+#endif
+	else
+#ifndef FCEU_NO_MALLOC
+	    ExWRAM = (uint8*)FCEU_gmalloc(8192);
+#else
+		ExWRAM = (uint8*)ahb_malloc(8192);
+#endif
+	return 1;
+}
+#else
 int NSFLoad(FCEUFILE *fp) {
 	int x;
 
@@ -218,6 +324,7 @@ int NSFLoad(FCEUFILE *fp) {
 		ExWRAM = FCEU_gmalloc(8192);
 	return 1;
 }
+#endif
 
 static DECLFR(NSFVectorRead) {
 	if (((NSFNMIFlags & 1) && SongReload) || (NSFNMIFlags & 2) || doreset) {
@@ -284,7 +391,6 @@ void NSF_init(void) {
 	SetWriteHandler(0x3ff0, 0x3fff, NSF_write);
 	SetReadHandler(0x3ff0, 0x3fff, NSF_read);
 
-
 	if (NSFHeader.SoundChip & 1) {
 		NSFVRC6_Init();
 	} else if (NSFHeader.SoundChip & 2) {
@@ -342,20 +448,41 @@ static DECLFR(NSF_read) {
 		{
 			memset(RAM, 0x00, 0x800);
 
+#ifndef FCEU_LOW_RAM
 			BWrite[0x4015](0x4015, 0x0);
+#else
+			fceu_write(0x4015, 0x0);
+#endif
 			for (x = 0; x < 0x14; x++)
+#ifndef FCEU_LOW_RAM
 				BWrite[0x4000 + x](0x4000 + x, 0);
 			BWrite[0x4015](0x4015, 0xF);
+#else
+				fceu_write(0x4000 + x, 0);
+			fceu_write(0x4015 + x, 0xF);
+#endif
 
 			if (NSFHeader.SoundChip & 4) {
+#ifndef FCEU_LOW_RAM
 				BWrite[0x4017](0x4017, 0xC0);	/* FDS BIOS writes $C0 */
 				BWrite[0x4089](0x4089, 0x80);
 				BWrite[0x408A](0x408A, 0xE8);
+#else
+				fceu_write(0x4017, 0xC0);
+				fceu_write(0x4089, 0x80);
+				fceu_write(0x408A, 0xE8);
+#endif
 			} else {
 				memset(ExWRAM, 0x00, 8192);
+#ifndef FCEU_LOW_RAM
 				BWrite[0x4017](0x4017, 0xC0);
 				BWrite[0x4017](0x4017, 0xC0);
 				BWrite[0x4017](0x4017, 0x40);
+#else
+				fceu_write(0x4017, 0xC0);
+				fceu_write(0x4017, 0xC0);
+				fceu_write(0x4017, 0x40);
+#endif
 			}
 
 			if (BSon) {
@@ -518,3 +645,5 @@ int FCEUI_NSFGetInfo(uint8 *name, uint8 *artist, uint8 *copyright, int maxlen) {
 	strncpy((char*)copyright, (const char*)NSFHeader.Copyright, (size_t)maxlen);
 	return(NSFHeader.TotalSongs);
 }
+
+#endif

@@ -1,5 +1,6 @@
 #ifdef TARGET_GNW
 #include "build/config.h"
+#include "build/mappers.h"
 #endif
 
 #if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
@@ -79,14 +80,16 @@ int FCEU_InitVirtualVideo(void)
 
 void FCEU_PutImage(void)
 {
-#ifndef TARGET_GNW
+#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 	if (GameInfo->type == GIT_NSF)
 		DrawNSF(XBuf);
+#ifndef TARGET_GNW
    else
    {
 		if (GameInfo->type == GIT_VSUNI)
 			FCEU_VSUniDraw(XBuf);
 	}
+#endif
 	if (show_crosshair)
 		FCEU_DrawInput(XBuf);
 #endif

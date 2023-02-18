@@ -1027,7 +1027,11 @@ def analyzeRom(nesFile,fileName):
                         CHRRamSize = 64 << ((CHRRam >> 0) & 0x0F)
                     if CHRRam & 0xF0 != 0:
                         CHRRamSaveSize = 64 << ((CHRRam >> 4) & 0x0F)
-        else:
+        if mapper == -1: #check if it's a nsf file
+            idString = nesBytes[0:4].decode("utf-8",errors='ignore')
+            if idString == "NESM" and nesBytes[4] == 0x1a:
+                mapper = -3
+        if mapper == -1: #check if it's a FDS file
             idString = nesBytes[1:15].decode("utf-8")
             if idString == "*NINTENDO-HVC*":
                 mapper = -2
@@ -1036,13 +1040,16 @@ def analyzeRom(nesFile,fileName):
                 if idString == "*NINTENDO-HVC*":
                     mapper = -2
     except Exception as e:
+        print("exeption = "+e)
         mapper = -1
     return mapper,ines2header,PRGRamSize,PRGRamSaveSize,CHRRamSize,CHRRamSaveSize,hasBattery
 
 def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,CHRRamSize,CHRRamSaveSize,hasBattery):
     size = 0
     #TODO : find reliable way to know exact save size
-    if mapper == -2: # FDS
+    if mapper == -3: # NSF
+        size = 0
+    elif mapper == -2: # FDS
         size = 46926
         sides = math.ceil(fileSize/65500)
         size+=sides*65508
@@ -1524,6 +1531,8 @@ def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,CHRRamSize
     #550 ? (MMC1)
     else:
         size = 24*1024 # 24KB by default
+    if size == 0:
+        return 0
     return size + 4 # +4 to include G&W specific data
 
 n = len(sys.argv)
@@ -1557,6 +1566,21 @@ elif sys.argv[1] == "mapper":
             mappers = open(mappersFile, 'a+')
             mappers.write("#define NES_MAPPER_"+mapperString+"\n")
             mappers.close
+    elif mapper == -3: #NSF
+        addMapper = 1
+        mappersFile = "./build/mappers.h"
+        # Add mapper #define in file if needed
+        mapperString = "NES_MAPPER_NSF"
+        if os.path.exists(mappersFile):
+            mappers = open(mappersFile, 'r')
+            if mapperString in mappers.read():
+                addMapper = 0
+            mappers.close
+        if addMapper:
+            mappers = open(mappersFile, 'a+')
+            mappers.write("#define NES_MAPPER_NSF\n")
+            mappers.close
+
 else:
     print("unknown command\nUsage :\nnesmapper.py [mapper|savesize] file.nes\n")
 sys.exit(0)

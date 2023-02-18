@@ -1,5 +1,6 @@
 #ifdef TARGET_GNW
 #include "build/config.h"
+#include "build/mappers.h"
 #endif
 
 #if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
@@ -1156,7 +1157,7 @@ int FCEUPPU_Loop(int skip) {
 
 		/* I need to figure out the true nature and length of this delay. */
 		X6502_Run(12);
-#ifndef TARGET_GNW
+#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 		if (GameInfo->type == GIT_NSF)
 			DoNSFFrame();
 		else
@@ -1204,7 +1205,7 @@ int FCEUPPU_Loop(int skip) {
 			X6502_Run(16 - kook);
 			kook ^= 1;
 		}
-#ifndef TARGET_GNW
+#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 		if (GameInfo->type == GIT_NSF)
 			X6502_Run((256 + 85) * normal_scanlines);
 		else

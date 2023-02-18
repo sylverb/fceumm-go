@@ -110,6 +110,11 @@ static void VRC7_ESI(void) {
 	VRC7Sound = OPLL_FCEU_new(3579545, FSettings.SndRate ? FSettings.SndRate : 18000);
 #endif
 	OPLL_FCEU_reset(VRC7Sound);
+
+	GameExpSound.Fill = UpdateOPL;
+#ifndef TARGET_GNW
+	GameExpSound.NeoFill = UpdateOPLNEO;
+#endif
 }
 
 /* VRC7 Sound */
@@ -233,11 +238,6 @@ void Mapper85_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	VRC7_ESI();
 	AddExState(&StateRegs, ~0, 0, 0);
-
-	GameExpSound.Fill = UpdateOPL;
-#ifndef TARGET_GNW
-	GameExpSound.NeoFill = UpdateOPLNEO;
-#endif
 
 /* Ignoring these sound state files for Wii since it causes states unable to load */
 #ifndef GEKKO

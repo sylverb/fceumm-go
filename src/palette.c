@@ -1,5 +1,6 @@
 #ifdef TARGET_GNW
 #include "build/config.h"
+#include "build/mappers.h"
 #endif
 
 #if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
@@ -169,7 +170,7 @@ void FCEU_ResetPalette(void) {
 }
 
 static void ChoosePalette(void) {
-#ifndef TARGET_GNW
+#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 	if (GameInfo->type == GIT_NSF)
 		palo = 0;
 	else
@@ -185,7 +186,7 @@ void WritePalette(void) {
 
 	for (x = 0; x < 7; x++)
 		FCEUD_SetPalette(x, unvpalette[x].r, unvpalette[x].g, unvpalette[x].b);
-#ifndef TARGET_GNW
+#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 	if (GameInfo->type == GIT_NSF) {
 	} else
 #endif
