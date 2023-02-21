@@ -27,9 +27,11 @@
 #include <stdlib.h>
 #include <math.h>
 
+#ifndef TARGET_GNW
 #include <string/stdstring.h>
 #include <file/file_path.h>
 #include <streams/file_stream.h>
+#endif
 
 #include "fceu-types.h"
 #include "fceu.h"

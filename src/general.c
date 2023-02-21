@@ -35,7 +35,9 @@
 #include <unistd.h>
 #endif
 
+#ifndef TARGET_GNW
 #include <file/file_path.h>
+#endif
 
 #include "fceu-types.h"
 #include "fceu.h"

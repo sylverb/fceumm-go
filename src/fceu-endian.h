@@ -2,7 +2,12 @@
 #define _FCEU_ENDIAN_H
 
 #include "fceu-memory.h"
+
+#ifndef TARGET_GNW
 #include <streams/memory_stream.h>
+#else
+#include <nes_memory_stream.h>
+#endif
 
 int write32le_mem(uint32 b, memstream_t *mem);
 int read32le_mem(uint32 *Bufo, memstream_t *mem);

@@ -1,9 +1,21 @@
 #ifndef _FCEU_DRIVER_H
 #define _FCEU_DRIVER_H
 
-//#ifndef TARGET_GNW
+#ifndef TARGET_GNW
 #include <libretro.h>
-//#endif
+#else
+#include <stddef.h>
+#include <stdbool.h>
+enum retro_log_level
+{
+   RETRO_LOG_DEBUG = 0,
+   RETRO_LOG_INFO,
+   RETRO_LOG_WARN,
+   RETRO_LOG_ERROR,
+
+   RETRO_LOG_DUMMY = 65535
+};
+#endif
 
 #ifdef  __cplusplus
 extern "C" {
