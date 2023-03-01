@@ -408,6 +408,11 @@ void Mapper19_ESI(void) {
 }
 
 void NSFN106_Init(void) {
+#ifndef FCEU_NO_MALLOC
+	IRAM = (uint8*)FCEU_gmalloc(128);
+#else
+	IRAM = (uint8*)itc_calloc(1,128);
+#endif
 	SetWriteHandler(0xf800, 0xffff, Mapper19_write);
 	SetWriteHandler(0x4800, 0x4fff, Mapper19_write);
 	SetReadHandler(0x4800, 0x4fff, Namco_Read4800);
