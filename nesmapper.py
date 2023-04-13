@@ -1058,25 +1058,14 @@ def getSaveSize(mapper,fileSize,ines2header,PRGRamSize,PRGRamSaveSize,CHRRamSize
     elif mapper == 0:
         size = 13726
     elif mapper == 1:
-        workRAM = (PRGRamSize + PRGRamSaveSize) / 1024
-        saveRAM = PRGRamSaveSize / 1024
+        workRAM = 8
         if ines2header:
+            workRAM = (PRGRamSize + PRGRamSaveSize) / 1024
             if workRAM > 0 and workRAM < 8:
                 workRAM = 8
             if workRAM > 32:
                 workRAM = 32
-            if saveRAM > 0 and saveRAM < 8:
-                saveRAM = 8
-            if saveRAM > 32:
-                saveRAM = 32
-            # save ram cannot be bigger than workram */
-            if saveRAM > workRAM:
-                saveRAM = workRAM
-                workRAM = 0
-        if workRAM == 0:
-            size = 13772
-        else :
-            size = 13780 + workRAM * 1024
+        size = 13780 + workRAM * 1024
     elif mapper == 2:
         size = 21944
     elif mapper == 3:
