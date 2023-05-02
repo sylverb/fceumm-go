@@ -1374,6 +1374,9 @@ INES_BOARD_BEGIN()
 #if defined(LINUX_EMU) || defined(NES_MAPPER_341)
 	INES_BOARD( "TJ-03",                    341, BMCTJ03_Init           )
 #endif
+#if defined(LINUX_EMU) || defined(NES_MAPPER_342)
+	INES_BOARD( "COOLGIRL",                 342, COOLGIRL_Init          )
+#endif
 #if defined(LINUX_EMU) || defined(NES_MAPPER_344)
 	INES_BOARD( "GN-26",                    344, BMCGN26_Init           )
 #endif
