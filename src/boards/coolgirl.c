@@ -104,6 +104,7 @@
 #ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
+#include <ctype.h>
 #include "mapinc.h"
 
 const uint32 SAVE_FLASH_SIZE = 1024 * 1024 * 8;
@@ -131,7 +132,7 @@ static uint8 four_screen = 0;
 static uint8 lockout = 0;
 
 static uint32 prg_base = 0;		/* [26:14] */
-static uint32 prg_mask = 0b11111000 << 14; /* 11111000, 128KB		[20:14] */
+static uint32 prg_mask = 4063232 << 14; /* 11111000, 128KB		[20:14] */
 static uint8 prg_mode = 0;		/* [2:0] */
 static uint8 prg_bank_6000 = 0;	/* [7:0] */
 static uint8 prg_bank_a = 0;	/* [7:0] */
