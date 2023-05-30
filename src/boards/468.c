@@ -57,7 +57,7 @@
 #include "gw_malloc.h"
 #endif
 #include "mapinc.h"
-#include "state.h"
+#include "fceu-state.h"
 
 static uint8 submapper;
 static uint8 eeprom[16], eep_clock, state, command, output; /* Some strange serial EEPROM */
