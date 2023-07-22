@@ -2,15 +2,10 @@
 #define _FCEU_ENDIAN_H
 
 #include "fceu-memory.h"
+#include "filesystem.h"
 
-#ifndef TARGET_GNW
-#include <streams/memory_stream.h>
-#else
-#include <nes_memory_stream.h>
-#endif
-
-int write32le_mem(uint32 b, memstream_t *mem);
-int read32le_mem(uint32 *Bufo, memstream_t *mem);
+int write32le_filesystem(filesystem_file_t *file, uint32 b);
+int read32le_filesystem(filesystem_file_t *file, uint32 *Bufo);
 
 void FlipByteOrder(uint8 *src, uint32 count);
 

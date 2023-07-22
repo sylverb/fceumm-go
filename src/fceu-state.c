@@ -80,7 +80,7 @@ SFORMAT SFCPUC[] = {
    { 0 }
 };
 
-static int SubWrite(memstream_t *mem, SFORMAT *sf)
+static int SubWrite(filesystem_file_t *file, SFORMAT *sf)
 {
    uint32 acc = 0;
 
@@ -90,7 +90,7 @@ static int SubWrite(memstream_t *mem, SFORMAT *sf)
       {
          uint32 tmp;
 
-         if(!(tmp = SubWrite(mem, (SFORMAT *)sf->v)))
+         if(!(tmp = SubWrite(file, (SFORMAT *)sf->v)))
             return(0);
          acc += tmp;
          sf++;
@@ -100,16 +100,16 @@ static int SubWrite(memstream_t *mem, SFORMAT *sf)
       acc += 8; /* Description + size */
       acc += sf->s & (~RLSB);
 
-      if(mem) /* Are we writing or calculating the size of this block? */
+      if(file) /* Are we writing or calculating the size of this block? */
       {
-         memstream_write(mem, sf->desc, 4);
-         write32le_mem(sf->s & (~RLSB), mem);
+         filesystem_write(file, sf->desc, 4);
+         write32le_filesystem(file, sf->s & (~RLSB));
 
 #ifdef MSB_FIRST
          if(sf->s & RLSB)
             FlipByteOrder((uint8 *)sf->v, sf->s & (~RLSB));
 #endif
-         memstream_write(mem, (char *)sf->v, sf->s & (~RLSB));
+         filesystem_write(file, (char *)sf->v, sf->s & (~RLSB));
 
          /* Now restore the original byte order. */
 #ifdef MSB_FIRST
@@ -123,15 +123,16 @@ static int SubWrite(memstream_t *mem, SFORMAT *sf)
    return acc;
 }
 
-static int WriteStateChunk(memstream_t *mem, int type, SFORMAT *sf)
+static int WriteStateChunk(filesystem_file_t *file, int type, SFORMAT *sf)
 {
    int bsize;
-   memstream_putc(mem, type);
+
+   filesystem_write(file, type, 1);
 
    bsize = SubWrite(0, sf);
-   write32le_mem(bsize, mem);
+   write32le_filesystem(file, bsize);
 
-   if (!SubWrite(mem, sf))
+   if (!SubWrite(file, sf))
       return 0;
    return bsize + 5;
 }
@@ -159,24 +160,24 @@ static SFORMAT *CheckS(SFORMAT *sf, uint32 tsize, char *desc)
    return(0);
 }
 
-static int ReadStateChunk(memstream_t *mem, SFORMAT *sf, int size)
+static int ReadStateChunk(filesystem_file_t *file, SFORMAT *sf, int size)
 {
    SFORMAT *tmp;
    uint64 temp;
-   temp = memstream_pos(mem);
+   temp = filesystem_seek(file, 0, LFS_SEEK_CUR);  // get the current position
 
-   while(memstream_pos(mem) < (temp + size))
+   while(filesystem_seek(file, 0, LFS_SEEK_CUR) < (temp + size))  // while we are in this chunk
    {
       uint32 tsize;
       char toa[4];
-      if(memstream_read(mem, toa, 4) <= 0)
+      if(filesystem_read(file, toa, 4) <= 0)  // read a uint32
          return 0;
 
-      read32le_mem(&tsize, mem);
+      read32le_filesystem(file, &tsize);  //read another
 
       if((tmp = CheckS(sf, tsize, toa)))
       {
-         memstream_read(mem, (char *)tmp->v, tmp->s & (~RLSB));
+         filesystem_read(file, (char *)tmp->v, tmp->s & (~RLSB));
 
 #ifdef MSB_FIRST
          if(tmp->s & RLSB)
@@ -184,56 +185,58 @@ static int ReadStateChunk(memstream_t *mem, SFORMAT *sf, int size)
 #endif
       }
       else
-         memstream_seek(mem, tsize, SEEK_CUR);
+      {
+         // TODO: just do an unconditional read so we can support compression
+         filesystem_seek(file, tsize, LFS_SEEK_CUR);
+      }
    }
    return 1;
 }
 
-static int ReadStateChunks(memstream_t *st, int32 totalsize)
+static int ReadStateChunks(filesystem_file_t *file)
 {
    int t;
    uint32 size;
    int ret = 1;
 
-   while (totalsize > 0)
+   while(true)
    {
-      t = memstream_getc(st);
-      if (t == EOF)
+      if(0 == filesystem_read(file, &t, 1))
          break;
-      if (!read32le_mem(&size, st))
+      if (!read32le_filesystem(file, &size))
          break;
-      totalsize -= size + 5;
 
       switch(t)
       {
          case 1:
-            if (!ReadStateChunk(st, SFCPU, size))
+            if (!ReadStateChunk(file, SFCPU, size))
                ret = 0;
             break;
          case 2:
-            if (!ReadStateChunk(st, SFCPUC, size))
+            if (!ReadStateChunk(file, SFCPUC, size))
                ret = 0;
             /* else
                X.mooPI = X.P; */ /* Quick and dirty hack. */
             break;
          case 3:
-            if (!ReadStateChunk(st, FCEUPPU_STATEINFO, size))
+            if (!ReadStateChunk(file, FCEUPPU_STATEINFO, size))
                ret = 0;
             break;
          case 4:
-            if (!ReadStateChunk(st, FCEUCTRL_STATEINFO, size))
+            if (!ReadStateChunk(file, FCEUCTRL_STATEINFO, size))
                ret = 0;
             break;
          case 5:
-            if (!ReadStateChunk(st, FCEUSND_STATEINFO, size))
+            if (!ReadStateChunk(file, FCEUSND_STATEINFO, size))
                ret = 0;
             break;
          case 0x10:
-            if (!ReadStateChunk(st, SFMDATA, size))
+            if (!ReadStateChunk(file, SFMDATA, size))
                ret = 0;
             break;
          default:
-            if (memstream_seek(st, size, SEEK_CUR) < 0)
+            printf("Seeking?!?!\n");
+            if (filesystem_seek(file, size, LFS_SEEK_CUR) < 0)
                goto endo;
             break;
       }
@@ -244,65 +247,65 @@ endo:
 
 void FCEUSS_Save_Mem(void)
 {
-   memstream_t *mem = memstream_open(1);
+   // TODO: pass in name to function signature.
+   filesystem_file_t *file = filesystem_open("NES_SAVESTATE", false);
 
-   uint32 totalsize;
-   uint8 header[16] = {0};
+   uint8 header[12] = {0};
 
-   // Set to FF so it can be updated in flash later
-   memset(header,0xff,16);
+   // 4 bytes - magic
+   // OLD: 4 bytse - size
+   // 8 bytes - fceu version numeric
    header[0] = 'F';
    header[1] = 'C';
    header[2] = 'S';
    header[3] = 0xFF;
 
-   FCEU_en32lsb(header + 8, FCEU_VERSION_NUMERIC);
-   memstream_write(mem, header, 16);
+   FCEU_en32lsb(header + 4, FCEU_VERSION_NUMERIC);
+   filesystem_write(file, header, 12);
 
    FCEUPPU_SaveState();
-   totalsize  = WriteStateChunk(mem, 1, SFCPU);
-   totalsize += WriteStateChunk(mem, 2, SFCPUC);
-   totalsize += WriteStateChunk(mem, 3, FCEUPPU_STATEINFO);
-   totalsize += WriteStateChunk(mem, 4, FCEUCTRL_STATEINFO);
-   totalsize += WriteStateChunk(mem, 5, FCEUSND_STATEINFO);
+   WriteStateChunk(file, 1, SFCPU);
+   WriteStateChunk(file, 2, SFCPUC);
+   WriteStateChunk(file, 3, FCEUPPU_STATEINFO);
+   WriteStateChunk(file, 4, FCEUCTRL_STATEINFO);
+   WriteStateChunk(file, 5, FCEUSND_STATEINFO);
 
    if (SPreSave)
       SPreSave();
 
-   totalsize += WriteStateChunk(mem, 0x10, SFMDATA);
+   WriteStateChunk(file, 0x10, SFMDATA);
 
    if (SPreSave)
       SPostSave();
 
-   memstream_seek(mem, 4, SEEK_SET);
-   write32le_mem(totalsize, mem);
-
-   memstream_close(mem);
+   filesystem_close(file);
 }
 
 void FCEUSS_Load_Mem(void)
 {
-   memstream_t *mem = memstream_open(0);
+   // TODO: pass in name to function signature.
+   printf("Opening file\n");
+   filesystem_file_t *file = filesystem_open("NES_SAVESTATE", false);
 
-   uint8 header[16];
+   uint8 header[12];
    int stateversion;
-   int totalsize;
    int x;
 
-   memstream_read(mem, header, 16);
+   printf("reading header\n");
+   filesystem_read(file, header, 12);
 
    if (memcmp(header, "FCS", 3) != 0)
       return;
 
    if (header[3] == 0xFF)
-      stateversion = FCEU_de32lsb(header + 8);
+      stateversion = FCEU_de32lsb(header + 4);
    else
       stateversion = header[3] * 100;
    
-   totalsize = FCEU_de32lsb(header + 4);
+   printf("reading chunks\n");
+   x = ReadStateChunks(file);
 
-   x = ReadStateChunks(mem, totalsize);
-
+   printf("meow\n");
    if (stateversion < 9500)
       X.IRQlow = 0;
 
@@ -314,8 +317,7 @@ void FCEUSS_Load_Mem(void)
       FCEUPPU_LoadState(stateversion);
       FCEUSND_LoadState(stateversion);
    }
-
-   memstream_close(mem);
+   filesystem_close(file);
 }
 
 void ResetExState(void (*PreSave)(void), void (*PostSave)(void))

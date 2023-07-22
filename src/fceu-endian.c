@@ -50,20 +50,20 @@ void FlipByteOrder(uint8 *src, uint32 count)
    }
 }
 
-int write32le_mem(uint32 b, memstream_t *mem)
+int write32le_filesystem(filesystem_file_t *file, uint32 b)
 {
    uint8 s[4];
    s[0]=b;
    s[1]=b>>8;
    s[2]=b>>16;
    s[3]=b>>24;
-   return((memstream_write(mem, s, 4)<4)?0:4);
+   return((filesystem_write(file, s, 4)<4)?0:4);
 }
 
-int read32le_mem(uint32 *Bufo, memstream_t *mem)
+int read32le_filesystem(filesystem_file_t *file, uint32 *Bufo)
 {
    uint32 buf;
-   if(memstream_read(mem, &buf, 4)<4)
+   if(filesystem_read(file, &buf, 4)<4)
       return 0;
 #ifdef MSB_FIRST
    *(uint32*)Bufo=((buf&0xFF)<<24)|((buf&0xFF00)<<8)|((buf&0xFF0000)>>8)|((buf&0xFF000000)>>24);
