@@ -127,7 +127,7 @@ static int WriteStateChunk(filesystem_file_t *file, int type, SFORMAT *sf)
 {
    int bsize;
 
-   filesystem_write(file, type, 1);
+   filesystem_write(file, &type, 1);
 
    bsize = SubWrite(0, sf);
    write32le_filesystem(file, bsize);
@@ -195,7 +195,7 @@ static int ReadStateChunk(filesystem_file_t *file, SFORMAT *sf, int size)
 
 static int ReadStateChunks(filesystem_file_t *file)
 {
-   int t;
+   uint8_t t;
    uint32 size;
    int ret = 1;
 
@@ -235,6 +235,7 @@ static int ReadStateChunks(filesystem_file_t *file)
                ret = 0;
             break;
          default:
+            // I *think* this never happens?
             printf("Seeking?!?!\n");
             if (filesystem_seek(file, size, LFS_SEEK_CUR) < 0)
                goto endo;
