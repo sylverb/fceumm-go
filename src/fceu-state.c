@@ -80,7 +80,7 @@ SFORMAT SFCPUC[] = {
    { 0 }
 };
 
-static int SubWrite(filesystem_file_t *file, SFORMAT *sf)
+static int SubWrite(fs_file_t *file, SFORMAT *sf)
 {
    uint32 acc = 0;
 
@@ -102,14 +102,14 @@ static int SubWrite(filesystem_file_t *file, SFORMAT *sf)
 
       if(file) /* Are we writing or calculating the size of this block? */
       {
-         filesystem_write(file, sf->desc, 4);
-         write32le_filesystem(file, sf->s & (~RLSB));
+         fs_write(file, sf->desc, 4);
+         write32le_fs(file, sf->s & (~RLSB));
 
 #ifdef MSB_FIRST
          if(sf->s & RLSB)
             FlipByteOrder((uint8 *)sf->v, sf->s & (~RLSB));
 #endif
-         filesystem_write(file, (char *)sf->v, sf->s & (~RLSB));
+         fs_write(file, (char *)sf->v, sf->s & (~RLSB));
 
          /* Now restore the original byte order. */
 #ifdef MSB_FIRST
@@ -123,14 +123,14 @@ static int SubWrite(filesystem_file_t *file, SFORMAT *sf)
    return acc;
 }
 
-static int WriteStateChunk(filesystem_file_t *file, int type, SFORMAT *sf)
+static int WriteStateChunk(fs_file_t *file, int type, SFORMAT *sf)
 {
    int bsize;
 
-   filesystem_write(file, &type, 1);
+   fs_write(file, &type, 1);
 
    bsize = SubWrite(0, sf);
-   write32le_filesystem(file, bsize);
+   write32le_fs(file, bsize);
 
    if (!SubWrite(file, sf))
       return 0;
@@ -160,24 +160,24 @@ static SFORMAT *CheckS(SFORMAT *sf, uint32 tsize, char *desc)
    return(0);
 }
 
-static int ReadStateChunk(filesystem_file_t *file, SFORMAT *sf, int size)
+static int ReadStateChunk(fs_file_t *file, SFORMAT *sf, int size)
 {
    SFORMAT *tmp;
    uint64 temp;
-   temp = filesystem_seek(file, 0, LFS_SEEK_CUR);  // get the current position
+   temp = fs_seek(file, 0, LFS_SEEK_CUR);  // get the current position
 
-   while(filesystem_seek(file, 0, LFS_SEEK_CUR) < (temp + size))  // while we are in this chunk
+   while(fs_seek(file, 0, LFS_SEEK_CUR) < (temp + size))  // while we are in this chunk
    {
       uint32 tsize;
       char toa[4];
-      if(filesystem_read(file, toa, 4) <= 0)  // read a uint32
+      if(fs_read(file, toa, 4) <= 0)  // read a uint32
          return 0;
 
-      read32le_filesystem(file, &tsize);  //read another
+      read32le_fs(file, &tsize);  //read another
 
       if((tmp = CheckS(sf, tsize, toa)))
       {
-         filesystem_read(file, (char *)tmp->v, tmp->s & (~RLSB));
+         fs_read(file, (char *)tmp->v, tmp->s & (~RLSB));
 
 #ifdef MSB_FIRST
          if(tmp->s & RLSB)
@@ -187,13 +187,13 @@ static int ReadStateChunk(filesystem_file_t *file, SFORMAT *sf, int size)
       else
       {
          // TODO: just do an unconditional read so we can support compression
-         filesystem_seek(file, tsize, LFS_SEEK_CUR);
+         fs_seek(file, tsize, LFS_SEEK_CUR);
       }
    }
    return 1;
 }
 
-static int ReadStateChunks(filesystem_file_t *file)
+static int ReadStateChunks(fs_file_t *file)
 {
    uint8_t t;
    uint32 size;
@@ -201,9 +201,9 @@ static int ReadStateChunks(filesystem_file_t *file)
 
    while(true)
    {
-      if(0 == filesystem_read(file, &t, 1))
+      if(0 == fs_read(file, &t, 1))
          break;
-      if (!read32le_filesystem(file, &size))
+      if (!read32le_fs(file, &size))
          break;
 
       switch(t)
@@ -237,7 +237,7 @@ static int ReadStateChunks(filesystem_file_t *file)
          default:
             // I *think* this never happens?
             printf("Seeking?!?!\n");
-            if (filesystem_seek(file, size, LFS_SEEK_CUR) < 0)
+            if (fs_seek(file, size, LFS_SEEK_CUR) < 0)
                goto endo;
             break;
       }
@@ -249,7 +249,7 @@ endo:
 void FCEUSS_Save_Mem(void)
 {
    // TODO: pass in name to function signature.
-   filesystem_file_t *file = filesystem_open("NES_SAVESTATE", false);
+   fs_file_t *file = fs_open("NES_SAVESTATE", fs_WRITE, fs_RAW);
 
    uint8 header[12] = {0};
 
@@ -262,7 +262,7 @@ void FCEUSS_Save_Mem(void)
    header[3] = 0xFF;
 
    FCEU_en32lsb(header + 4, FCEU_VERSION_NUMERIC);
-   filesystem_write(file, header, 12);
+   fs_write(file, header, 12);
 
    FCEUPPU_SaveState();
    WriteStateChunk(file, 1, SFCPU);
@@ -279,21 +279,21 @@ void FCEUSS_Save_Mem(void)
    if (SPreSave)
       SPostSave();
 
-   filesystem_close(file);
+   fs_close(file);
 }
 
 void FCEUSS_Load_Mem(void)
 {
    // TODO: pass in name to function signature.
    printf("Opening file\n");
-   filesystem_file_t *file = filesystem_open("NES_SAVESTATE", false);
+   fs_file_t *file = fs_open("NES_SAVESTATE", fs_READ, fs_RAW);
 
    uint8 header[12];
    int stateversion;
    int x;
 
    printf("reading header\n");
-   filesystem_read(file, header, 12);
+   fs_read(file, header, 12);
 
    if (memcmp(header, "FCS", 3) != 0)
       return;
@@ -318,7 +318,7 @@ void FCEUSS_Load_Mem(void)
       FCEUPPU_LoadState(stateversion);
       FCEUSND_LoadState(stateversion);
    }
-   filesystem_close(file);
+   fs_close(file);
 }
 
 void ResetExState(void (*PreSave)(void), void (*PostSave)(void))
