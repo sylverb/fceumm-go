@@ -164,20 +164,20 @@ static int ReadStateChunk(fs_file_t *file, SFORMAT *sf, int size)
 {
    SFORMAT *tmp;
    uint64 temp;
-   temp = fs_seek(file, 0, LFS_SEEK_CUR);  // get the current position
 
-   while(fs_seek(file, 0, LFS_SEEK_CUR) < (temp + size))  // while we are in this chunk
+   while(size > 0)
    {
       uint32 tsize;
       char toa[4];
       if(fs_read(file, toa, 4) <= 0)  // read a uint32
          return 0;
+      size -= 4;
 
-      read32le_fs(file, &tsize);  //read another
+      size -= read32le_fs(file, &tsize);  //read another
 
       if((tmp = CheckS(sf, tsize, toa)))
       {
-         fs_read(file, (char *)tmp->v, tmp->s & (~RLSB));
+         size -= fs_read(file, (char *)tmp->v, tmp->s & (~RLSB));
 
 #ifdef MSB_FIRST
          if(tmp->s & RLSB)
@@ -186,7 +186,9 @@ static int ReadStateChunk(fs_file_t *file, SFORMAT *sf, int size)
       }
       else
       {
-         // TODO: just do an unconditional read so we can support compression
+         // I don't think this ever exeuctes
+         printf("fseek %d\n", tsize);
+         assert(0);
          fs_seek(file, tsize, LFS_SEEK_CUR);
       }
    }
@@ -236,7 +238,8 @@ static int ReadStateChunks(fs_file_t *file)
             break;
          default:
             // I *think* this never happens?
-            printf("Seeking?!?!\n");
+            printf("Seeking?!?! %d\n", size);
+            assert(0);
             if (fs_seek(file, size, LFS_SEEK_CUR) < 0)
                goto endo;
             break;
@@ -249,7 +252,7 @@ endo:
 void FCEUSS_Save_Mem(void)
 {
    // TODO: pass in name to function signature.
-   fs_file_t *file = fs_open("NES_SAVESTATE", FS_WRITE, FS_RAW);
+   fs_file_t *file = fs_open("NES_SAVESTATE", FS_WRITE, FS_COMPRESS);
 
    uint8 header[12] = {0};
 
@@ -285,14 +288,12 @@ void FCEUSS_Save_Mem(void)
 void FCEUSS_Load_Mem(void)
 {
    // TODO: pass in name to function signature.
-   printf("Opening file\n");
-   fs_file_t *file = fs_open("NES_SAVESTATE", FS_READ, FS_RAW);
+   fs_file_t *file = fs_open("NES_SAVESTATE", FS_READ, FS_COMPRESS);
 
    uint8 header[12];
    int stateversion;
    int x;
 
-   printf("reading header\n");
    fs_read(file, header, 12);
 
    if (memcmp(header, "FCS", 3) != 0)
@@ -303,10 +304,8 @@ void FCEUSS_Load_Mem(void)
    else
       stateversion = header[3] * 100;
    
-   printf("reading chunks\n");
    x = ReadStateChunks(file);
 
-   printf("meow\n");
    if (stateversion < 9500)
       X.IRQlow = 0;
 
