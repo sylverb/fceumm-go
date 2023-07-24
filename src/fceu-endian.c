@@ -70,7 +70,7 @@ int read32le_fs(fs_file_t *file, uint32 *Bufo)
 #else
    *(uint32*)Bufo=buf;
 #endif
-   return 1;
+   return 4;
 }
 
 void FCEU_en32lsb(uint8 *buf, uint32 morp)
