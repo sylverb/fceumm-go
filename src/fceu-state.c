@@ -249,7 +249,7 @@ endo:
 void FCEUSS_Save_Mem(void)
 {
    // TODO: pass in name to function signature.
-   fs_file_t *file = fs_open("NES_SAVESTATE", fs_WRITE, fs_RAW);
+   fs_file_t *file = fs_open("NES_SAVESTATE", FS_WRITE, FS_RAW);
 
    uint8 header[12] = {0};
 
@@ -286,7 +286,7 @@ void FCEUSS_Load_Mem(void)
 {
    // TODO: pass in name to function signature.
    printf("Opening file\n");
-   fs_file_t *file = fs_open("NES_SAVESTATE", fs_READ, fs_RAW);
+   fs_file_t *file = fs_open("NES_SAVESTATE", FS_READ, FS_RAW);
 
    uint8 header[12];
    int stateversion;
