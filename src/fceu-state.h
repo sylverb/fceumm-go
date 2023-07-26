@@ -23,8 +23,8 @@
 
 #include "fceu-memory.h"
 
-void FCEUSS_Load_Mem(void);
-void FCEUSS_Save_Mem(void);
+void FCEUSS_Load_Fs(const char *path);
+void FCEUSS_Save_Fs(const char *path);
 
 typedef struct {
 	void *v;

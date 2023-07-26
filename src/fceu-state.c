@@ -127,7 +127,7 @@ static int WriteStateChunk(fs_file_t *file, int type, SFORMAT *sf)
 {
    int bsize;
 
-   fs_write(file, &type, 1);
+   fs_write(file, (unsigned char *)&type, 1);
 
    bsize = SubWrite(0, sf);
    write32le_fs(file, bsize);
@@ -163,13 +163,12 @@ static SFORMAT *CheckS(SFORMAT *sf, uint32 tsize, char *desc)
 static int ReadStateChunk(fs_file_t *file, SFORMAT *sf, int size)
 {
    SFORMAT *tmp;
-   uint64 temp;
 
    while(size > 0)
    {
       uint32 tsize;
       char toa[4];
-      if(fs_read(file, toa, 4) <= 0)  // read a uint32
+      if(fs_read(file, (unsigned char *)toa, 4) <= 0)  // read a uint32
          return 0;
       size -= 4;
 
@@ -177,7 +176,7 @@ static int ReadStateChunk(fs_file_t *file, SFORMAT *sf, int size)
 
       if((tmp = CheckS(sf, tsize, toa)))
       {
-         size -= fs_read(file, (char *)tmp->v, tmp->s & (~RLSB));
+         size -= fs_read(file, (unsigned char *)tmp->v, tmp->s & (~RLSB));
 
 #ifdef MSB_FIRST
          if(tmp->s & RLSB)
@@ -249,10 +248,9 @@ endo:
    return ret;
 }
 
-void FCEUSS_Save_Mem(void)
+void FCEUSS_Save_Fs(const char *path) // TODO rename to FCEUSS_Save_fs
 {
-   // TODO: pass in name to function signature.
-   fs_file_t *file = fs_open("NES_SAVESTATE", FS_WRITE, FS_COMPRESS);
+   fs_file_t *file = fs_open(path, FS_WRITE, FS_COMPRESS);
 
    uint8 header[12] = {0};
 
@@ -285,10 +283,9 @@ void FCEUSS_Save_Mem(void)
    fs_close(file);
 }
 
-void FCEUSS_Load_Mem(void)
+void FCEUSS_Load_Fs(const char *path) // TODO rename to FCEUSS_Save_fs
 {
-   // TODO: pass in name to function signature.
-   fs_file_t *file = fs_open("NES_SAVESTATE", FS_READ, FS_COMPRESS);
+   fs_file_t *file = fs_open(path, FS_READ, FS_COMPRESS);
 
    uint8 header[12];
    int stateversion;
