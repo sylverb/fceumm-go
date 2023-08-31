@@ -1040,7 +1040,6 @@ def analyzeRom(nesFile,fileName):
                 if idString == "*NINTENDO-HVC*":
                     mapper = -2
     except Exception as e:
-        print("exeption = "+e)
         mapper = -1
     return mapper,ines2header,PRGRamSize,PRGRamSaveSize,CHRRamSize,CHRRamSaveSize,hasBattery
 
