@@ -433,7 +433,7 @@ mapper_dict = {
 #   427: "",
     428: "428",
     429: "datalatch",
-#   430: "",
+    430: "430", # TODO : not working as it relies on mmc3.c
     431: "431",
     432: "432",
     433: "433",
