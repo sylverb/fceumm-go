@@ -131,7 +131,7 @@ mapper_dict = {
     125: "lh32",
     126: "126_422_534",
 #   127: "",
-#   128: "",
+    128: "128", # TODO : not working as it relies on latch.c
 #   129: "",
 #   130: "",
 #   131: "",
