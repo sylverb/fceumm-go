@@ -457,7 +457,7 @@ mapper_dict = {
 #   451: "",
     452: "452",
     453: "453", # TODO : not working as it relies on latch.c
-#   454: "",
+    454: "454", # TODO : not working as it relies on latch.c
     455: "455",
     456: "456",
     457: "457", # TODO : not working as it relies on mmc3.c
