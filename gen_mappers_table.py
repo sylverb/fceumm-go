@@ -84,7 +84,7 @@ mapper_dict = {
     78: "datalatch",
     79: "79",
     80: "80",
-#   81: "",
+    81: "81", # TODO : not working as it relies on latch.c
     82: "82",
     83: "yoko",
 #   84: "",
