@@ -1,8 +1,4 @@
-#ifdef TARGET_GNW
-#include "build/config.h"
-#endif
-
-#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
+#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -80,6 +76,16 @@ SFORMAT SFCPUC[] = {
    { 0 }
 };
 
+
+void ResetExState(void (*PreSave)(void), void (*PostSave)(void))
+{
+}
+
+void AddExState(void *v, uint32 s, int type, char *desc)
+{
+}
+
+#if 0
 static int SubWrite(fs_file_t *file, SFORMAT *sf)
 {
    uint32 acc = 0;
@@ -344,5 +350,6 @@ void AddExState(void *v, uint32 s, int type, char *desc)
 void FCEU_DrawSaveStates(uint8 *XBuf)
 {
 }
+#endif
 
 #endif

@@ -50,7 +50,7 @@ void FlipByteOrder(uint8 *src, uint32 count)
    }
 }
 
-int write32le_fs(fs_file_t *file, uint32 b)
+/*int write32le_fs(fs_file_t *file, uint32 b)
 {
    uint8 s[4];
    s[0]=b;
@@ -71,7 +71,7 @@ int read32le_fs(fs_file_t *file, uint32 *Bufo)
    *(uint32*)Bufo=buf;
 #endif
    return 4;
-}
+}*/
 
 void FCEU_en32lsb(uint8 *buf, uint32 morp)
 {
