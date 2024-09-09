@@ -1,8 +1,4 @@
-#ifdef TARGET_GNW
-#include "build/config.h"
-#endif
-
-#if !defined(TARGET_GNW) || (defined(TARGET_GNW) &&  defined(ENABLE_EMULATOR_NES) && FORCE_NOFRENDO == 0)
+#if FORCE_NOFRENDO == 0
 #include "eeprom_93C66.h"
 
 uint8* eeprom_93C66_storage;
