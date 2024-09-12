@@ -638,9 +638,7 @@ void FCEUI_CloseGame(void)
 #endif
    GameInfo->name = 0;
 #if CHEAT_CODES == 1
-#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
    if (GameInfo->type != GIT_NSF)
-#endif
       FCEU_FlushGameCheats();
 #endif
    GameInterface(GI_CLOSE);
@@ -705,10 +703,8 @@ FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufs
 
    if (iNESLoad(name, (const uint8_t *)databuf, databufsize))
       goto endlseq;
-#ifdef NES_MAPPER_NSF
    if (NSFLoad(name, (const char *)databuf, databufsize))
       goto endlseq;
-#endif
    if (FDSLoad(name, (const char *)databuf, databufsize))
       goto endlseq;
 
@@ -721,18 +717,14 @@ endlseq:
 
    FCEU_ResetVidSys();
 #ifdef FCEU_ENABLE_GAMEGENIE_ROM
-#ifdef NES_MAPPER_NSF
    if (GameInfo->type != GIT_NSF)
-#endif
       FCEU_OpenGenie();
 #endif
 
    PowerNES();
 
 #if CHEAT_CODES == 1
-#ifdef NES_MAPPER_NSF
    if (GameInfo->type != GIT_NSF)
-#endif
       FCEU_LoadGameCheats();
 #endif
 

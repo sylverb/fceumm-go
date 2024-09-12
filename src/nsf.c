@@ -17,12 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#ifdef TARGET_GNW
-#include "build/mappers.h"
-#endif
-
-#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -645,5 +639,3 @@ int FCEUI_NSFGetInfo(uint8 *name, uint8 *artist, uint8 *copyright, int maxlen) {
 	strncpy((char*)copyright, (const char*)NSFHeader.Copyright, (size_t)maxlen);
 	return(NSFHeader.TotalSongs);
 }
-
-#endif

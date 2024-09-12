@@ -75,7 +75,6 @@ int FCEU_InitVirtualVideo(void)
 
 void FCEU_PutImage(void)
 {
-#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 	if (GameInfo->type == GIT_NSF)
 		DrawNSF(XBuf);
 #ifndef TARGET_GNW
@@ -87,7 +86,6 @@ void FCEU_PutImage(void)
 #endif
 	if (show_crosshair)
 		FCEU_DrawInput(XBuf);
-#endif
 }
 
 void FCEU_PutImageDummy(void)

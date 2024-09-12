@@ -167,11 +167,9 @@ void FCEU_ResetPalette(void) {
 }
 
 static void ChoosePalette(void) {
-#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 	if (GameInfo->type == GIT_NSF)
 		palo = 0;
 	else
-#endif
 	if (ipalette)
 		palo = palettei;
 	else
@@ -183,11 +181,8 @@ void WritePalette(void) {
 
 	for (x = 0; x < 7; x++)
 		FCEUD_SetPalette(x, unvpalette[x].r, unvpalette[x].g, unvpalette[x].b);
-#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 	if (GameInfo->type == GIT_NSF) {
-	} else
-#endif
-	{
+	} else {
 		for (x = 0; x < 64; x++)
 			FCEUD_SetPalette(128 + x, palo[x].r, palo[x].g, palo[x].b);
 		SetNESDeemph(lastd, 1);

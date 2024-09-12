@@ -1152,11 +1152,9 @@ int FCEUPPU_Loop(int skip) {
 
 		/* I need to figure out the true nature and length of this delay. */
 		X6502_Run(12);
-#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 		if (GameInfo->type == GIT_NSF)
 			DoNSFFrame();
 		else
-#endif
 		{
 			if (VBlankON)
 				TriggerNMI();
@@ -1200,11 +1198,9 @@ int FCEUPPU_Loop(int skip) {
 			X6502_Run(16 - kook);
 			kook ^= 1;
 		}
-#if !defined(TARGET_GNW) || defined(NES_MAPPER_NSF)
 		if (GameInfo->type == GIT_NSF)
 			X6502_Run((256 + 85) * normal_scanlines);
 		else
-#endif
 		#if defined(FRAMESKIP) || defined(TARGET_GNW)
 		if (skip) {
 			int y;
