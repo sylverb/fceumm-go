@@ -124,7 +124,7 @@ void FCEU_PutImageDummy(void);
 #endif
 
 extern uint8 Exit;
-extern uint8 pale;
+extern uint8 default_palette_selected;
 #ifndef TARGET_GNW
 extern uint8 vsdip;
 #endif
