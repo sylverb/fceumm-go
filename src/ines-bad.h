@@ -1,6 +1,11 @@
 #ifndef _FCEU_INES_BAD_H
 #define _FCEU_INES_BAD_H
 
+#ifndef SD_CARD
+#define SD_CARD 0
+#endif
+
+#if SD_CARD != 1 // TODO : set info in a file for SD_CARD = 1
 { 0xecf78d8a13a030a6LL, (uint8_t*)"Ai Sensei no Oshiete", INESB_HACKED },
 { 0x4712856d3e12f21fLL, (uint8_t*)"Akumajou Densetsu", INESB_HACKED },
 { 0x10f90ba5bd55c22eLL, (uint8_t*)"Alien Syndrome", INESB_HACKED },
@@ -40,6 +45,7 @@
 { 0x103fc85d978b861bLL, (uint8_t*)"Sweet Home", INESB_CORRUPT },
 { 0x7979dc51da86f19fLL, (uint8_t*)"110-in-1", INESB_CORRUPT },
 { 0x001c0bb9c358252aLL, (uint8_t*)"110-in-1", INESB_CORRUPT },
+#endif
 { 0, 0, 0 }
 
 #endif

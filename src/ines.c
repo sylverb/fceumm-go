@@ -135,7 +135,7 @@ struct INPSEL {
 
 static void SetInput(void) {
 	static struct INPSEL moo[]
-#if defined(TARGET_GNW) && !defined(LINUX_EMU)
+#if defined(TARGET_GNW) && !defined(LINUX_EMU) && SD_CARD == 0
 	__attribute__((section(".extflash_emu_data")))
 #endif
 	 =
@@ -208,7 +208,6 @@ static void SetInput(void) {
 		{0x5112dc21,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Wild Gunman */
 		{0xaf4010ea,	SI_GAMEPAD,		SI_POWERPADB,	SIFC_UNSET		},	/* World Class Track Meet */
 		{0xb3cc4d26,	SI_GAMEPAD,		SI_UNSET,		SIFC_SHADOW		},	/* 2-in-1 Uzi Lightgun (MGC-002) */
-
 		{0x00000000,	SI_UNSET,		SI_UNSET,		SIFC_UNSET		}
 	};
 	int x = 0;
@@ -235,7 +234,7 @@ struct BADINF {
 };
 
 static struct BADINF BadROMImages[]
-#if defined(TARGET_GNW) && !defined(LINUX_EMU)
+#if defined(TARGET_GNW) && !defined(LINUX_EMU) && SD_CARD == 0
 	__attribute__((section(".extflash_emu_data")))
 #endif
  =
@@ -284,7 +283,7 @@ static void CheckHInfo(void)
 #define DENDY     3
 
    static struct CHINF moo[]
-#if defined(TARGET_GNW) && !defined(LINUX_EMU)
+#if defined(TARGET_GNW) && !defined(LINUX_EMU) && SD_CARD == 0
 	__attribute__((section(".extflash_emu_data")))
 #endif
   =
@@ -456,6 +455,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                           8, Mapper8_Init           ) /* no games, it's worthless */
 	INES_BOARD( "MMC2",                       9, Mapper9_Init           )
 	INES_BOARD( "MMC4",                      10, Mapper10_Init          )
+#if 0 // TODO : Dynamically load needed mapper code in ram instead of this table
 	INES_BOARD( "Color Dreams",              11, Mapper11_Init          )
 	INES_BOARD( "REX DBZ 5",                 12, Mapper12_Init          )
 	INES_BOARD( "CPROM",                     13, CPROM_Init             )
@@ -883,6 +883,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "KS-7010",                  554, Mapper554_Init         )
 	INES_BOARD( "",                         550, Mapper550_Init         )
 	INES_BOARD( "YC-03-09",                 558, Mapper558_Init         )
+#endif
 INES_BOARD_END()
 
 static uint32 iNES_get_mapper_id(void)

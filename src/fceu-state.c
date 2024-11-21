@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #ifdef _WIN32
 #include <direct.h>
 #else
@@ -76,17 +77,7 @@ SFORMAT SFCPUC[] = {
    { 0 }
 };
 
-
-void ResetExState(void (*PreSave)(void), void (*PostSave)(void))
-{
-}
-
-void AddExState(void *v, uint32 s, int type, char *desc)
-{
-}
-
-#if 0
-static int SubWrite(fs_file_t *file, SFORMAT *sf)
+static int SubWrite(FILE *file, SFORMAT *sf)
 {
    uint32 acc = 0;
 
@@ -108,14 +99,14 @@ static int SubWrite(fs_file_t *file, SFORMAT *sf)
 
       if(file) /* Are we writing or calculating the size of this block? */
       {
-         fs_write(file, sf->desc, 4);
+         fwrite(sf->desc, 1, 4, file);
          write32le_fs(file, sf->s & (~RLSB));
 
 #ifdef MSB_FIRST
          if(sf->s & RLSB)
             FlipByteOrder((uint8 *)sf->v, sf->s & (~RLSB));
 #endif
-         fs_write(file, (char *)sf->v, sf->s & (~RLSB));
+         fwrite((char *)sf->v, 1, sf->s & (~RLSB), file);
 
          /* Now restore the original byte order. */
 #ifdef MSB_FIRST
@@ -129,11 +120,11 @@ static int SubWrite(fs_file_t *file, SFORMAT *sf)
    return acc;
 }
 
-static int WriteStateChunk(fs_file_t *file, int type, SFORMAT *sf)
+static int WriteStateChunk(FILE *file, int type, SFORMAT *sf)
 {
    int bsize;
 
-   fs_write(file, (unsigned char *)&type, 1);
+   fwrite((unsigned char *)&type, 1, 1, file);
 
    bsize = SubWrite(0, sf);
    write32le_fs(file, bsize);
@@ -166,7 +157,7 @@ static SFORMAT *CheckS(SFORMAT *sf, uint32 tsize, char *desc)
    return(0);
 }
 
-static int ReadStateChunk(fs_file_t *file, SFORMAT *sf, int size)
+static int ReadStateChunk(FILE *file, SFORMAT *sf, int size)
 {
    SFORMAT *tmp;
 
@@ -174,7 +165,7 @@ static int ReadStateChunk(fs_file_t *file, SFORMAT *sf, int size)
    {
       uint32 tsize;
       char toa[4];
-      if(fs_read(file, (unsigned char *)toa, 4) <= 0)  // read a uint32
+      if(fread((unsigned char *)toa, 1, 4, file) <= 0)  // read a uint32
          return 0;
       size -= 4;
 
@@ -182,7 +173,7 @@ static int ReadStateChunk(fs_file_t *file, SFORMAT *sf, int size)
 
       if((tmp = CheckS(sf, tsize, toa)))
       {
-         size -= fs_read(file, (unsigned char *)tmp->v, tmp->s & (~RLSB));
+         size -= fread((unsigned char *)tmp->v, 1, tmp->s & (~RLSB), file);
 
 #ifdef MSB_FIRST
          if(tmp->s & RLSB)
@@ -191,16 +182,16 @@ static int ReadStateChunk(fs_file_t *file, SFORMAT *sf, int size)
       }
       else
       {
-         // I don't think this ever exeuctes
-         printf("fseek %d\n", tsize);
+         // I don't think this ever executes
+         printf("fseek %ld\n", tsize);
          assert(0);
-         fs_seek(file, tsize, LFS_SEEK_CUR);
+         fseek(file, tsize, SEEK_CUR);
       }
    }
    return 1;
 }
 
-static int ReadStateChunks(fs_file_t *file)
+static int ReadStateChunks(FILE *file)
 {
    uint8_t t;
    uint32 size;
@@ -208,7 +199,7 @@ static int ReadStateChunks(fs_file_t *file)
 
    while(true)
    {
-      if(0 == fs_read(file, &t, 1))
+      if(0 == fread(&t, 1, 1, file))
          break;
       if (!read32le_fs(file, &size))
          break;
@@ -243,9 +234,9 @@ static int ReadStateChunks(fs_file_t *file)
             break;
          default:
             // I *think* this never happens?
-            printf("Seeking?!?! %d\n", size);
+            printf("Seeking?!?! %ld\n", size);
             assert(0);
-            if (fs_seek(file, size, LFS_SEEK_CUR) < 0)
+            if (fseek(file, size, SEEK_CUR) < 0)
                goto endo;
             break;
       }
@@ -256,7 +247,7 @@ endo:
 
 void FCEUSS_Save_Fs(const char *path) // TODO rename to FCEUSS_Save_fs
 {
-   fs_file_t *file = fs_open(path, FS_WRITE, FS_COMPRESS);
+   FILE *file = fopen(path, "wb");
 
    uint8 header[12] = {0};
 
@@ -269,7 +260,7 @@ void FCEUSS_Save_Fs(const char *path) // TODO rename to FCEUSS_Save_fs
    header[3] = 0xFF;
 
    FCEU_en32lsb(header + 4, FCEU_VERSION_NUMERIC);
-   fs_write(file, header, 12);
+   fwrite(header, 1, 12, file);
 
    FCEUPPU_SaveState();
    WriteStateChunk(file, 1, SFCPU);
@@ -286,18 +277,18 @@ void FCEUSS_Save_Fs(const char *path) // TODO rename to FCEUSS_Save_fs
    if (SPreSave)
       SPostSave();
 
-   fs_close(file);
+   fclose(file);
 }
 
 void FCEUSS_Load_Fs(const char *path) // TODO rename to FCEUSS_Save_fs
 {
-   fs_file_t *file = fs_open(path, FS_READ, FS_COMPRESS);
+   FILE *file = fopen(path,"rb");
 
    uint8 header[12];
    int stateversion;
    int x;
 
-   fs_read(file, header, 12);
+   fread(header, 12, 1, file);
 
    if (memcmp(header, "FCS", 3) != 0)
       return;
@@ -320,7 +311,7 @@ void FCEUSS_Load_Fs(const char *path) // TODO rename to FCEUSS_Save_fs
       FCEUPPU_LoadState(stateversion);
       FCEUSND_LoadState(stateversion);
    }
-   fs_close(file);
+   fclose(file);
 }
 
 void ResetExState(void (*PreSave)(void), void (*PostSave)(void))
@@ -350,6 +341,4 @@ void AddExState(void *v, uint32 s, int type, char *desc)
 void FCEU_DrawSaveStates(uint8 *XBuf)
 {
 }
-#endif
-
 #endif

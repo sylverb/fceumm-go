@@ -41,8 +41,12 @@
 #ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
-#ifdef TARGET_GNW
+#if defined(TARGET_GNW) && !defined(LINUX_EMU)
+#if SD_CARD == 1
+#include "gw_flash_alloc.h"
+#else
 #include "rom_manager.h"
+#endif
 #endif
 
 /*	TODO:  Add code to put a delay in between the time a disk is inserted
@@ -621,7 +625,7 @@ static void FreeFDSMemory(void) {
 }
 
 #ifdef TARGET_GNW
-static int SubLoadRom(uint8 *fds, uint32_t rom_size) {
+static int SubLoad(uint8 *fds, uint32_t rom_size) {
 	uint8 header[16];
 	int offset = 0;
 	int x;
@@ -656,9 +660,7 @@ static int SubLoadRom(uint8 *fds, uint32_t rom_size) {
 
 	return(1);
 }
-#endif
-
-#ifndef TARGET_GNW
+#else
 static int SubLoad(FCEUFILE *fp) {
 	struct md5_context md5;
 	uint8 header[16];
@@ -837,6 +839,7 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	FCEU_PrintError("FDSLoad\n");
 
 #ifndef LINUX_EMU
+#if SD_CARD == 0
 	retro_emulator_file_t *rom_file;
 
 	rom_system_t *rom_system = (rom_system_t *)rom_manager_system(&rom_mgr, "NES_BIOS");
@@ -847,7 +850,19 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 		return 0;
 	}
 #else
-	FILE *fdsbiosfile = fopen("disksys.rom","r");
+    uint32_t size_u32 = 0;
+	uint8_t *bios_data = store_file_in_flash("/bios/nes/disksys.rom", &size_u32, false);
+	if (bios_data == NULL) {
+		FCEU_PrintError("FDS BIOS ROM image missing!\n");
+		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
+		return 0;
+	} else if (size_u32 != 8192) {
+		FCEU_PrintError("FDS BIOS ROM image wrong size (expecting 8KB file)!\n");
+		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) incorrect");
+	}
+#endif
+#else
+	FILE *fdsbiosfile = fopen("bios/nes/disksys.rom","r");
 	if (fdsbiosfile == NULL) {
 		FCEU_PrintError("FDS BIOS ROM image missing!\n");
 		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing\n");
@@ -862,7 +877,11 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	FDSBIOSsize = 8192;
 
 #ifndef LINUX_EMU
+#if SD_CARD == 0
 	FDSBIOS = (uint8_t *)rom_file->address;
+#else
+	FDSBIOS = bios_data;
+#endif
 #else
 	FDSBIOS = (uint8*)FCEU_gmalloc(FDSBIOSsize);
 	fread(FDSBIOS,1,FDSBIOSsize,fdsbiosfile);
@@ -870,7 +889,7 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 #endif
 	SetupCartPRGMapping(0, FDSBIOS, FDSBIOSsize, 0);
 
-	if (!SubLoadRom((uint8 *)rom, rom_size)) {
+	if (!SubLoad((uint8 *)rom, rom_size)) {
 #ifdef LINUX_EMU
 		if (FDSBIOS)
 			FCEU_gfree(FDSBIOS);

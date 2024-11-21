@@ -1,11 +1,15 @@
 #ifndef _FCEU_INES_CORRECT_H
 #define _FCEU_INES_CORRECT_H
 
+#ifndef SD_CARD
+#define SD_CARD 0
+#endif
 	/* ROM images that have the battery-backed bit set in the header that really
 	don't have battery-backed RAM is not that big of a problem, so I'll
 	treat this differently by only listing games that should have battery-backed RAM.
 	*/
 	/* CRC32, mapperNum, SubMapper, Mirroring, hasBattery, prgRam, chrRam, region, extra flags */
+#if SD_CARD != 1 // TODO : set info in a file for SD_CARD = 1
 	{ 0xb17574f3,    1, DEFAULT, DEFAULT, 1,    0x70, DEFAULT, DEFAULT, NOEXTRA }, /* AD&D Heroes of the Lance */
 	{ 0x5de61639,    1, DEFAULT, DEFAULT, 1,    0x70,    0x07, DEFAULT, NOEXTRA }, /* AD&D Hillsfar */
 	{ 0x2545214c,    1, DEFAULT, DEFAULT, 1,    0x70, DEFAULT, DEFAULT, NOEXTRA }, /* DW */
@@ -967,7 +971,7 @@
 	{ 0x1df10182,  263, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Boogerman II (Rex-Soft) [!].nes */
 	{ 0xf956fcea,  521, DEFAULT, DEFAULT, 0, DEFAULT,    0x70, DEFAULT, NOEXTRA }, /* Korean Igo (Korea) (Unl).nes */
 	{ 0x2eed2e34,  289, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* 76-in-1 [p1][a1].nes 2048 PRG, 0 CHR */
-
+#endif
 	{ 0x00000000, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }
 
 #endif
