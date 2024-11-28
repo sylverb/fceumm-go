@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -67,4 +66,3 @@ void BMC830118C_Init(CartInfo *info) {
 	info->Reset = BMC830118CReset;
 	AddExState(EXPREGS, 1, 0, "EXPR");
 }
-#endif

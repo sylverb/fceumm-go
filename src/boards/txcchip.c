@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -404,4 +403,3 @@ void UNL22211_Init(CartInfo *info) {
 	GameStateRestore = UNL22211StateRestore;
 	AddExState(&UNL22211StateRegs, ~0, 0, 0);
 }
-#endif

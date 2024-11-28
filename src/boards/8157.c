@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -80,4 +79,3 @@ void UNL8157_Init(CartInfo *info) {
 	GameStateRestore = UNL8157Restore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-#endif

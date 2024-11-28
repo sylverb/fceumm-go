@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -159,4 +158,3 @@ void Mapper17_Init(CartInfo *info) {
 	ffemode = 1;
 	Mapper6_Init(info);
 }
-#endif

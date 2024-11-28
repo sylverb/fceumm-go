@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
 *
 * Copyright notice for this file:
@@ -2393,5 +2392,3 @@ void COOLGIRL_Init(CartInfo *info) {
 	info->Close = COOLGIRL_Close;
 	GameStateRestore = COOLGIRL_Restore;
 }
-
-#endif

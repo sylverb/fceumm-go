@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -50,4 +49,3 @@ void DreamTech01_Init(CartInfo *info) {
 	info->Power = DREAMPower;
 	AddExState(&latche, 1, 0, "LATC");
 }
-#endif

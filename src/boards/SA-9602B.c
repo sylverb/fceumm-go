@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -60,4 +59,3 @@ void SA9602B_Init(CartInfo *info) {
 	info->Power = SA9602BPower;
 	AddExState(EXPREGS, 2, 0, "EXPR");
 }
-#endif

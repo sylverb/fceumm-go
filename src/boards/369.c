@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -193,4 +192,3 @@ void Mapper369_Init(CartInfo *info) {
 	GameHBIRQHook = MMC3IRQHook;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-#endif

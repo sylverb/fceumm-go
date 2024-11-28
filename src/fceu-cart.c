@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -609,6 +608,4 @@ void FCEU_GeniePower(void) {
 	else
 		geniestage = 2;
 }
-#endif
-
 #endif

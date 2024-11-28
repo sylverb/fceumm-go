@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -95,4 +94,3 @@ void Mapper401_Init(CartInfo *info) {
 	AddExState(EXPREGS, 5, 0, "EXPR");
 	AddExState(&dipswitch, 1, 0, "DPSW");
 }
-#endif

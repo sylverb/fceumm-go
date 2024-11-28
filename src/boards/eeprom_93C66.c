@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 #include "eeprom_93C66.h"
 
 uint8* eeprom_93C66_storage;
@@ -139,4 +138,3 @@ void eeprom_93C66_write (uint8 CS, uint8 CLK, uint8 DAT)
    }
    eeprom_93C66_lastCLK = CLK;
 }
-#endif

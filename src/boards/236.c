@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -110,4 +109,3 @@ void Mapper236_Init(CartInfo *info)
 	GameStateRestore = StateRestore;
 	chrramvariant = info->CHRRomSize == 0;
 }
-#endif

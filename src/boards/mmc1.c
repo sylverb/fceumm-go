@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -742,4 +741,3 @@ void Mapper404_Init(CartInfo *info) {
 	MMC1PRGHook16 = M404PRG16;
 	AddExState(&outerBank, 1, 0, "BANK");
 }
-#endif

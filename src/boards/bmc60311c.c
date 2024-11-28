@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright (C) 2019 Libretro Team
@@ -83,4 +82,3 @@ void BMC60311C_Init(CartInfo *info) {
 	GameStateRestore = BMC60311CRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-#endif

@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -89,4 +88,3 @@ void UNLBMW8544_Init(CartInfo *info) {
 	info->Power = UNLBMW8544Power;
 	AddExState(EXPREGS, 3, 0, "EXPR");
 }
-#endif

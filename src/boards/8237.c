@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -178,4 +177,3 @@ void UNL8237A_Init(CartInfo *info) {
 	UNL8237_Init(info);
 	submapper = 1;
 }
-#endif

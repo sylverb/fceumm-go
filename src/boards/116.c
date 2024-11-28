@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -345,4 +344,3 @@ void UNLSL12_Init(CartInfo *info) {
 	if (ROM_size == 8 && VROM_size == 16)
 		isHuang2 = 1;
 }
-#endif

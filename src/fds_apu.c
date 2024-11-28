@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -315,4 +314,3 @@ void FDSSoundPower(void) {
 	FDSSoundReset();
 	FDSSoundStateAdd();
 }
-#endif

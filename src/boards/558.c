@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -148,4 +147,3 @@ void Mapper558_Init (CartInfo *info)
       info->SaveGameLen[0] = (info->PRGRamSaveSize &~0x7FF);
    }
 }
-#endif

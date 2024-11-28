@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -640,4 +639,3 @@ void FCEUI_CheatSearchEnd(int type, uint8 v1, uint8 v2) {
 	if (type > 4)
 		FCEUI_CheatSearchSetCurrentAsOriginal();
 }
-#endif

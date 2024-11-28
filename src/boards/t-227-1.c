@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -99,4 +98,3 @@ void BMCT2271_Init(CartInfo *info) {
 	info->Reset = BMCT2271Reset;
 	AddExState(EXPREGS, 1, 0, "EXPR");
 }
-#endif

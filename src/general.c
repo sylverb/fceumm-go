@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -99,4 +98,3 @@ uint32 uppow2(uint32 n)
       }
    return n;
 }
-#endif

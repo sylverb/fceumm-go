@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /*
  * RFC 1321 compliant MD5 implementation,
  * by Christophe Devine <devine@cr0.net>;
@@ -236,4 +235,3 @@ char *md5_asciistr(uint8 digest[16]) {
 	}
 	return(str);
 }
-#endif

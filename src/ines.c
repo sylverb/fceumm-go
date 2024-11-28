@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -1413,4 +1412,3 @@ static int iNES_Init(int num) {
 	}
 	return 0;
 }
-#endif

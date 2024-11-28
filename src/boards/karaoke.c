@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -62,4 +61,3 @@ void Mapper188_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(&latche, 1, 0, "LATC");
 }
-#endif

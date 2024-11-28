@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -989,4 +988,3 @@ void FDSClose(void) {
 
 	FreeFDSMemory();
 }
-#endif

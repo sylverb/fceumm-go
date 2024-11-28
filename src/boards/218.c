@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -33,4 +32,3 @@ void Mapper218_Init(CartInfo* info) {
 	SetupCartCHRMapping(0, NTARAM, 2048, 1);
 	info->Power = M218Power;
 }
-#endif

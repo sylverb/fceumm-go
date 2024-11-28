@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -188,4 +187,3 @@ void WritePalette(void) {
 		SetNESDeemph(lastd, 1);
 	}
 }
-#endif

@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -163,4 +162,3 @@ void MINDKIDS_Init(CartInfo *info) {
 	info->submapper =1;
 	Mapper268_Init(info);
 }
-#endif

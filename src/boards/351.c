@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -347,5 +346,3 @@ void Mapper351_Init (CartInfo *info) {
 		SetupCartPRGMapping(0x10, PRGCHR, PRGsize[0] +CHRsize[0], 0);
 	}
 }
-
-#endif

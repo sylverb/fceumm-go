@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -387,5 +386,3 @@ void UNLOneBus_Init(CartInfo *info) {
 #endif
 	SetupCartPRGMapping(0x10, WRAM, 8192, 1);
 }
-
-#endif

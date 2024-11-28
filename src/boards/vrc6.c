@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -415,4 +414,3 @@ void NSFVRC6_Init(void) {
 	SetWriteHandler(0x8000, 0xbfff, VRC6SW);
 	AddExState(&SStateRegs, ~0, 0, 0);
 }
-#endif

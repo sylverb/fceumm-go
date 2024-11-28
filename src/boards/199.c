@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -38,4 +37,3 @@ void Mapper199_Init(CartInfo *info) {
 	info->Power = Mapper199_Power;
 	info->Reset = MMC3RegReset;
 }
-#endif

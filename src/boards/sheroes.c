@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -86,4 +85,3 @@ void UNLSHeroes_Init(CartInfo *info) {
 	AddExState(EXPREGS, 4, 0, "EXPR");
 	AddExState(&tekker, 1, 0, "DIPSW");
 }
-#endif

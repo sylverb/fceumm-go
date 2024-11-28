@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright (C) 2019 Libretro Team
@@ -69,4 +68,3 @@ void BMCK3006_Init(CartInfo *info) {
 	info->Reset = BMCK3006Reset;
 	AddExState(EXPREGS, 1, 0, "EXPR");
 }
-#endif

@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -69,4 +68,3 @@ void UNLH2288_Init(CartInfo *info) {
 	info->Power = H2288Power;
 	AddExState(EXPREGS, 2, 0, "EXPR");
 }
-#endif

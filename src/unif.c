@@ -29,11 +29,11 @@
 
 #include  "fceu-types.h"
 #include  "fceu.h"
-#include  "cart.h"
+#include  "fceu-cart.h"
 #include  "unif.h"
 #include  "ines.h"
 #include  "general.h"
-#include  "state.h"
+#include  "fceu-state.h"
 #include  "fceu-endian.h"
 #include  "file.h"
 #include  "fceu-memory.h"
@@ -41,7 +41,9 @@
 #include  "md5.h"
 #include  "fceu-crc32.h"
 
+#ifndef TARGET_GNW
 #include "string/stdstring.h"
+#endif
 
 typedef struct {
 	char ID[4];

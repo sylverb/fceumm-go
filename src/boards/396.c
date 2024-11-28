@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -72,4 +71,3 @@ void Mapper396_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(reg, 2, 0, "REGS");
 }
-#endif

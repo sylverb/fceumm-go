@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -80,4 +79,3 @@ void FCEU_gfree(void *ptr)
 	free(ptr);
 #endif
 }
-#endif

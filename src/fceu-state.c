@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -341,4 +340,3 @@ void AddExState(void *v, uint32 s, int type, char *desc)
 void FCEU_DrawSaveStates(uint8 *XBuf)
 {
 }
-#endif

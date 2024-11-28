@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -1518,4 +1517,3 @@ void TQROM_Init(CartInfo *info) {
 void HKROM_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 512, 1, info->battery);
 }
-#endif

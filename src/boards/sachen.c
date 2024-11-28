@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -343,4 +342,3 @@ static void Mapper553Power(void) {
 void Mapper553_Init(CartInfo *info) {
 	info->Power = Mapper553Power;
 }
-#endif

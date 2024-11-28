@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /*
  * Copyright (C) 2012-2017 FCEUX team
  *
@@ -186,4 +185,3 @@ void Mapper28_Init(CartInfo* info) {
 	GameStateRestore=StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-#endif

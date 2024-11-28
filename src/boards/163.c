@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -130,4 +129,3 @@ void Mapper163_Init (CartInfo *info)
       info->SaveGameLen[0] = WRAMSIZE;
    }
 }
-#endif

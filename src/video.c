@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -106,4 +105,3 @@ void FCEU_DispMessage(enum retro_log_level level, unsigned duration, const char 
 
    FCEUD_DispMessage(level, duration, msg);
 }
-#endif

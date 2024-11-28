@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -853,4 +852,3 @@ static void M464Sync(void) {
 void Mapper464_Init(CartInfo *info) {
 	Latch_Init(info, M464Sync, NULL, 0x0000, 0x8000, 0xFFFF, 1);
 }
-#endif

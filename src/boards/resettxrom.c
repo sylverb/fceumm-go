@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -84,4 +83,3 @@ void BMCRESETTXROM_Init(CartInfo *info) {
 	AddExState(&EXPREGS[0], 1, 0, "EXPR");
 	AddExState(&submapper, 1, 0, "SUBM");
 }
-#endif

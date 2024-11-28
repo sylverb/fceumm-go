@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -92,4 +91,3 @@ void BMCK3033_Init(CartInfo *info) {
 	info->Reset = BMCK3033Reset;
 	AddExState(EXPREGS, 4, 0, "EXPR");
 }
-#endif

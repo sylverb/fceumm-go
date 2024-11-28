@@ -1,4 +1,3 @@
-#if FORCE_NOFRENDO == 0
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
@@ -646,4 +645,3 @@ void Mapper157_Init(CartInfo *info) {
 	AddExState(&x24c02StateRegs, ~0, 0, 0);
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-#endif
