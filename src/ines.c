@@ -44,6 +44,12 @@
 #ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
+#if SD_CARD == 1
+#include <odroid_system.h>
+#include "nes_fceu_mappers.h"
+#include "rg_storage.h"
+#include "gw_linker.h"
+#endif
 #endif
 #include "md5.h"
 #include "cheat.h"
@@ -455,7 +461,6 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                           8, Mapper8_Init           ) /* no games, it's worthless */
 	INES_BOARD( "MMC2",                       9, Mapper9_Init           )
 	INES_BOARD( "MMC4",                      10, Mapper10_Init          )
-#if 0 // TODO : Dynamically load needed mapper code in ram instead of this table
 	INES_BOARD( "Color Dreams",              11, Mapper11_Init          )
 	INES_BOARD( "REX DBZ 5",                 12, Mapper12_Init          )
 	INES_BOARD( "CPROM",                     13, CPROM_Init             )
@@ -883,7 +888,6 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "KS-7010",                  554, Mapper554_Init         )
 	INES_BOARD( "",                         550, Mapper550_Init         )
 	INES_BOARD( "YC-03-09",                 558, Mapper558_Init         )
-#endif
 INES_BOARD_END()
 
 static uint32 iNES_get_mapper_id(void)
@@ -987,10 +991,10 @@ int iNESLoad(const char *name, const uint8_t *rom, uint32_t rom_size)
 
    if (romSize > filesize)
    {
-      FCEU_PrintError(" File length is too short to contain all data reported from header by %llu\n", romSize -  filesize);
+      FCEU_PrintError(" File length is too short to contain all data reported from header by %d\n", romSize -  filesize);
    }
    else if (romSize < filesize)
-      FCEU_PrintError(" File contains %llu bytes of unused data\n", filesize - romSize);
+      FCEU_PrintError(" File contains %d bytes of unused data\n", filesize - romSize);
 
    rom_size_pow2 = uppow2(iNESCart.PRGRomSize);
 
@@ -1305,6 +1309,7 @@ int iNESLoad(const char *name, FCEUFILE *fp)
 
    iNESCart.battery = (head.ROM_type & 2) ? 1 : 0;
 
+   printf("iNESCart.mapper = %d\n",iNESCart.mapper);
    if (!iNES_Init(iNESCart.mapper))
    {
       FCEU_printf("\n");
@@ -1328,6 +1333,10 @@ int iNESLoad(const char *name, FCEUFILE *fp)
 #endif
 
 static int iNES_Init(int num) {
+#if SD_CARD == 1
+	char mapper_path[256];
+	size_t mapper_size;
+#endif
 	BMAPPINGLocal *tmp = bmap;
 
 	CHRRAMSize = -1;
@@ -1384,8 +1393,19 @@ static int iNES_Init(int num) {
 					AddExState(ExtraNTARAM, 2048, 0, "EXNR");
 				}
 			}
-		   FCEU_printf("init found mapper %ld\n",tmp->number);
-
+		    FCEU_printf("init found mapper %ld\n",tmp->number);
+#if SD_CARD == 1
+			// Load mapper code in ram
+			if (fceumm_get_mapper_name(num, mapper_path, 255) == 0) {
+				FCEU_printf("mapper %s\n",mapper_path);
+				mapper_size = rg_storage_copy_file_to_ram(mapper_path, (char *)&__RAM_EMU_START__);
+				FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
+				memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(30*1024-mapper_size));
+				SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+			} else {
+				FCEU_printf("Failed to load mapper\n");
+			}
+#endif
 			tmp->init(&iNESCart);
 			return 1;
 		}
