@@ -47,7 +47,9 @@
 #include <odroid_system.h>
 #include "nes_fceu_mappers.h"
 #include "rg_storage.h"
+#ifndef LINUX_EMU
 #include "gw_linker.h"
+#endif
 #endif
 #endif
 #include "md5.h"
@@ -1393,7 +1395,7 @@ static int iNES_Init(int num) {
 				}
 			}
 		    FCEU_printf("init found mapper %ld\n",tmp->number);
-#if SD_CARD == 1
+#if SD_CARD == 1 && !defined(LINUX_EMU)
 			// Load mapper code in ram
 			if (fceumm_get_mapper_name(num, mapper_path, 255) == 0) {
 				FCEU_printf("mapper %s\n",mapper_path);
