@@ -9,7 +9,7 @@
 	treat this differently by only listing games that should have battery-backed RAM.
 	*/
 	/* CRC32, mapperNum, SubMapper, Mirroring, hasBattery, prgRam, chrRam, region, extra flags */
-#if SD_CARD != 1 // TODO : set info in a file for SD_CARD = 1
+#if SD_CARD == 0 || defined(LINUX_EMU)
 	{ 0xb17574f3,    1, DEFAULT, DEFAULT, 1,    0x70, DEFAULT, DEFAULT, NOEXTRA }, /* AD&D Heroes of the Lance */
 	{ 0x5de61639,    1, DEFAULT, DEFAULT, 1,    0x70,    0x07, DEFAULT, NOEXTRA }, /* AD&D Hillsfar */
 	{ 0x2545214c,    1, DEFAULT, DEFAULT, 1,    0x70, DEFAULT, DEFAULT, NOEXTRA }, /* DW */

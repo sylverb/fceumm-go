@@ -275,6 +275,40 @@ struct CHINF {
 	int32 extra;
 };
 
+#if SD_CARD == 1 && !defined(LINUX_EMU)
+static int find_correct_rom_info(uint32_t crc32, struct CHINF *moo) {
+    FILE *file = fopen("/cores/mappers/ines_correct.bin", "rb");
+    if (!file) {
+        return 0;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long filesize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    int num_entries = filesize / sizeof(struct CHINF);
+    int low = 0, high = num_entries - 1;
+
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        fseek(file, mid * sizeof(struct CHINF), SEEK_SET);
+        fread(moo, sizeof(struct CHINF), 1, file);
+
+        if (moo->crc32 == crc32) {
+            fclose(file);
+            return 1;
+        }
+        if (moo->crc32 < crc32) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    fclose(file);
+    return 0;
+}
+#endif
+
 static void CheckHInfo(void)
 {
 #define DEFAULT (-1)
@@ -289,14 +323,16 @@ static void CheckHInfo(void)
 #define MULTI     2
 #define DENDY     3
 
+#if SD_CARD == 0 || defined(LINUX_EMU)
    static struct CHINF moo[]
-#if defined(TARGET_GNW) && !defined(LINUX_EMU) && SD_CARD == 0
+#if defined(TARGET_GNW) && !defined(LINUX_EMU)
 	__attribute__((section(".extflash_emu_data")))
 #endif
   =
    {
 #include "ines-correct.h"
    };
+#endif
    int32 tofix = 0, x;
    uint64 partialmd5 = 0;
    int32 current_mapper = 0;
@@ -306,6 +342,7 @@ static void CheckHInfo(void)
       partialmd5 |= (uint64)iNESCart.MD5[15 - x] << (x * 8);
    CheckBad(partialmd5);
 
+#if SD_CARD == 0 || defined(LINUX_EMU)
    x = 0;
    do {
       if (moo[x].crc32 == iNESCart.CRC32) {
@@ -378,6 +415,75 @@ static void CheckHInfo(void)
       }
       x++;
    } while (moo[x].mirror >= 0 || moo[x].mapper >= 0);
+#else
+   struct CHINF moo;
+   if (find_correct_rom_info(iNESCart.CRC32, &moo)) {
+      if (moo.mapper >= 0) {
+            if (moo.extra >= 0 && moo.extra == 0x800 && VROM_size) {
+               VROM_size = 0;
+#ifndef TARGET_GNW
+               free(VROM);
+#endif
+               VROM = NULL;
+               tofix |= 8;
+            }
+            if (iNESCart.mapper != (moo.mapper & 0xFFF)) {
+               tofix |= 1;
+               current_mapper = iNESCart.mapper;
+               iNESCart.mapper = moo.mapper & 0xFFF;
+            }
+         }
+         if (moo.submapper >= 0) {
+            iNESCart.iNES2 = 1;
+            if (moo.submapper != iNESCart.submapper) {
+               iNESCart.submapper = moo.submapper;
+            }
+         }
+         if (moo.mirror >= 0) {
+            cur_mirr = iNESCart.mirror;
+            if (moo.mirror == 8) {
+               if (iNESCart.mirror == 2) {	/* Anything but hard-wired(four screen). */
+                  tofix |= 2;
+                  iNESCart.mirror = 0;
+               }
+            } else if (iNESCart.mirror != moo.mirror) {
+               if (iNESCart.mirror != (moo.mirror & ~4))
+                  if ((moo.mirror & ~4) <= 2)	/* Don't complain if one-screen mirroring
+                                                   needs to be set(the iNES header can't
+                                                   hold this information).
+                                                 */
+                     tofix |= 2;
+               iNESCart.mirror = moo.mirror;
+            }
+         }
+         if (moo.battery >= 0) {
+            if (!(head.ROM_type & 2) && (moo.battery != 0)) {
+               tofix |= 4;
+               head.ROM_type |= 2;
+            }
+         }
+         if (moo.region >= 0) {
+            if (iNESCart.region != moo.region) {
+               tofix |= 16;
+               iNESCart.region = moo.region;
+            }
+         }
+
+         if (moo.prgram >= 0) {
+            tofix |= 32;
+            iNESCart.iNES2 = 1;
+            iNESCart.PRGRamSize = (moo.prgram & 0x0F) ? (64 << ((moo.prgram >> 0) & 0xF)) : 0;
+            iNESCart.PRGRamSaveSize = (moo.prgram & 0xF0) ? (64 << ((moo.prgram >> 4) & 0xF)) : 0;
+         }
+
+         if (moo.chrram >= 0) {
+            tofix |= 32;
+            iNESCart.iNES2 = 1;
+            iNESCart.CHRRamSize = (moo.chrram & 0x0F) ? (64 << ((moo.chrram >> 0) & 0xF)) : 0;
+            iNESCart.CHRRamSaveSize = (moo.chrram & 0xF0) ? (64 << ((moo.chrram >> 4) & 0xF)) : 0;
+         }
+   }
+#endif
 
    /* Games that use these iNES mappers tend to have the four-screen bit set
       when it should not be.
