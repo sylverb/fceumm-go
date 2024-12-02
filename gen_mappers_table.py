@@ -569,7 +569,7 @@ n = len(sys.argv)
 if n < 2: print("Usage :\ngen_mappers_table.py output_file.bin\n"); sys.exit(0)
 
 # Mappers configuration
-max_mappers = 600  # Max mappers
+max_mappers = max(mapper_dict.keys()) + 1
 entry_size = 28
 output_file = sys.argv[1]
 
