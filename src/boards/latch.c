@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#if !defined(TARGET_GNW) || defined(FORCE_INCLUDE) // On the G&W mappers code shall be compiled in one file
-
 #include "mapinc.h"
 #include "latch.h"
 
@@ -98,4 +96,3 @@ void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func,
 	AddExState(&latch.addr, 2, 0, "ADDR");
 	AddExState(&latch.data, 1, 0, "DATA");
 }
-#endif

@@ -21,12 +21,6 @@
 #include "mapinc.h"
 #include "latch.h"
 
-#ifdef TARGET_GNW // On the G&W mappers code shall be compiled in one file
-#define FORCE_INCLUDE
-#include "latch.c"
-#undef FORCE_INCLUDE
-#endif
-
 static void Sync(void) {
     if (latch.addr & 0x80) {
         setprg32(0x8000, (latch.addr >> 5) & 3);

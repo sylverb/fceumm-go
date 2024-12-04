@@ -84,7 +84,7 @@ mapper_dict = {
     78: "datalatch",
     79: "79",
     80: "80",
-    81: "81", # TODO : not working as it relies on latch.c
+    81: "81",
     82: "82",
     83: "yoko",
 #   84: "",
@@ -131,7 +131,7 @@ mapper_dict = {
     125: "lh32",
     126: "126_422_534",
 #   127: "",
-    128: "128", # TODO : not working as it relies on latch.c
+    128: "128",
 #   129: "",
 #   130: "",
 #   131: "",
@@ -433,7 +433,7 @@ mapper_dict = {
 #   427: "",
     428: "428",
     429: "datalatch",
-    430: "430", # TODO : not working as it relies on mmc3.c
+    430: "430",
     431: "431",
     432: "432",
     433: "433",
@@ -456,12 +456,12 @@ mapper_dict = {
 #   450: "",
 #   451: "",
     452: "452",
-    453: "453", # TODO : not working as it relies on latch.c
-    454: "454", # TODO : not working as it relies on latch.c
+    453: "453",
+    454: "454",
     455: "455",
     456: "456",
-    457: "457", # TODO : not working as it relies on mmc3.c
-    458: "458", # TODO : not working as it relies on mmc3.c
+    457: "457",
+    458: "458",
     459: "addrlatch",
     460: "460",
     461: "addrlatch",

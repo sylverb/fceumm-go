@@ -1,4 +1,3 @@
-#if !defined(TARGET_GNW) || defined(FORCE_INCLUDE) // On the G&W mappers code shall be compiled in one file
 #include "mapinc.h"
 #include "vrcirq.h"
 
@@ -92,4 +91,3 @@ void VRCIRQ_Acknowledge(void)
 	IRQa = IRQd;
 	X6502_IRQEnd(FCEU_IQEXT);
 }
-#endif

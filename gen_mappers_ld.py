@@ -39,9 +39,22 @@ def generate_section(file_name, base_path="build/nes_fceu/"):
 
 # Parse files in mappers folder
 sections = []
+
+# We have to ignore some files which are not compiled or
+# are needed by some other mappers code. To prevent adding
+# some complexity and heavily modifying existing code,
+# the mapper code shared with some other mappers is not
+# loaded dynamically (so it's in main fceumm core file)
+ignore_prefixes = ["__", # some dummy/template files to ignore
+            "fceu-emu2413", # YM2413 chip emulator used by VRC7 mapper
+            "mmc3", # mmc3 mapper used by many other mappers
+            "latch", # code shared by various mappers
+            "vrcirq", # code shared by various mappers
+            "eeprom_93C66", # code shared by various mappers
+            ]
 for file_name in sorted(os.listdir(source_dir)):
     # Ignore files starting with "__" or "fceu-" and non .c files
-    if file_name.startswith("__")  or file_name.startswith("fceu-emu2413") or not file_name.endswith(".c"):
+    if any(file_name.startswith(prefix) for prefix in ignore_prefixes) or not file_name.endswith(".c"):
         continue
     sections.append(generate_section(file_name))
 

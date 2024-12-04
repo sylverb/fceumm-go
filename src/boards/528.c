@@ -25,11 +25,8 @@
 #include "mapinc.h"
 #include "vrcirq.h"
 
-#ifdef TARGET_GNW // On the G&W mappers code shall be compiled in one file
+#ifdef TARGET_GNW
 #include "gw_malloc.h"
-#define FORCE_INCLUDE
-#include "vrcirq.c"
-#undef FORCE_INCLUDE
 #endif
 
 static uint8 preg[4], creg[8], mirr;
