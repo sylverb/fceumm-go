@@ -807,8 +807,10 @@ endlseq:
 #endif
 
 int FCEUI_Initialize(void) {
+#ifndef TARGET_GNW
 	if (!FCEU_InitVirtualVideo())
 		return 0;
+#endif
 	memset(&FSettings, 0, sizeof(FSettings));
 	FSettings.UsrFirstSLine[0] = 8;
 	FSettings.UsrFirstSLine[1] = 0;

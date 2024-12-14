@@ -52,9 +52,9 @@ void FCEU_KillVirtualVideo(void)
 #endif
 }
 
+#ifndef TARGET_GNW
 int FCEU_InitVirtualVideo(void)
 {
-#ifndef TARGET_GNW
    /* 256 bytes per scanline, * 240 scanline maximum, +8 for alignment, */
    if (!XBuf)
       XBuf = (uint8*)(FCEU_malloc(256 * (256 + extrascanlines + 8)));
@@ -66,9 +66,9 @@ int FCEU_InitVirtualVideo(void)
 
    memset(XBuf, 128, 256 * (256 + extrascanlines + 8));
    memset(XDBuf, 0, 256 * (256 + extrascanlines + 8));
-#endif
    return 1;
 }
+#endif
 
 #include "drawing.h"
 
