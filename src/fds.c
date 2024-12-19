@@ -850,7 +850,7 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	}
 #else
     uint32_t size_u32 = 0;
-	uint8_t *bios_data = store_file_in_flash("/bios/nes/disksys.rom", &size_u32, false);
+	uint8_t *bios_data = store_file_in_flash("/bios/nes/disksys.rom", &size_u32, false, NULL);
 	if (bios_data == NULL) {
 		FCEU_PrintError("FDS BIOS ROM image missing!\n");
 		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
