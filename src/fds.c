@@ -42,7 +42,7 @@
 #endif
 #if defined(TARGET_GNW) && !defined(LINUX_EMU)
 #if SD_CARD == 1
-#include "gw_flash_alloc.h"
+#include "odroid_overlay.h"
 #else
 #include "rom_manager.h"
 #endif
@@ -850,7 +850,7 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	}
 #else
     uint32_t size_u32 = 0;
-	uint8_t *bios_data = store_file_in_flash("/bios/nes/disksys.rom", &size_u32, false, NULL);
+	uint8_t *bios_data = odroid_overlay_cache_file_in_flash("/bios/nes/disksys.rom", &size_u32, false);
 	if (bios_data == NULL) {
 		FCEU_PrintError("FDS BIOS ROM image missing!\n");
 		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
