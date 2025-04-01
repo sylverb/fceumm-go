@@ -1525,7 +1525,7 @@ static int iNES_Init(int num) {
 			// Load mapper code in ram
 			if (fceumm_get_mapper_name(num, mapper_path, 255) == 0) {
 				FCEU_printf("mapper %s\n",mapper_path);
-				mapper_size = rg_storage_copy_file_to_ram(mapper_path, (char *)&__RAM_EMU_START__);
+				mapper_size = rg_storage_copy_file_to_ram(mapper_path, (char *)&__RAM_EMU_START__, NULL);
 				FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
 				memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
 				SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);

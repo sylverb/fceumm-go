@@ -394,7 +394,7 @@ void NSF_init(void) {
 
 	if (NSFHeader.SoundChip & 1) {
 #if defined(TARGET_GNW) && SD_CARD == 1 && !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_vrc6.bin", (char *)&__RAM_EMU_START__);
+		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_vrc6.bin", (char *)&__RAM_EMU_START__, NULL);
 		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
 		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
 		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
@@ -402,7 +402,7 @@ void NSF_init(void) {
 		NSFVRC6_Init();
 	} else if (NSFHeader.SoundChip & 2) {
 #if defined(TARGET_GNW) && SD_CARD == 1 && !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_vrc7.bin", (char *)&__RAM_EMU_START__);
+		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_vrc7.bin", (char *)&__RAM_EMU_START__, NULL);
 		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
 		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
 		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
@@ -412,7 +412,7 @@ void NSF_init(void) {
 		FDSSoundReset();
 	} else if (NSFHeader.SoundChip & 8) {
 #if defined(TARGET_GNW) && SD_CARD == 1 && !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_mmc5.bin", (char *)&__RAM_EMU_START__);
+		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_mmc5.bin", (char *)&__RAM_EMU_START__, NULL);
 		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
 		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
 		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
@@ -420,7 +420,7 @@ void NSF_init(void) {
 		NSFMMC5_Init();
 	} else if (NSFHeader.SoundChip & 0x10) {
 #if defined(TARGET_GNW) && SD_CARD == 1 && !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_n106.bin", (char *)&__RAM_EMU_START__);
+		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_n106.bin", (char *)&__RAM_EMU_START__, NULL);
 		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
 		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
 		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
@@ -428,7 +428,7 @@ void NSF_init(void) {
 		NSFN106_Init();
 	} else if (NSFHeader.SoundChip & 0x20) {
 #if defined(TARGET_GNW) && SD_CARD == 1 && !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_69.bin", (char *)&__RAM_EMU_START__);
+		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_69.bin", (char *)&__RAM_EMU_START__, NULL);
 		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
 		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
 		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
