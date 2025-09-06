@@ -63,7 +63,7 @@ extern SFORMAT FCEUVSUNI_STATEINFO[];
 uint8 *trainerpoo       = NULL;
 uint8 *ROM              = NULL;
 uint8 *VROM             = NULL;
-uint8 *ExtraNTARAM      = NULL;
+uint8 *ExtraNTARAM      = (uint8 *)0xFFFFFFFF;
 iNES_HEADER head        = {0};
 
 CartInfo iNESCart       = {0};
@@ -120,9 +120,9 @@ static void iNESGI(int h) {
 			free(trainerpoo);
 			trainerpoo = NULL;
 		}
-		if (ExtraNTARAM) {
+		if (ExtraNTARAM != (uint8 *)0xFFFFFFFF) {
 			free(ExtraNTARAM);
-			ExtraNTARAM = NULL;
+			ExtraNTARAM = (uint8 *)0xFFFFFFFF;
 		}
 		break;
 	}
@@ -1515,8 +1515,9 @@ static int iNES_Init(int num) {
 			}
 			if (head.ROM_type & 8)
 			{
-				if (ExtraNTARAM != NULL)
+				if (ExtraNTARAM != (uint8 *)0xFFFFFFFF)
 				{
+					printf("ExtraNTARAM = %p\n",ExtraNTARAM);
 					AddExState(ExtraNTARAM, 2048, 0, "EXNR");
 				}
 			}
@@ -1525,7 +1526,7 @@ static int iNES_Init(int num) {
 			// Load mapper code in ram
 			if (fceumm_get_mapper_name(num, mapper_path, 255) == 0) {
 				FCEU_printf("mapper %s\n",mapper_path);
-				mapper_size = rg_storage_copy_file_to_ram(mapper_path, (char *)&__RAM_EMU_START__, NULL);
+				mapper_size = rg_storage_copy_file_to_ram(mapper_path, (uint8_t *)&__RAM_EMU_START__, NULL);
 				FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
 				memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
 				SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);

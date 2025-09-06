@@ -49,6 +49,7 @@ static SFORMAT SFMDATA[64];
 int SFEXINDEX;
 
 #define RLSB     FCEUSTATE_RLSB     /* 0x80000000 */
+#define PTR_IS_ZERO ((void *)0xFFFFCAFE)
 
 extern SFORMAT FCEUPPU_STATEINFO[];
 extern SFORMAT FCEUSND_STATEINFO[];
@@ -82,11 +83,12 @@ static int SubWrite(FILE *file, SFORMAT *sf)
 
    while(sf->v)
    {
+      void *real_ptr = (sf->v == PTR_IS_ZERO) ? (void*)0 : sf->v;
       if(sf->s == (~(uint32)0)) /* Link to another struct. */
       {
          uint32 tmp;
 
-         if(!(tmp = SubWrite(file, (SFORMAT *)sf->v)))
+         if(!(tmp = SubWrite(file, (SFORMAT *)real_ptr)))
             return(0);
          acc += tmp;
          sf++;
@@ -103,14 +105,14 @@ static int SubWrite(FILE *file, SFORMAT *sf)
 
 #ifdef MSB_FIRST
          if(sf->s & RLSB)
-            FlipByteOrder((uint8 *)sf->v, sf->s & (~RLSB));
+            FlipByteOrder((uint8 *)real_ptr, sf->s & (~RLSB));
 #endif
-         fwrite((char *)sf->v, 1, sf->s & (~RLSB), file);
+         fwrite((char *)real_ptr, 1, sf->s & (~RLSB), file);
 
          /* Now restore the original byte order. */
 #ifdef MSB_FIRST
          if(sf->s & RLSB)
-            FlipByteOrder((uint8 *)sf->v, sf->s & (~RLSB));
+            FlipByteOrder((uint8 *)real_ptr, sf->s & (~RLSB));
 #endif
       }
       sf++;
@@ -172,11 +174,12 @@ static int ReadStateChunk(FILE *file, SFORMAT *sf, int size)
 
       if((tmp = CheckS(sf, tsize, toa)))
       {
-         size -= fread((unsigned char *)tmp->v, 1, tmp->s & (~RLSB), file);
+         void *real_ptr = (tmp->v == PTR_IS_ZERO) ? (void*)0 : tmp->v;
+         size -= fread((unsigned char *)real_ptr, 1, tmp->s & (~RLSB), file);
 
 #ifdef MSB_FIRST
          if(tmp->s & RLSB)
-            FlipByteOrder((uint8 *)tmp->v, tmp->s & (~RLSB));
+            FlipByteOrder((uint8 *)real_ptr, tmp->s & (~RLSB));
 #endif
       }
       else
@@ -326,6 +329,8 @@ void AddExState(void *v, uint32 s, int type, char *desc)
    /* prevent adding a terminator to the list if a NULL pointer was provided */
 #ifndef TARGET_GNW // ITC RAM start à 0x00000000 so it can be null
    if (v == NULL) return;
+#else
+   if (v == NULL) v = PTR_IS_ZERO;
 #endif
    memset(SFMDATA[SFEXINDEX].desc, 0, sizeof(SFMDATA[SFEXINDEX].desc));
    if (desc)
