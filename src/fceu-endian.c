@@ -63,7 +63,7 @@ int write32le_fs(fs_file_t *file, uint32 b)
 int read32le_fs(fs_file_t *file, uint32 *Bufo)
 {
    uint32 buf;
-   if(fs_read(file, &buf, 4)<4)
+   if(fs_read(file, (unsigned char *)&buf, 4)<4)
       return 0;
 #ifdef MSB_FIRST
    *(uint32*)Bufo=((buf&0xFF)<<24)|((buf&0xFF00)<<8)|((buf&0xFF0000)>>8)|((buf&0xFF000000)>>24);
