@@ -39,7 +39,7 @@
 
 #ifdef TARGET_GNW
 #include "gw_malloc.h"
-#include "rom_manager.h"
+#include "odroid_overlay.h"
 #endif
 
 /*
@@ -407,19 +407,17 @@ void FCEU_OpenGenie(void) {
 #else
 #ifndef LINUX_EMU
 	if (!GENIEROM) {
-		retro_emulator_file_t *rom_file;
-
-		rom_system_t *rom_system = (rom_system_t *)rom_manager_system(&rom_mgr, "NES_BIOS");
-		rom_file = (retro_emulator_file_t *)rom_manager_get_file((const rom_system_t *)rom_system,"gamegenie.nes");
-		if (rom_file == NULL) {
+		uint32_t rom_size = 0;
+		uint8_t *rom_data = odroid_overlay_cache_file_in_flash("/bios/nes/gamegenie.nes", &rom_size, false);
+		if (rom_data == NULL) {
 			FCEU_PrintError("Error reading from Game Genie ROM image!\n");
 			FCEUD_DispMessage(RETRO_LOG_WARN, 3000, "Failed to read Game Genie ROM image (gamegenie.nes)");
 			return;
 		}
-		if (rom_file->address[0] == 0x4E) {	/* iNES ROM image */
+		if (rom_data[0] == 0x4E) {	/* iNES ROM image */
 			GENIEROM = (uint8*)ahb_malloc(4096 + 1024);
-			memcpy(GENIEROM, rom_file->address+16, 4096);
-			memcpy(GENIEROM+ 4096, rom_file->address+16+16384, 256);
+			memcpy(GENIEROM, rom_data+16, 4096);
+			memcpy(GENIEROM+ 4096, rom_data+16+16384, 256);
 
 			/* Workaround for the FCE Ultra CHR page size only being 1KB */
 			for (x = 0; x < 4; x++)

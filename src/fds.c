@@ -41,11 +41,7 @@
 #include "gw_malloc.h"
 #endif
 #if defined(TARGET_GNW) && !defined(LINUX_EMU)
-#if SD_CARD == 1
 #include "odroid_overlay.h"
-#else
-#include "rom_manager.h"
-#endif
 #endif
 
 /*	TODO:  Add code to put a delay in between the time a disk is inserted
@@ -838,17 +834,6 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	FCEU_PrintError("FDSLoad\n");
 
 #ifndef LINUX_EMU
-#if SD_CARD == 0
-	retro_emulator_file_t *rom_file;
-
-	rom_system_t *rom_system = (rom_system_t *)rom_manager_system(&rom_mgr, "NES_BIOS");
-	rom_file = (retro_emulator_file_t *)rom_manager_get_file((const rom_system_t *)rom_system,"disksys.rom");
-	if (rom_file == NULL) {
-		FCEU_PrintError("FDS BIOS ROM image missing!\n");
-		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
-		return 0;
-	}
-#else
     uint32_t size_u32 = 0;
 	uint8_t *bios_data = odroid_overlay_cache_file_in_flash("/bios/nes/disksys.rom", &size_u32, false);
 	if (bios_data == NULL) {
@@ -859,7 +844,6 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 		FCEU_PrintError("FDS BIOS ROM image wrong size (expecting 8KB file)!\n");
 		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) incorrect");
 	}
-#endif
 #else
 	FILE *fdsbiosfile = fopen("bios/nes/disksys.rom","r");
 	if (fdsbiosfile == NULL) {
@@ -876,11 +860,7 @@ int FDSLoad(const char *name, const char *rom, uint32_t rom_size) {
 	FDSBIOSsize = 8192;
 
 #ifndef LINUX_EMU
-#if SD_CARD == 0
-	FDSBIOS = (uint8_t *)rom_file->address;
-#else
-	FDSBIOS = bios_data;
-#endif
+	FDSBIOS = (uint8_t *)bios_data;
 #else
 	FDSBIOS = (uint8*)FCEU_gmalloc(FDSBIOSsize);
 	fread(FDSBIOS,1,FDSBIOSsize,fdsbiosfile);
