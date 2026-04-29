@@ -43,13 +43,11 @@
 #ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
-#if SD_CARD == 1
 #include <odroid_system.h>
 #include "nes_fceu_mappers.h"
 #include "rg_storage.h"
 #ifndef LINUX_EMU
 #include "gw_linker.h"
-#endif
 #endif
 #endif
 #include "md5.h"
@@ -142,9 +140,6 @@ struct INPSEL {
 
 static void SetInput(void) {
 	static struct INPSEL moo[]
-#if defined(TARGET_GNW) && !defined(LINUX_EMU) && SD_CARD == 0
-	__attribute__((section(".extflash_emu_data")))
-#endif
 	 =
 	{
 		{0x19b0a9f1,	SI_GAMEPAD,		SI_ZAPPER,		SIFC_NONE		},	/* 6-in-1 (MGC-023)(Unl)[!] */
@@ -241,9 +236,6 @@ struct BADINF {
 };
 
 static struct BADINF BadROMImages[]
-#if defined(TARGET_GNW) && !defined(LINUX_EMU) && SD_CARD == 0
-	__attribute__((section(".extflash_emu_data")))
-#endif
  =
 {
 	#include "ines-bad.h"
@@ -275,7 +267,7 @@ struct CHINF {
 	int32 extra;
 };
 
-#if SD_CARD == 1 && !defined(LINUX_EMU)
+#ifndef LINUX_EMU
 static int find_correct_rom_info(uint32_t crc32, struct CHINF *moo) {
     FILE *file = fopen("/cores/mappers/ines_correct.bin", "rb");
     if (!file) {
@@ -323,11 +315,8 @@ static void CheckHInfo(void)
 #define MULTI     2
 #define DENDY     3
 
-#if SD_CARD == 0 || defined(LINUX_EMU)
+#ifdef LINUX_EMU
    static struct CHINF moo[]
-#if defined(TARGET_GNW) && !defined(LINUX_EMU)
-	__attribute__((section(".extflash_emu_data")))
-#endif
   =
    {
 #include "ines-correct.h"
@@ -342,7 +331,7 @@ static void CheckHInfo(void)
       partialmd5 |= (uint64)iNESCart.MD5[15 - x] << (x * 8);
    CheckBad(partialmd5);
 
-#if SD_CARD == 0 || defined(LINUX_EMU)
+#ifdef LINUX_EMU
    x = 0;
    do {
       if (moo[x].crc32 == iNESCart.CRC32) {
@@ -1460,10 +1449,8 @@ int iNESLoad(const char *name, FCEUFILE *fp)
 #endif
 
 static int iNES_Init(int num) {
-#if SD_CARD == 1
 	char mapper_path[256];
 	size_t mapper_size;
-#endif
 	BMAPPINGLocal *tmp = bmap;
 
 	CHRRAMSize = -1;
@@ -1522,7 +1509,7 @@ static int iNES_Init(int num) {
 				}
 			}
 		    FCEU_printf("init found mapper %ld\n",tmp->number);
-#if SD_CARD == 1 && !defined(LINUX_EMU)
+#ifndef LINUX_EMU
 			// Load mapper code in ram
 			if (fceumm_get_mapper_name(num, mapper_path, 255) == 0) {
 				FCEU_printf("mapper %s\n",mapper_path);
