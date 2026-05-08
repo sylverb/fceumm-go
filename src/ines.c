@@ -43,11 +43,11 @@
 #ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
 #endif
-#include <odroid_system.h>
 #include "nes_fceu_mappers.h"
-#include "rg_storage.h"
 #ifndef LINUX_EMU
+#include <odroid_system.h>
 #include "gw_linker.h"
+#include "rg_storage.h"
 #endif
 #endif
 #include "md5.h"
