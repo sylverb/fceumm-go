@@ -37,6 +37,7 @@
 #include "input.h"
 #ifdef FCEU_NO_MALLOC
 #include "gw_malloc.h"
+#include "nes_fceu_mappers.h"
 #endif
 #if defined(TARGET_GNW) && !defined(LINUX_EMU)
 #include <odroid_system.h>
@@ -394,44 +395,49 @@ void NSF_init(void) {
 
 	if (NSFHeader.SoundChip & 1) {
 #if defined(TARGET_GNW) && !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_vrc6.bin", (char *)&__RAM_EMU_START__, NULL);
-		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
-		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
-		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		size_t mapper_size = fceumm_load_mapper(24, (uint8_t *)&__RAM_EMU_START__, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__));
+		if (mapper_size) {
+			memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
+			SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		}
 #endif
 		NSFVRC6_Init();
 	} else if (NSFHeader.SoundChip & 2) {
 #if defined(TARGET_GNW) &&  !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_vrc7.bin", (char *)&__RAM_EMU_START__, NULL);
-		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
-		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
-		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		size_t mapper_size = fceumm_load_mapper(85, (uint8_t *)&__RAM_EMU_START__, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__));
+		if (mapper_size) {
+			memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
+			SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		}
 #endif
 		NSFVRC7_Init();
 	} else if (NSFHeader.SoundChip & 4) {
 		FDSSoundReset();
 	} else if (NSFHeader.SoundChip & 8) {
 #if defined(TARGET_GNW) && !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_mmc5.bin", (char *)&__RAM_EMU_START__, NULL);
-		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
-		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
-		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		size_t mapper_size = fceumm_load_mapper(5, (uint8_t *)&__RAM_EMU_START__, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__));
+		if (mapper_size) {
+			memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
+			SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		}
 #endif
 		NSFMMC5_Init();
 	} else if (NSFHeader.SoundChip & 0x10) {
 #if defined(TARGET_GNW) && !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_n106.bin", (char *)&__RAM_EMU_START__, NULL);
-		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
-		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
-		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		size_t mapper_size = fceumm_load_mapper(19, (uint8_t *)&__RAM_EMU_START__, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__));
+		if (mapper_size) {
+			memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
+			SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		}
 #endif
 		NSFN106_Init();
 	} else if (NSFHeader.SoundChip & 0x20) {
 #if defined(TARGET_GNW) && !defined(LINUX_EMU)
-		size_t mapper_size = rg_storage_copy_file_to_ram("/cores/mappers/mapper_69.bin", (char *)&__RAM_EMU_START__, NULL);
-		FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
-		memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
-		SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		size_t mapper_size = fceumm_load_mapper(69, (uint8_t *)&__RAM_EMU_START__, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__));
+		if (mapper_size) {
+			memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
+			SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
+		}
 #endif
 		NSFAY_Init();
 	}

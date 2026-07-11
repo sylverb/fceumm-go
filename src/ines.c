@@ -1449,7 +1449,6 @@ int iNESLoad(const char *name, FCEUFILE *fp)
 #endif
 
 static int iNES_Init(int num) {
-	char mapper_path[256];
 	size_t mapper_size;
 	BMAPPINGLocal *tmp = bmap;
 
@@ -1510,15 +1509,12 @@ static int iNES_Init(int num) {
 			}
 		    FCEU_printf("init found mapper %ld\n",tmp->number);
 #ifndef LINUX_EMU
-			// Load mapper code in ram
-			if (fceumm_get_mapper_name(num, mapper_path, 255) == 0) {
-				FCEU_printf("mapper %s\n",mapper_path);
-				mapper_size = rg_storage_copy_file_to_ram(mapper_path, (uint8_t *)&__RAM_EMU_START__, NULL);
-				FCEU_printf("Loaded %d b of mapper in ram\n",mapper_size);
+			// Load mapper code in ram from the mappers pack
+			mapper_size = fceumm_load_mapper(num, (uint8_t *)&__RAM_EMU_START__, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__));
+			if (mapper_size) {
+				FCEU_printf("Loaded %d b of mapper %d in ram\n",mapper_size,num);
 				memset((char *)(&__RAM_EMU_START__) + mapper_size, 0x0, (size_t)(&__RAM_FCEUMM_MAPPER_LENGTH__)-mapper_size);
 				SCB_CleanDCache_by_Addr((uint32_t *)&__RAM_EMU_START__, mapper_size);
-			} else {
-				FCEU_printf("Failed to load mapper\n");
 			}
 #endif
 			tmp->init(&iNESCart);
