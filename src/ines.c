@@ -269,7 +269,7 @@ struct CHINF {
 
 #ifndef LINUX_EMU
 static int find_correct_rom_info(uint32_t crc32, struct CHINF *moo) {
-    FILE *file = fopen("/cores/mappers/ines_correct.bin", "rb");
+    FILE *file = fopen("/cores/nes_fceumm_mappers/ines_correct.bin", "rb");
     if (!file) {
         return 0;
     }
